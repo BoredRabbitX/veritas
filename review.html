@@ -1,137 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Submit Review | Veritas</title>
+    <meta charset="UTF-8"><title>Review | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
+<body>
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">V</div>
-                <span class="text-2xl font-bold">Veritas</span>
-            </a>
-            <div class="hidden md:flex gap-6 text-sm font-medium opacity-70">
-                <a href="dashboard.html">Merchant Dashboard</a>
-                <a href="review.html" class="text-blue-600 font-bold">Customer Portal</a>
-            </div>
-            <button id="darkModeToggle" class="p-2">🌓</button>
+            <a href="index.html" class="flex items-center gap-2"><div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">V</div><span class="text-2xl font-bold">Veritas</span></a>
+            <div class="flex items-center gap-6"><button id="darkModeToggle">🌓</button><button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect Wallet</button></div>
         </nav>
     </div>
 
-    <main class="main-content flex items-center justify-center px-6 py-20">
-        <div id="connectPrompt" class="card-veritas max-w-md w-full text-center">
-            <div class="text-5xl mb-6">🦊</div>
-            <h2 class="text-2xl font-bold mb-4">Identity Verification</h2>
-            <p class="text-gray-500 mb-8">Please connect your wallet to verify your purchase and post a review.</p>
-            <button onclick="handleManualConnect()" class="btn-primary w-full py-4 text-lg">Connect Wallet</button>
-        </div>
-
-        <div id="denied" class="hidden card-veritas max-w-md text-center border-red-500">
-            <h2 class="text-2xl font-bold text-red-600 mb-4">Invalid Access</h2>
-            <p id="reason" class="opacity-60 mb-6"></p> <a href="index.html" class="btn-outline inline-block w-full">Return Home</a>
-        </div>
-
-        <div id="form" class="hidden card-veritas max-w-md w-full">
-            <h2 class="text-2xl font-bold mb-2">Verified Review</h2>
-            <p id="bizLabel" class="text-blue-600 font-bold text-sm mb-6"></p>
+    <main class="main-content max-w-2xl mx-auto px-6 py-12">
+        <div class="card-veritas">
+            <h2 class="text-3xl font-bold mb-6">Post a Review</h2>
             
-            <label class="block text-xs font-bold uppercase mb-2 opacity-50">Score</label>
-            <select id="r" class="mb-4">
-                <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-                <option value="4">⭐⭐⭐⭐ Great</option>
-                <option value="3">⭐⭐⭐ Good</option>
-                <option value="2">⭐⭐ Poor</option>
-                <option value="1">⭐ Terrible</option>
-            </select>
+            <div id="setupData" class="space-y-4 mb-8 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                <p class="text-xs font-bold uppercase opacity-50">Transaction Details</p>
+                <input id="bizInput" type="text" placeholder="Merchant Wallet Address (0x...)">
+                <input id="receiptInput" type="text" placeholder="Receipt / Order ID">
+                <button onclick="processValidation()" class="btn-outline w-full">Verify Transaction</button>
+            </div>
 
-            <label class="block text-xs font-bold uppercase mb-2 opacity-50">Your Feedback</label>
-            <textarea id="msg" placeholder="Share your experience..." rows="5" class="mb-6"></textarea>
-            
-            <button id="submitBtn" onclick="send()" class="btn-primary w-full py-4">Publish on Asset Hub</button>
+            <div id="denied" class="hidden p-4 mb-6 bg-red-100 text-red-700 rounded-lg text-sm font-medium"></div>
+
+            <div id="form" class="hidden space-y-6">
+                <div class="border-b pb-4"><p class="text-blue-600 font-bold" id="storeName">Reviewing: ...</p></div>
+                <div><label class="block text-xs font-bold mb-2">SCORE</label><select id="r"><option value="5">⭐⭐⭐⭐⭐ Excellent</option><option value="1">⭐ Poor</option></select></div>
+                <div><label class="block text-xs font-bold mb-2">COMMENT</label><textarea id="msg" placeholder="Share your experience..." rows="4"></textarea></div>
+                <button id="submitBtn" onclick="send()" class="btn-primary w-full py-4 text-lg">Publish to Blockchain</button>
+            </div>
         </div>
     </main>
 
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase tracking-widest font-bold opacity-50">
-            <div>The White Rabbit bored creation</div>
-            <div>Powered by Polkadot paseo testnet</div>
-        </div>
-    </footer>
+    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-50"><div>The White Rabbit bored creation</div><div>Powered by Polkadot paseo testnet</div></div></footer>
 
     <script src="app.js"></script>
     <script>
-        const p = new URLSearchParams(window.location.search);
-        const bA = p.get('business')?.toLowerCase();
-        const rid = p.get('receipt');
-
         window.onload = async () => {
-            if(!bA || !rid) {
-                return showD("Invalid QR Code. Missing business or receipt data.");
-            }
-            if (window.ethereum) {
-                const acc = await window.ethereum.request({ method: 'eth_accounts' });
-                if (acc.length > 0) {
-                    processValidation();
-                }
+            const p = new URLSearchParams(window.location.search);
+            if(p.get('business')) document.getElementById('bizInput').value = p.get('business');
+            if(p.get('receipt')) {
+                document.getElementById('receiptInput').value = p.get('receipt');
+                setTimeout(processValidation, 1000); // Auto-verify if QR data exists
             }
         };
 
-        async function handleManualConnect() {
-            const success = await connectWallet();
-            if (success) processValidation();
-        }
-
         async function processValidation() {
+            const bA = document.getElementById('bizInput').value.trim().toLowerCase();
+            const rI = document.getElementById('receiptInput').value.trim();
+            const errorDiv = document.getElementById('denied');
+
+            if(!bA || !rI) return alert("Enter both Merchant Address and Receipt ID");
+            if(!contract) await connectWallet();
+
             try {
-                if(!contract) await connectWallet();
                 const uA = (await signer.getAddress()).toLowerCase();
                 const b = await contract.businesses(bA);
-                const used = await contract.usedReceipts(ethers.id(rid));
+                const used = await contract.usedReceipts(ethers.id(rI));
 
-                if(!b.isActive) return showD("Business not registered.");
-                if(uA === bA) return showD("Owners cannot review themselves.");
-                if(used) return showD("Receipt already used.");
+                if(!b.isActive) throw new Error("Business not registered.");
+                if(uA === bA) throw new Error("Owners cannot review themselves.");
+                if(used) throw new Error("Receipt already used.");
 
-                document.getElementById('connectPrompt').classList.add('hidden');
-                document.getElementById('denied').classList.add('hidden');
+                document.getElementById('setupData').classList.add('hidden');
+                errorDiv.classList.add('hidden');
                 document.getElementById('form').classList.remove('hidden');
-                document.getElementById('bizLabel').innerText = `Verified for: ${b.name}`;
+                document.getElementById('storeName').innerText = "Reviewing: " + b.name;
             } catch (e) {
-                showD("Blockchain error: " + e.message);
-            }
-        }
-
-        // FUNZIONE CORRETTA: Gli ID 'denied' e 'reason' ora corrispondono all'HTML
-        function showD(m) {
-            const deniedEl = document.getElementById('denied');
-            const reasonEl = document.getElementById('reason');
-            
-            if (deniedEl && reasonEl) {
-                document.getElementById('connectPrompt').classList.add('hidden');
-                document.getElementById('form').classList.add('hidden');
-                deniedEl.classList.remove('hidden');
-                reasonEl.innerText = m;
-            } else {
-                console.error("Elements 'denied' or 'reason' not found in HTML");
+                errorDiv.innerText = e.message;
+                errorDiv.classList.remove('hidden');
             }
         }
 
         async function send() {
-            const btn = document.getElementById('submitBtn');
+            const bA = document.getElementById('bizInput').value.trim();
+            const rI = document.getElementById('receiptInput').value.trim();
             try {
-                btn.innerText = "Broadcasting...";
-                btn.disabled = true;
-                const tx = await contract.postReview(bA, document.getElementById('r').value, document.getElementById('msg').value, ethers.id(rid), "0x");
-                await tx.wait();
-                window.location.href = `store.html?id=${bA}`;
-            } catch (e) { 
-                alert(e.message); 
-                btn.innerText = "Publish on Asset Hub";
-                btn.disabled = false;
-            }
+                const tx = await contract.postReview(bA, document.getElementById('r').value, document.getElementById('msg').value, ethers.id(rI), "0x");
+                await tx.wait(); window.location.href = `store.html?id=${bA}`;
+            } catch (e) { alert(e.message); }
         }
     </script>
 </body>
