@@ -46,6 +46,7 @@ The project is hosted in the `/veritas` directory for easy access via GitHub Pag
 ├── review.html      # User portal: Signature verification & Transaction UI
 ├── app.js           # Ethers.js v6 implementation & ABI Bridge
 └── style.css        # Web3-optimized UI/UX components
+---
 🛠️ How to Test
 1. Configure your Wallet
 Add the Paseo Asset Hub network to MetaMask:
