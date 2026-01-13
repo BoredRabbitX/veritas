@@ -1,10 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap');
 
 :root {
     --bg-dark: #09090b;
     --card-bg: #18181b;
+    --input-bg: #27272a;
     --primary: #2563eb;
-    --primary-hover: #3b82f6;
     --text-main: #f4f4f5;
     --text-dim: #a1a1aa;
     --border: rgba(255, 255, 255, 0.1);
@@ -15,124 +15,65 @@ body {
     color: var(--text-main);
     font-family: 'Inter', sans-serif;
     margin: 0;
-    overflow-x: hidden;
+    line-height: 1.5;
 }
 
-/* --- Glassmorphism Nav --- */
 .nav-container {
-    background: rgba(9, 9, 11, 0.8);
-    backdrop-filter: blur(12px);
+    background: rgba(9, 9, 11, 0.9);
+    backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    position: sticky; top: 0; z-index: 100;
 }
 
-/* --- Professional Cards --- */
 .card-veritas {
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 2rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
 }
 
 .card-veritas:hover {
-    border-color: rgba(37, 99, 235, 0.5);
-    box-shadow: 0 20px 40px -15px rgba(37, 99, 235, 0.15);
+    border-color: var(--primary);
+    box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.2);
 }
 
-/* --- Inputs: FIX PER LEGGIBILITÀ --- */
+/* Fix Leggibilità Input */
 input, select, textarea {
     width: 100%;
-    background: #27272a !important; /* Grigio scuro leggibile */
+    background: var(--input-bg) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 12px !important;
+    color: #ffffff !important;
     padding: 12px 16px !important;
-    color: #ffffff !important; /* Testo bianco puro */
-    font-size: 0.95rem !important;
-    transition: all 0.2s ease;
+    border-radius: 12px !important;
+    font-size: 14px !important;
     outline: none !important;
 }
 
-input::placeholder, textarea::placeholder {
-    color: #71717a !important;
-}
+input:focus { border-color: var(--primary) !important; }
 
-input:focus, select:focus, textarea:focus {
-    border-color: var(--primary) !important;
-    background: #2d2d30 !important;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
-}
-
-/* --- Buttons --- */
 .btn-primary {
     background: var(--primary);
     color: white;
     font-weight: 700;
-    border-radius: 12px;
     padding: 12px 24px;
-    transition: all 0.2s ease;
-    border: none;
+    border-radius: 12px;
+    transition: all 0.2s;
     cursor: pointer;
+    border: none;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 12px;
 }
 
-.btn-primary:hover {
-    background: var(--primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
-}
-
-.btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-}
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
 
 .btn-outline {
     background: transparent;
     border: 1px solid var(--border);
-    color: var(--text-main);
-    font-weight: 600;
-    border-radius: 12px;
+    color: white;
     padding: 12px 24px;
-    transition: all 0.2s ease;
+    border-radius: 12px;
+    cursor: pointer;
 }
 
-.btn-outline:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--text-dim);
-}
-
-/* --- Typography --- */
-h1, h2, h3 {
-    letter-spacing: -0.04em;
-}
-
-.text-gradient {
-    background: linear-gradient(to right, #3b82f6, #60a5fa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* --- Footer --- */
-footer {
-    background: #050507;
-    border-top: 1px solid var(--border);
-}
-
-/* --- Grid Animations --- */
-#grid > a, #reviewsList > div {
-    animation: fadeIn 0.5s ease backwards;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+footer { border-top: 1px solid var(--border); background: #050507; }
