@@ -6,18 +6,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
-    <div class="nav-container">
-        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="font-black text-2xl italic">VERITAS</a>
-            <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
-                <a href="explore.html">Explore</a>
-                <a href="review.html">Submit Review</a>
-                <a href="dashboard.html">Merchant Hub</a>
-            </div>
-            <button id="connectBtn" class="btn-primary" onclick="connectWallet()">Connect</button>
-        </nav>
-    </div>
-
     <main class="flex-grow max-w-5xl mx-auto px-6 py-12 w-full">
         <div class="card-veritas mb-8 border-b-4 border-blue-600">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -29,38 +17,17 @@
                 <div class="flex gap-4">
                     <div class="bg-zinc-900 p-4 rounded-2xl text-center min-w-[100px] border border-white/5">
                         <div id="avgRate" class="text-3xl font-black text-blue-600">0.0</div>
-                        <div class="text-[8px] uppercase font-bold opacity-40">Rating</div>
+                        <div class="text-[8px] font-bold opacity-40 uppercase">Rating</div>
                     </div>
                     <div class="bg-zinc-900 p-4 rounded-2xl text-center min-w-[100px] border border-white/5">
                         <div id="totalRev" class="text-3xl font-black text-white">0</div>
-                        <div class="text-[8px] uppercase font-bold opacity-40">Reviews</div>
+                        <div class="text-[8px] font-bold opacity-40 uppercase">Reviews</div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="md:col-span-2">
-                <h2 class="text-sm font-bold mb-6 uppercase opacity-40 tracking-widest">Verified Feed</h2>
-                <div id="reviewsList" class="space-y-4">
-                    <div class="opacity-30 italic">Scanning blockchain...</div>
-                </div>
-            </div>
-            <div class="space-y-4">
-                <a href="review.html" class="btn-primary w-full text-center block">Write a Review</a>
-                <div class="card-veritas text-xs opacity-60 leading-relaxed">
-                    This business is verified on the Veritas Protocol. All reviews are permanent and mathematically proven.
-                </div>
-            </div>
-        </div>
+        <div id="reviewsList" class="space-y-4">Scanning blockchain logs...</div>
     </main>
-
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center opacity-30 text-[10px] font-bold">
-            <div>THE WHITE RABBIT BORED CREATION</div>
-            <div>VERITAS V3.5</div>
-        </div>
-    </footer>
 
     <script src="app.js"></script>
     <script>
@@ -80,12 +47,13 @@
                 try {
                     events = await contract.queryFilter(filter, 0);
                 } catch(e) {
+                    // Fallback to recent blocks if full scan fails
                     events = await contract.queryFilter(filter, -10000);
                 }
 
                 const list = document.getElementById('reviewsList');
                 if(events.length === 0) {
-                    list.innerHTML = "<div class='opacity-30 italic'>No reviews found.</div>";
+                    list.innerHTML = "<div class='opacity-30 italic'>No verified reviews found.</div>";
                     return;
                 }
 
@@ -98,7 +66,7 @@
                         <div class="card-veritas bg-zinc-900/50">
                             <div class="flex justify-between mb-2">
                                 <span class="text-[9px] font-mono opacity-40">${author.slice(0,15)}...</span>
-                                <span class="text-yellow-500 font-bold">${"★".repeat(rating)}</span>
+                                <span class="text-yellow-500 font-bold">★`.repeat(rating) + `</span>
                             </div>
                             <p class="text-white italic leading-relaxed">"${content}"</p>
                         </div>`;
@@ -106,8 +74,7 @@
                 document.getElementById('avgRate').innerText = (sum / events.length).toFixed(1);
                 document.getElementById('totalRev').innerText = events.length;
             } catch(e) { 
-                console.error(e);
-                document.getElementById('reviewsList').innerHTML = "Error loading blockchain logs.";
+                document.getElementById('reviewsList').innerHTML = "<span style='color:red'>Error loading logs. Check network connection.</span>";
             }
         };
     </script>
