@@ -1,33 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Store Profile | Veritas</title>
+    <meta charset="UTF-8"><title>Store | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body>
-    <div class="nav-container">
-        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="font-bold text-blue-600">← Back Home</a>
-            <button id="connectBtn" class="btn-primary text-xs" onclick="connectWallet()">Connect</button>
-        </nav>
-    </div>
-
+    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-bold text-blue-600">← Back Home</a><button id="connectBtn" class="btn-primary text-xs" onclick="connectWallet()">Connect</button></nav></div>
     <main class="main-content max-w-4xl mx-auto px-6 py-12">
         <div class="flex justify-between items-end border-b pb-8 mb-12">
-            <div><h1 id="sn" class="text-5xl font-black">...</h1><p id="sc" class="text-blue-600 uppercase text-xs font-bold mt-2">...</p></div>
-            <div class="text-right"><div id="ar" class="text-6xl font-black">0.0</div><p class="text-[10px] uppercase opacity-50">Trust Score</p></div>
+            <div><h1 id="sn" class="text-5xl font-black tracking-tighter">...</h1><p id="sc" class="text-blue-600 font-bold uppercase text-xs mt-2">...</p></div>
+            <div class="text-right"><div id="ar" class="text-6xl font-black">0.0</div><p class="text-[10px] uppercase opacity-50 font-bold">Trust Score</p></div>
         </div>
-        <div id="rc" class="space-y-6">Scanning logs...</div>
+        <div id="rc" class="space-y-6">Fetching reviews...</div>
     </main>
-
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase tracking-widest font-bold opacity-50">
-            <div>The White Rabbit bored creation</div>
-            <div>Powered by Polkadot paseo testnet</div>
-        </div>
-    </footer>
+    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-50"><div>The White Rabbit bored creation</div><div>Powered by Polkadot paseo testnet</div></div></footer>
     <script src="app.js"></script>
     <script>
         window.onload = async () => {
@@ -36,17 +24,13 @@
             const b = await contract.businesses(id);
             document.getElementById('sn').innerText = b.name;
             document.getElementById('sc').innerText = b.category;
-            const logs = await contract.queryFilter(contract.filters.ReviewAdded(id), -5000);
+            const logs = await contract.queryFilter(contract.filters.ReviewAdded(id), -10000);
             const container = document.getElementById('rc');
-            container.innerHTML = logs.length ? "" : "No reviews.";
+            container.innerHTML = logs.length ? "" : "No reviews found.";
             let sum = 0;
             logs.reverse().forEach(l => {
                 sum += Number(l.args.rating);
-                container.innerHTML += `<div class="card-veritas">
-                    <div class="text-yellow-500 font-bold mb-2">${"★".repeat(l.args.rating)}</div>
-                    <p class="text-lg">"${l.args.content}"</p>
-                    <p class="text-[10px] mt-4 opacity-40">Verified Review: ${l.args.author.slice(0,10)}...</p>
-                </div>`;
+                container.innerHTML += `<div class="card-veritas transition-all hover:scale-[1.01]"><div class="text-yellow-500 font-bold mb-2">${"★".repeat(l.args.rating)}</div><p class="text-xl">"${l.args.content}"</p><p class="text-[10px] mt-4 opacity-40 uppercase tracking-widest font-bold">Verified on-chain</p></div>`;
             });
             if(logs.length) document.getElementById('ar').innerText = (sum/logs.length).toFixed(1);
         };
