@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Review V3 | Veritas (Clean Data)</title>
+    <meta charset="UTF-8"><title>Review V3.4 | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         #v3Debug { background: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 12px; margin-top: 20px; max-height: 250px; overflow-y: auto; border: 1px solid #333; }
-        .d-err { color: #f44; } .d-warn { color: #fa0; } .d-ok { color: #0f8; }
+        .d-err { color: #f44; } .d-ok { color: #0f8; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -16,47 +16,31 @@
     <main class="main-content max-w-lg mx-auto px-6 py-12">
         <div class="card-veritas shadow-2xl">
             <h2 class="text-3xl font-black mb-6">Post Review</h2>
-            
             <div id="gate" class="space-y-4">
-                <input id="bizInput" type="text" placeholder="Merchant 0x...">
+                <input id="bizInput" type="text" placeholder="Merchant Wallet">
                 <input id="receiptInput" type="text" placeholder="Receipt ID (V3-...)">
-                <button onclick="verifyReceipt()" class="btn-primary w-full py-4">Verify Receipt</button>
+                <button onclick="verifyReceipt()" class="btn-primary w-full py-4">Verify Receipt On-chain</button>
             </div>
             
-            <div id="form" class="hidden space-y-6">
-                <div class="p-4 bg-blue-900/10 rounded-xl border border-blue-900/20"><p id="storeLabel" class="text-blue-600 font-bold"></p></div>
-                
-                <input id="custName" type="text" placeholder="Your Name (Simple Text)">
-                
-                <div>
-                    <label class="text-[10px] font-bold uppercase opacity-50">Rating (1-5)</label>
-                    <select id="rating" class="mt-1">
-                        <option value="5">5 - Excellent</option>
-                        <option value="4">4 - Very Good</option>
-                        <option value="3">3 - Good</option>
-                        <option value="2">2 - Fair</option>
-                        <option value="1">1 - Poor</option>
-                    </select>
-                </div>
-
-                <textarea id="comment" placeholder="Feedback (Simple text, no emojis)..." rows="4"></textarea>
-                
+            <div id="form" class="hidden space-y-4">
+                <div class="p-3 bg-blue-900/10 rounded-xl border border-blue-900/20"><p id="storeLabel" class="text-blue-600 font-bold"></p></div>
+                <input id="custName" type="text" placeholder="Your Name">
+                <select id="rating"><option value="5">5 Stars</option><option value="4">4 Stars</option><option value="3">3 Stars</option><option value="2">2 Stars</option><option value="1">1 Star</option></select>
+                <textarea id="comment" placeholder="Feedback (No special chars)..." rows="3"></textarea>
                 <button id="subBtn" onclick="sendReview()" class="btn-primary w-full py-4">Publish to Blockchain</button>
             </div>
 
-            <div id="v3Debug"><div>> VERITAS V3 SYSTEM BYPASS READY...</div></div>
+            <div id="v3Debug"><div>> VERITAS V3.4 READY (CHAIN: 420420422)</div></div>
         </div>
     </main>
-    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] font-bold opacity-30"><div>VERITAS V3.1 - CLEAN DATA EDITION</div></div></footer>
+    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] font-bold opacity-30"><div>VERITAS V3.4</div></div></footer>
 
     <script src="app.js"></script>
     <script>
         function logV3(m, t='info') {
             const d = document.getElementById('v3Debug');
             const div = document.createElement('div');
-            if(t === 'err') div.className = 'd-err';
-            else if(t === 'warn') div.className = 'd-warn';
-            else if(t === 'ok') div.className = 'd-ok';
+            if(t === 'err') div.className = 'd-err'; else if(t === 'ok') div.className = 'd-ok';
             div.innerText = `[${new Date().toLocaleTimeString().split(' ')[0]}] ${m}`;
             d.appendChild(div); d.scrollTop = d.scrollHeight;
         }
@@ -65,8 +49,16 @@
             const bA = document.getElementById('bizInput').value.trim();
             const rid = document.getElementById('receiptInput').value.trim();
             try {
-                if(!contract) await connectWallet();
+                if(!contract) {
+                    logV3("Connecting wallet...");
+                    const connected = await connectWallet();
+                    if(!connected) return;
+                }
+                
                 const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
+                logV3("Checking hash: " + hash.slice(0,12) + "...");
+
+                // Se qui ricevi 0x, significa che il contratto non è su questa rete
                 const [isValid, isUsed, biz] = await Promise.all([
                     contract.validReceipts(hash),
                     contract.usedReceipts(hash),
@@ -75,70 +67,40 @@
 
                 if(!isValid) throw new Error("Receipt not found on-chain.");
                 if(isUsed) throw new Error("Receipt already used.");
-
+                
                 document.getElementById('gate').classList.add('hidden');
                 document.getElementById('form').classList.remove('hidden');
-                document.getElementById('storeLabel').innerText = "Verified for: " + biz.name;
-                logV3("Receipt Validated. Ready for clean data input.", "ok");
-            } catch (e) { logV3(e.message, "err"); alert(e.message); }
-        }
-
-       async function sendReview() {
-    const btn = document.getElementById('subBtn');
-    try {
-        btn.disabled = true; 
-        btn.innerText = "Aligning ABI...";
-
-        const bizAddr = document.getElementById('bizInput').value.trim();
-        const rid = document.getElementById('receiptInput').value.trim();
-        
-        // Dati puliti
-        const nameClean = (document.getElementById('custName').value || "Anon").substring(0, 20);
-        const commentClean = (document.getElementById('comment').value || "Verified").substring(0, 100);
-        const ratingValue = parseInt(document.getElementById('rating').value);
-        const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
-
-        logV3(`Target: ${bizAddr.slice(0,10)}...`);
-        logV3(`Data: Name=${nameClean}, Rating=${ratingValue}`);
-
-        // VERIFICA RETE
-        const network = await provider.getNetwork();
-        logV3(`Network ChainID: ${network.chainId}`);
-
-        // CHIAMATA ALLINEATA ALL'ABI DEFINITO
-        // Ordine: _business, _customerName, _rating, _content, _receiptId
-        const tx = await contract.postReview(
-            bizAddr,        // address
-            nameClean,      // string
-            ratingValue,    // uint8
-            commentClean,   // string
-            hash,           // bytes32
-            { 
-                gasLimit: 500000,
-                type: 0 
+                document.getElementById('storeLabel').innerText = "Store: " + biz.name;
+                logV3("Receipt Validated!", "ok");
+            } catch (e) { 
+                logV3(e.message, "err"); 
+                if(e.message.includes("decode")) logV3("CRITICAL: Contract not found on this network!", "err");
             }
-        );
-
-        logV3("Signature Received! Broadcasting...", "warn");
-        await tx.wait();
-        logV3("SUCCESS! Confirmed on-chain.", "ok");
-        window.location.href = `store.html?id=${bizAddr}`;
-
-    } catch (e) {
-        console.error("Full Error:", e);
-        let errorMsg = e.message;
-        
-        // Se l'errore è ancora -32603, proviamo a estrarre la causa reale
-        if (e.data) {
-            logV3("Revert Data found: " + e.data, "err");
         }
-        
-        logV3("FAILED: Check console for full trace", "err");
-        alert("Blockchain Error: " + errorMsg.slice(0, 100));
-        btn.disabled = false; 
-        btn.innerText = "Retry Alignment";
-    }
-}
+
+        async function sendReview() {
+            const btn = document.getElementById('subBtn');
+            try {
+                btn.disabled = true; btn.innerText = "Processing...";
+                const bizAddr = document.getElementById('bizInput').value.trim();
+                const rid = document.getElementById('receiptInput').value.trim();
+                const name = (document.getElementById('custName').value || "Anon").replace(/[^a-zA-Z0-9 ]/g, "");
+                const comment = (document.getElementById('comment').value || "Review").replace(/[^a-zA-Z0-9 ]/g, "");
+                const rating = parseInt(document.getElementById('rating').value);
+                const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
+
+                logV3("Sending transaction...");
+                const tx = await contract.postReview(bizAddr, name, rating, comment, hash, { gasLimit: 500000, type: 0 });
+                
+                logV3("Wait for confirmation...", "warn");
+                await tx.wait();
+                logV3("SUCCESS!", "ok");
+                window.location.href = `store.html?id=${bizAddr}`;
+            } catch (e) {
+                logV3(e.message, "err");
+                btn.disabled = false; btn.innerText = "Publish to Blockchain";
+            }
+        }
     </script>
 </body>
 </html>
