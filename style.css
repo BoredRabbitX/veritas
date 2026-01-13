@@ -38,7 +38,7 @@ body {
     box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.2);
 }
 
-/* Fix Leggibilità Input */
+/* Input legibility fix */
 input, select, textarea {
     width: 100%;
     background: var(--input-bg) !important;
@@ -66,14 +66,3 @@ input:focus { border-color: var(--primary) !important; }
 }
 
 .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-
-.btn-outline {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: white;
-    padding: 12px 24px;
-    border-radius: 12px;
-    cursor: pointer;
-}
-
-footer { border-top: 1px solid var(--border); background: #050507; }
