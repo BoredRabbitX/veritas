@@ -1,63 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veritas V3.5 | On-Chain Trust Protocol</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"><title>Veritas | On-Chain Trust</title>
+    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
-
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <div class="flex items-center gap-8">
-                <a href="index.html" class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">V</div>
-                    <span class="text-2xl font-black tracking-tighter uppercase">Veritas</span>
-                </a>
-                <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest opacity-60">
-                    <a href="explore.html" class="hover:text-blue-600 transition">Explore</a>
-                    <a href="dashboard.html" class="hover:text-blue-600 transition">Merchant Hub</a>
-                </div>
+            <a href="index.html" class="font-black text-2xl tracking-tighter italic">VERITAS</a>
+            <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
+                <a href="explore.html" class="opacity-60 hover:opacity-100">Explore</a>
+                <a href="review.html" class="opacity-60 hover:opacity-100">Submit Review</a>
+                <a href="dashboard.html" class="opacity-60 hover:opacity-100">Merchant Hub</a>
             </div>
-            <button id="connectBtn" class="btn-primary text-xs py-2 px-6" onclick="connectWallet()">Connect Wallet</button>
+            <button id="connectBtn" class="btn-primary text-xs px-6" onclick="connectWallet()">Connect</button>
         </nav>
     </div>
-
-    <main class="main-content flex-grow flex flex-col items-center justify-center px-6 text-center">
-        <div class="max-w-4xl">
-            <div class="inline-block px-4 py-1 border border-blue-600/30 rounded-full text-blue-600 text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
-                Paseo PassetHub Protocol Active
-            </div>
-            
-            <h1 class="text-6xl md:text-8xl font-black mb-6 tracking-tighter italic leading-none">
-                TRUST IS <br><span class="text-blue-600">ON-CHAIN.</span>
-            </h1>
-            
-            <p class="text-lg md:text-xl opacity-60 max-w-2xl mx-auto mb-12">
-                The first review protocol where every feedback is tied to a cryptographic receipt registered on the blockchain.
-            </p>
-
-            <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
-                <a href="explore.html" class="btn-primary py-5 px-12 text-lg shadow-2xl w-full md:w-auto">
-                    Explore Stores
-                </a>
-                <a href="dashboard.html" class="btn-outline py-5 px-12 text-lg w-full md:w-auto">
-                    Merchant Portal
-                </a>
-            </div>
+    <main class="main-content flex-grow flex flex-col items-center justify-center text-center px-6">
+        <h1 class="text-7xl font-black mb-6 italic tracking-tighter leading-none">TRUST IS <span class="text-blue-600">ON-CHAIN.</span></h1>
+        <p class="text-xl opacity-60 max-w-2xl mb-12 italic">The protocol for verified reviews powered by Paseo AssetHub.</p>
+        <div class="flex gap-4">
+            <a href="explore.html" class="btn-primary py-5 px-10 text-lg shadow-xl">Explore Stores</a>
+            <a href="dashboard.html" class="btn-outline py-5 px-10 text-lg">Merchant Hub</a>
         </div>
     </main>
-
-    <footer class="py-10 border-t border-gray-100 dark:border-zinc-800">
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
-            <div class="text-[10px] uppercase font-bold opacity-30 tracking-[0.3em]">The White Rabbit</div>
-            <div class="text-[10px] font-black text-blue-600 uppercase">Veritas V3.5.420420422</div>
-        </div>
-    </footer>
-
     <script src="app.js"></script>
 </body>
 </html>
