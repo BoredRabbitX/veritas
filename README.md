@@ -37,7 +37,7 @@ The protocol runs on a single "Hub" Smart Contract that manages multiple busines
 ### Smart Contract
 | Parameter | Value |
 | :--- | :--- |
-| **Contract Address** | `0x4cb4f27090ab3b07c0faadddcb8ca473db9e05f7` |
+| **Contract Address** | `0x7ca8b8cddaa0381509961d042c51f52867ccfd05` |
 | **Network** | Paseo Asset Hub (Polkadot Testnet) |
 | **Chain ID** | `424` |
 | **Explorer** | [Statescan - Paseo Asset Hub](https://paseo-asset-hub.statescan.io/) |
