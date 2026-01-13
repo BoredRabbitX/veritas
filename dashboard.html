@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Merchant Dashboard V3</title>
+    <meta charset="UTF-8"><title>Merchant Hub V3 | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
@@ -11,33 +11,32 @@
     <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl">VERITAS</a><button id="connectBtn" class="btn-primary text-sm" onclick="handleLogin()">Connect Wallet</button></nav></div>
 
     <main class="main-content max-w-6xl mx-auto px-6 py-12">
-        <div id="mainContent" class="opacity-20 pointer-events-none transition-all duration-500">
+        <div id="mainContent" class="opacity-20 pointer-events-none transition-all">
             <div class="grid md:grid-cols-2 gap-12">
                 <div class="card-veritas" id="regCard">
-                    <h2 class="text-2xl font-bold mb-6">Store Activation</h2>
+                    <h2 class="text-2xl font-bold mb-6">Business Registration</h2>
                     <div id="regForm">
                         <input id="bizN" type="text" placeholder="Store Name" class="mb-2">
-                        <input id="bizC" type="text" placeholder="Category" class="mb-4">
-                        <button onclick="register()" class="btn-primary w-full">Activate Business</button>
+                        <input id="bizC" type="text" placeholder="Industry" class="mb-4">
+                        <button onclick="register()" class="btn-primary w-full">Activate Store</button>
                     </div>
                     <div id="activeProfile" class="hidden text-center py-4">
-                        <div class="text-4xl mb-2">🏪</div>
-                        <h3 id="activeName" class="text-2xl font-bold">...</h3>
-                        <p id="activeCat" class="text-blue-600 font-bold text-xs uppercase">...</p>
+                        <h3 id="activeName" class="text-3xl font-black">...</h3>
+                        <p id="activeCat" class="text-blue-600 font-bold uppercase text-xs">...</p>
                     </div>
                 </div>
 
                 <div class="card-veritas">
-                    <h2 class="text-2xl font-bold mb-6">Issue On-chain Receipt</h2>
-                    <p class="text-xs opacity-50 mb-4">Clicking generate will register a unique random ID on the blockchain.</p>
-                    <button id="genBtn" onclick="genReceipt()" class="btn-primary w-full py-4 mb-6">Register & Generate QR</button>
+                    <h2 class="text-2xl font-bold mb-4">Issue Digital Receipt</h2>
+                    <p class="text-xs opacity-50 mb-6">This will register a unique ID on-chain for your customer.</p>
+                    <button id="genBtn" onclick="issueAndGen()" class="btn-primary w-full py-4 mb-6">Register & Generate QR</button>
                     <div id="qrcode" class="flex justify-center p-4 bg-white rounded-xl"></div>
-                    <input id="ridDisplay" type="text" readonly class="mt-4 text-center border-none opacity-50" placeholder="Receipt ID will appear here">
+                    <input id="ridDisplay" type="text" readonly class="mt-4 text-center border-none opacity-40 font-mono text-sm">
                 </div>
             </div>
         </div>
     </main>
-    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-30"><div>The White Rabbit</div><div>VERITAS PROTOCOL V3</div></div></footer>
+    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] font-bold opacity-30"><div>VERITAS V3</div></div></footer>
     <script src="app.js"></script>
     <script>
         async function handleLogin() {
@@ -58,20 +57,19 @@
                 await tx.wait(); location.reload();
             } catch(e) { alert(e.message); }
         }
-        async function genReceipt() {
+        async function issueAndGen() {
             const btn = document.getElementById('genBtn');
             const randomID = "V3-" + Math.random().toString(36).substring(2, 10).toUpperCase();
             const hash = ethers.keccak256(ethers.toUtf8Bytes(randomID));
-            
             try {
-                btn.innerText = "Confirming on-chain..."; btn.disabled = true;
-                const tx = await contract.issueReceipt(hash);
+                btn.innerText = "Registering on-chain..."; btn.disabled = true;
+                const tx = await contract.issueReceipt(hash, { gasLimit: 200000 });
                 await tx.wait();
                 
                 const baseUrl = window.location.href.split('dashboard.html')[0];
                 const url = `${baseUrl}review.html?business=${await signer.getAddress()}&receipt=${randomID}`;
                 document.getElementById('qrcode').innerHTML = "";
-                new QRCode(document.getElementById('qrcode'), { text: url, width: 150, height: 150 });
+                new QRCode(document.getElementById('qrcode'), { text: url, width: 160, height: 160 });
                 document.getElementById('ridDisplay').value = randomID;
                 btn.innerText = "Receipt Registered!";
             } catch(e) { alert(e.message); btn.innerText = "Register & Generate QR"; btn.disabled = false; }
