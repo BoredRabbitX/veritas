@@ -2,87 +2,79 @@
 
 :root {
     --primary: #1a73e8;
-    --primary-hover: #1557b0;
     --bg: #ffffff;
     --surface: #ffffff;
     --text: #202124;
-    --text-muted: #5f6368;
     --border: #dadce0;
-    --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    --nav-bg: rgba(255, 255, 255, 0.9);
 }
 
 body.dark-mode {
     --bg: #121212;
     --surface: #1e1e1e;
     --text: #e8eaed;
-    --text-muted: #9aa0a6;
     --border: #3c4043;
-    --shadow: 0 4px 6px rgba(0,0,0,0.3);
+    --nav-bg: rgba(30, 30, 30, 0.9);
+}
+
+/* Layout Fixing */
+html, body {
+    height: 100%;
+    margin: 0;
 }
 
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg);
     color: var(--text);
-    transition: background-color 0.2s ease;
-    margin: 0;
-    line-height: 1.6;
+    display: flex;
+    flex-direction: column; /* Spinge il footer in basso */
+    transition: background-color 0.2s;
 }
 
 .nav-container {
     border-bottom: 1px solid var(--border);
-    background: var(--surface);
+    background: var(--nav-bg);
+    backdrop-filter: blur(10px);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
 }
 
-.hero-gradient {
-    background: linear-gradient(135deg, var(--primary) 0%, #174ea6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 800;
+.main-content {
+    flex: 1 0 auto; /* Fa crescere il contenuto per riempire lo spazio */
 }
 
+footer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    padding: 2rem 0;
+}
+
+/* Global Elements */
 .card-veritas {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 2rem;
-    box-shadow: var(--shadow);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card-veritas:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
 .btn-primary {
     background: var(--primary);
     color: white;
-    padding: 12px 28px;
+    padding: 12px 24px;
     border-radius: 8px;
     font-weight: 600;
-    border: none;
-    cursor: pointer;
     transition: opacity 0.2s;
 }
 
-.btn-outline {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 12px 28px;
+input, select, textarea {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-/* Fix per QR in Dark Mode */
-#qrcode {
-    padding: 10px;
-    background: white !important;
-    border-radius: 8px;
-    display: inline-block;
+    padding: 12px;
+    width: 100%;
 }
