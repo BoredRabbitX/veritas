@@ -9,16 +9,22 @@ let provider, signer, contract;
 
 async function connectWallet() {
     if (window.ethereum) {
-        provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
-        contract = new ethers.Contract(contractAddress, abi, signer);
-        
-        const address = await signer.getAddress();
-        document.getElementById('connectBtn').innerText = address.slice(0,6) + "..." + address.slice(-4);
-        return true;
+        try {
+            provider = new ethers.BrowserProvider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = await provider.getSigner();
+            contract = new ethers.Contract(contractAddress, abi, signer);
+            
+            const address = await signer.getAddress();
+            const btn = document.getElementById('connectBtn');
+            if (btn) btn.innerText = address.slice(0,6) + "..." + address.slice(-4);
+            return true;
+        } catch (error) {
+            console.error("User denied account access");
+            return false;
+        }
     } else {
-        alert("Installa Metamask!");
+        alert("Please install MetaMask to use this dApp!");
         return false;
     }
 }
