@@ -59,10 +59,6 @@ Symbol: PAS
 2. Get Test Tokens
 Visit the Paseo Faucet to receive free PAS tokens to cover gas fees.
 
-3. Run Locally
-git clone [https://github.com/YOUR_USER/YOUR_REPO.git](https://github.com/YOUR_USER/YOUR_REPO.git)
-# Open /veritas/index.html in any modern browser
-
 🔐 Security Features
 Anti-Replay: Each ReceiptID is hashed and mapped. Once a review is posted, the ID is "burned" on-chain.
 
