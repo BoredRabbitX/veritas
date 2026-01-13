@@ -39,7 +39,7 @@ The core logic is deployed on the **Paseo Asset Hub (EVM layer)**.
 
 The project is hosted in the `/veritas` directory for easy access via GitHub Pages.
 
-```text
+
 /veritas
 ├── index.html       # Entry point: Hero section & Navigation
 ├── dashboard.html   # Business portal: QR Generation logic
