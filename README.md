@@ -6,74 +6,69 @@
 ![Network](https://img.shields.io/badge/Network-Paseo_Asset_Hub-blueviolet?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-**Veritas** è un protocollo decentralizzato progettato per eliminare le recensioni false. Grazie alla potenza della blockchain **Paseo Asset Hub**, ogni feedback è collegato matematicamente a una transazione reale (ricevuta), creando un ecosistema di fiducia immutabile per commercianti e clienti.
+**Veritas** is a decentralized protocol designed to eliminate fake reviews. Leveraging the power of the **Paseo Asset Hub** blockchain, every feedback is mathematically linked to a real transaction (receipt), creating an immutable trust ecosystem for both merchants and customers.
 
 ---
 
-## 🌟 Caratteristiche Principali
+## 🌟 Key Features
 
-* ✅ **Proof of Purchase**: Solo chi ha scansionato un QR Code generato dal commerciante può lasciare una recensione.
-* 🛡️ **Anti-Falsificazione**: Ogni ricevuta può essere usata una sola volta (prevenzione dello spam).
-* 🌓 **Interfaccia Moderna**: Design pulito stile Google con supporto nativo alla **Dark Mode**.
-* ⛓️ **100% On-Chain**: I dati non risiedono su un database privato, ma sono pubblici e verificabili su Polkadot.
-
----
-
-## 🏗️ Architettura del Sistema
-
-Il protocollo si basa su un unico Smart Contract "Hub" che gestisce molteplici attività commerciali senza la necessità di deploy multipli.
-
-
-
-1. **Merchant Registration**: Il commerciante registra il suo indirizzo come "Business" ufficiale.
-2. **QR Generation**: Viene generato un link univoco contenente l'ID della ricevuta.
-3. **Verification**: Lo Smart Contract verifica che il negozio sia attivo e che la ricevuta sia valida.
-4. **Indexing**: Il frontend scansiona gli eventi blockchain per calcolare il rating medio e mostrare i commenti.
+* ✅ **Proof of Purchase**: Only users who scan a merchant-generated QR Code can leave a review.
+* 🛡️ **Anti-Fraud**: Each receipt ID can only be used once (preventing spam and bulk fake reviews).
+* 🌓 **Modern Interface**: Clean Google-inspired design with native **Dark Mode** support.
+* ⛓️ **100% On-Chain**: Data is not stored on a private database but is public and verifiable on Polkadot.
 
 ---
 
-## 🛠️ Dettagli Tecnici
+## 🏗️ System Architecture
+
+The protocol runs on a single "Hub" Smart Contract that manages multiple business entities without needing individual deployments.
+
+
+
+1. **Merchant Registration**: Merchants register their wallet address as an official "Business".
+2. **QR Generation**: A unique link is generated containing the Receipt ID.
+3. **Verification**: The Smart Contract verifies the business is active and the receipt is unused.
+4. **Indexing**: The frontend scans blockchain events to calculate the average rating and display history.
+
+---
+
+## 🛠️ Technical Details
 
 ### Smart Contract
-| Parametro | Valore |
+| Parameter | Value |
 | :--- | :--- |
 | **Contract Address** | `0x4cb4f27090ab3b07c0faadddcb8ca473db9e05f7` |
 | **Network** | Paseo Asset Hub (Polkadot Testnet) |
 | **Chain ID** | `424` |
 | **Explorer** | [Statescan - Paseo Asset Hub](https://paseo-asset-hub.statescan.io/) |
 
-### Struttura del Progetto
-* `/veritas/index.html`: Portale di ricerca e landing page.
-* `/veritas/dashboard.html`: Pannello di controllo per commercianti (Login/QR).
-* `/veritas/review.html`: Interfaccia cliente per l'invio delle recensioni.
-* `/veritas/store.html`: Profilo pubblico con media voti e commenti storici.
-* `/veritas/app.js`: Logica Web3 (Ethers.js) e gestione temi.
-* `/veritas/style.css`: Stile centralizzato Google Material Design.
+### Project Structure
+* `/veritas/index.html`: Main search portal and landing page.
+* `/veritas/dashboard.html`: Merchant control panel (Login/QR Generation).
+* `/veritas/review.html`: Customer interface for submitting reviews.
+* `/veritas/store.html`: Public store profile with ratings and historical comments.
+* `/veritas/app.js`: Web3 logic (Ethers.js) and theme management.
+* `/veritas/style.css`: Centralized Google Material Design stylesheet.
 
 ---
 
-## 🚀 Come Iniziare
+## 🚀 Getting Started
 
-### 1. Requisiti
-* Un wallet **MetaMask** configurato sulla rete Paseo Asset Hub.
-* Token **PAS** (Paseo) ottenibili dal [Faucet Ufficiale](https://faucet.polkadot.io/).
+### 1. Requirements
+* A **MetaMask** wallet configured for the Paseo Asset Hub network.
+* **PAS** (Paseo) tokens from the [Official Faucet](https://faucet.polkadot.io/).
 
-### 2. Configurazione Rete (Custom RPC)
+### 2. Network Configuration (Custom RPC)
 * **RPC URL**: `https://paseo-asset-hub-rpc.polkadot.io`
 * **Chain ID**: `424`
 * **Currency Symbol**: `PAS`
 
-### 3. Installazione Locale
+### 3. Local Installation
 ```bash
-# Clona il repository
-git clone [https://github.com/tuo-username/veritas-protocol.git](https://github.com/tuo-username/veritas-protocol.git)
+# Clone the repository
+git clone [https://github.com/your-username/veritas-protocol.git](https://github.com/your-username/veritas-protocol.git)
 
-# Entra nella cartella
+# Enter the directory
 cd veritas
 
-# Apri index.html con un server locale (es. Live Server di VS Code)
-
-📜 Licenza
-Distribuito sotto Licenza MIT.
-
-Developed for the Polkadot Web3 Ecosystem.
+# Open index.html with a local server (e.g., VS Code Live Server)
