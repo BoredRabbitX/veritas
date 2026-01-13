@@ -1,74 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Explore | Veritas V3.5</title>
+    <meta charset="UTF-8"><title>Explore | Veritas</title>
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="font-black text-2xl tracking-tighter italic">VERITAS</a>
+            <a href="index.html" class="font-black text-2xl italic">VERITAS</a>
             <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
                 <a href="explore.html" class="text-blue-600">Explore</a>
-                <a href="review.html" class="opacity-60 hover:opacity-100">Submit Review</a>
-                <a href="dashboard.html" class="opacity-60 hover:opacity-100">Merchant Hub</a>
+                <a href="review.html">Submit Review</a>
+                <a href="dashboard.html">Merchant Hub</a>
             </div>
-            <button id="connectBtn" class="btn-primary text-xs" onclick="connectWallet()">Connect</button>
+            <button id="connectBtn" class="btn-primary" onclick="connectWallet()">Connect</button>
         </nav>
     </div>
-
-    <main class="flex-grow max-w-6xl mx-auto px-6 py-12 w-full">
-        <h2 class="text-6xl font-black italic mb-12 tracking-tighter">Verified Stores</h2>
+    <main class="max-w-7xl mx-auto px-6 py-12 w-full">
+        <h1 class="text-6xl font-black italic mb-12 tracking-tighter">Verified Stores</h1>
         <div id="grid" class="grid md:grid-cols-3 gap-8">
-            <div class="col-span-full text-center opacity-30 py-20">Scanning blockchain for registered businesses...</div>
+            <div class="col-span-full text-center opacity-30 py-20 animate-pulse">Scanning blockchain events...</div>
         </div>
     </main>
-
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 py-10 flex flex-col md:flex-row justify-between items-center border-t border-white/10 gap-4">
-            <div class="text-[10px] uppercase font-bold opacity-30 tracking-widest">The White Rabbit bored creation</div>
-            <div class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Veritas Protocol V3.5 - Paseo AssetHub</div>
-        </div>
+    <footer class="mt-auto py-8 text-center opacity-30 text-[10px] font-bold uppercase tracking-widest border-t border-white/5">
+        Veritas Protocol V3.5 | Paseo AssetHub
     </footer>
-
     <script src="app.js"></script>
     <script>
         window.onload = async () => {
             const grid = document.getElementById('grid');
             if(!await connectWallet(true)) {
-                grid.innerHTML = "<div class='col-span-full opacity-50'>Please connect your wallet to see the store list.</div>";
-                return;
+                grid.innerHTML = "Connect wallet to see stores."; return;
             }
             try {
-                // Try scanning from block 0, if it fails, try last 50000 blocks
-                let events;
-                try {
-                    events = await contract.queryFilter(contract.filters.BusinessRegistered(), 0);
-                } catch(e) {
-                    events = await contract.queryFilter(contract.filters.BusinessRegistered(), -50000);
-                }
-
+                const events = await contract.queryFilter(contract.filters.BusinessRegistered(), 0);
                 const stores = [...new Set(events.map(e => e.args.owner))];
-                if(stores.length === 0) { grid.innerHTML = "<div class='col-span-full opacity-50'>No stores found yet.</div>"; return; }
-                
-                grid.innerHTML = "";
-                for (let addr of stores.reverse()) {
+                grid.innerHTML = stores.length ? "" : "No stores found.";
+                for(let addr of stores.reverse()) {
                     const b = await contract.businesses(addr);
                     if(!b.isActive) continue;
-                    
                     const r = await contract.queryFilter(contract.filters.ReviewAdded(addr), 0);
                     const avg = r.length ? (r.reduce((s,e)=>s+Number(e.args.rating),0)/r.length).toFixed(1) : "0.0";
-                    
                     grid.innerHTML += `
-                        <a href="store.html?id=${addr}" class="card-veritas group hover:border-blue-600 transition-all">
+                        <a href="store.html?id=${addr}" class="card-veritas block">
                             <div class="flex justify-between mb-4"><span class="text-blue-600 text-[10px] font-bold uppercase">${b.category}</span><span class="font-black text-sm">★ ${avg}</span></div>
-                            <h3 class="text-2xl font-black italic mb-2 group-hover:text-blue-600 transition-colors">${b.name}</h3>
+                            <h3 class="text-2xl font-black italic mb-2 text-white">${b.name}</h3>
                             <p class="text-[9px] font-mono opacity-30 truncate">${addr}</p>
-                            <div class="mt-4 pt-4 border-t border-white/5 text-[10px] font-bold opacity-50 uppercase tracking-widest">${r.length} Reviews</div>
                         </a>`;
                 }
-            } catch(e) { grid.innerHTML = "<div class='col-span-full text-red-500'>Error reading blockchain data. Switch network and refresh.</div>"; }
+            } catch(e) { grid.innerHTML = "Error loading stores."; }
         };
     </script>
 </body>
