@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Write a Review | Veritas</title>
+    <meta charset="UTF-8"><title>Submit Review | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
@@ -15,73 +15,56 @@
                     <span class="text-2xl font-bold">Veritas</span>
                 </a>
                 <div class="hidden md:flex gap-6 text-sm font-medium opacity-70">
-                    <a href="dashboard.html" class="hover:text-blue-600 transition">Merchant Dashboard</a>
-                    <a href="review.html" class="text-blue-600 font-bold underline">Customer Portal</a>
+                    <a href="dashboard.html" class="hover:text-blue-600">Merchant Dashboard</a>
+                    <a href="review.html" class="text-blue-600 font-bold">Customer Portal</a>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <button id="darkModeToggle" class="p-2">🌓</button>
-                <button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect Wallet</button>
-            </div>
+            <button id="darkModeToggle" class="p-2">🌓</button>
         </nav>
     </div>
 
-    <main class="main-content max-w-2xl mx-auto px-6 py-12 w-full">
-        <div class="card-veritas">
-            <h2 class="text-3xl font-bold mb-6">Submit Your Experience</h2>
+    <main class="main-content flex items-center justify-center px-6 py-12">
+        <div id="denied" class="hidden card-veritas max-w-md w-full text-center border-red-500">
+            <h2 class="text-2xl font-bold text-red-600 mb-4">Action Required</h2>
+            <p id="reason" class="opacity-70 mb-6"></p>
+            <button onclick="location.reload()" class="btn-outline w-full">Retry</button>
+        </div>
+
+        <div id="reviewForm" class="hidden card-veritas max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-6">Verified Feedback</h2>
             
-            <div id="setupData" class="space-y-4 mb-8 p-6 bg-gray-50 dark:bg-gray-800/30 rounded-2xl border border-[var(--border)]">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                    <p class="text-[10px] font-bold uppercase tracking-widest opacity-60">Verification Data</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1 opacity-50">Your Name</label>
+                    <input id="custName" type="text" placeholder="Enter your name">
                 </div>
-                <input id="bizInput" type="text" placeholder="Merchant Wallet Address (0x...)">
-                <input id="receiptInput" type="text" placeholder="Receipt / Order ID">
-                <button onclick="processValidation()" class="btn-outline w-full py-3">Verify Purchase</button>
-            </div>
-
-            <div id="denied" class="hidden p-4 mb-6 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-xl text-sm border border-red-200">
-                <p id="reason"></p>
-            </div>
-
-            <div id="reviewForm" class="hidden space-y-6">
-                <div class="flex items-center justify-between border-b border-[var(--border)] pb-4">
-                    <p class="text-blue-600 font-bold" id="storeNameDisplay">Store: ...</p>
-                    <span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded font-bold">VERIFIED</span>
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1 opacity-50">Rating</label>
+                    <select id="rating">
+                        <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                        <option value="4">⭐⭐⭐⭐ Great</option>
+                        <option value="3">⭐⭐⭐ Good</option>
+                        <option value="2">⭐⭐ Poor</option>
+                        <option value="1">⭐ Terrible</option>
+                    </select>
                 </div>
-
-                <div class="grid grid-cols-1 gap-6">
-                    <div>
-                        <label class="block text-xs font-bold uppercase mb-2 opacity-50">Your Name</label>
-                        <input id="customerName" type="text" placeholder="E.g. John Doe" class="w-full">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold uppercase mb-2 opacity-50">Rating</label>
-                        <select id="ratingSelect" class="w-full">
-                            <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-                            <option value="4">⭐⭐⭐⭐ Very Good</option>
-                            <option value="3">⭐⭐⭐ Good</option>
-                            <option value="2">⭐⭐ Fair</option>
-                            <option value="1">⭐ Poor</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold uppercase mb-2 opacity-50">Review Details</label>
-                        <textarea id="reviewText" placeholder="Describe your experience..." rows="5"></textarea>
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-1 opacity-50">Comment</label>
+                    <textarea id="comment" placeholder="How was your experience?" rows="4"></textarea>
                 </div>
-
-                <button id="submitBtn" onclick="sendReview()" class="btn-primary w-full py-4 text-lg shadow-lg shadow-blue-500/20">
-                    Publish to Polkadot Hub
-                </button>
+                <button id="submitBtn" onclick="sendReview()" class="btn-primary w-full py-4">Publish on Blockchain</button>
             </div>
+        </div>
+
+        <div id="connectPrompt" class="card-veritas max-w-md w-full text-center">
+            <h2 class="text-xl font-bold mb-4">Wallet Required</h2>
+            <p class="mb-6 opacity-60">Connect your wallet to verify your identity and post.</p>
+            <button onclick="handleConnect()" class="btn-primary w-full">Connect Wallet</button>
         </div>
     </main>
 
     <footer>
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-50">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase tracking-widest font-bold opacity-50">
             <div>The White Rabbit bored creation</div>
             <div>Powered by Polkadot paseo testnet</div>
         </div>
@@ -89,83 +72,57 @@
 
     <script src="app.js"></script>
     <script>
-        window.onload = async () => {
-            const params = new URLSearchParams(window.location.search);
-            const b = params.get('business');
-            const r = params.get('receipt');
-            if(b) document.getElementById('bizInput').value = b;
-            if(r) document.getElementById('receiptInput').value = r;
+        const p = new URLSearchParams(window.location.search);
+        const bA = p.get('business');
+        const rid = p.get('receipt');
+
+        async function handleConnect() {
+            if(await connectWallet()) checkAccess();
+        }
+
+        window.onload = () => { if(localStorage.getItem('veritas_connected')) checkAccess(); };
+
+        async function checkAccess() {
+            if(!bA || !rid) return showError("Invalid Link: Missing business or receipt data.");
             
-            if(b && r && localStorage.getItem('veritas_connected') === 'true') {
-                setTimeout(processValidation, 800);
-            }
-        };
-
-        async function processValidation() {
-            const bizAddr = document.getElementById('bizInput').value.trim();
-            const receiptID = document.getElementById('receiptInput').value.trim();
-            const deniedDiv = document.getElementById('denied');
-            const reasonP = document.getElementById('reason');
-
-            if(!bizAddr || !receiptID) {
-                showError("Please provide both Merchant Address and Receipt ID.");
-                return;
-            }
-
             try {
-                if(!contract) await connectWallet();
-                
+                if(!contract) await connectWallet(true);
                 const userAddr = (await signer.getAddress()).toLowerCase();
-                const bizData = await contract.businesses(bizAddr);
-                const isUsed = await contract.usedReceipts(ethers.id(receiptID));
+                const biz = await contract.businesses(bA);
+                const used = await contract.usedReceipts(ethers.id(rid));
 
-                if(!bizData.isActive) throw new Error("This merchant is not registered on Veritas.");
-                if(userAddr === bizAddr.toLowerCase()) throw new Error("Security Alert: Merchants cannot review their own store.");
-                if(isUsed) throw new Error("Security Alert: This receipt has already been used for a review.");
+                if(!biz.isActive) return showError("Store not registered on Veritas.");
+                if(userAddr === bA.toLowerCase()) return showError("Merchants cannot review themselves.");
+                if(used) return showError("This receipt has already been used.");
 
-                deniedDiv.classList.add('hidden');
-                document.getElementById('setupData').classList.add('hidden');
+                document.getElementById('connectPrompt').classList.add('hidden');
                 document.getElementById('reviewForm').classList.remove('hidden');
-                document.getElementById('storeNameDisplay').innerText = "Reviewing: " + bizData.name;
-
-            } catch (e) {
-                showError(e.message);
-            }
+            } catch (e) { showError("Connection Error: " + e.message); }
         }
 
         function showError(msg) {
-            const reasonP = document.getElementById('reason');
-            if(reasonP) {
-                document.getElementById('denied').classList.remove('hidden');
-                reasonP.innerText = msg;
-            }
+            document.getElementById('connectPrompt').classList.add('hidden');
+            document.getElementById('reviewForm').classList.add('hidden');
+            document.getElementById('denied').classList.remove('hidden');
+            document.getElementById('reason').innerText = msg;
         }
 
         async function sendReview() {
             const btn = document.getElementById('submitBtn');
-            const bizAddr = document.getElementById('bizInput').value.trim();
-            const receiptID = document.getElementById('receiptInput').value.trim();
-            const name = document.getElementById('customerName').value.trim() || "Anonymous";
-            const comment = document.getElementById('reviewText').value.trim();
-            const rating = document.getElementById('ratingSelect').value;
-
-            // Save Name and Comment combined into the content field
-            const fullContent = `[${name}] ${comment}`;
+            const name = document.getElementById('custName').value || "Anonymous";
+            const msg = document.getElementById('comment').value;
+            const fullContent = `[${name}] ${msg}`;
 
             try {
-                btn.innerText = "Broadcasting to Blockchain...";
+                btn.innerText = "Processing...";
                 btn.disabled = true;
-
-                const receiptHash = ethers.id(receiptID);
-                const tx = await contract.postReview(bizAddr, rating, fullContent, receiptHash, "0x");
+                const tx = await contract.postReview(bA, document.getElementById('rating').value, fullContent, ethers.id(rid), "0x");
                 await tx.wait();
-                
-                window.location.href = `store.html?id=${bizAddr}`;
+                window.location.href = `store.html?id=${bA}`;
             } catch (e) {
-                console.error(e);
-                alert("Blockchain error: " + (e.reason || e.message));
-                btn.innerText = "Publish to Polkadot Hub";
+                btn.innerText = "Publish on Blockchain";
                 btn.disabled = false;
+                alert("Error: " + (e.reason || "Transaction rejected. Check your balance or if the receipt is valid."));
             }
         }
     </script>
