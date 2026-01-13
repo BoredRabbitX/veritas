@@ -12,17 +12,18 @@
             color: #00ff00;
             font-family: 'Courier New', monospace;
             font-size: 11px;
-            max-height: 180px;
+            max-height: 200px;
             overflow-y: auto;
             border-radius: 12px;
             padding: 15px;
             margin-top: 20px;
             border: 1px solid #333;
-            line-height: 1.4;
+            line-height: 1.5;
         }
         .debug-err { color: #ff4444; font-weight: bold; }
         .debug-warn { color: #ffaa00; }
         .debug-info { color: #00ccff; }
+        .debug-success { color: #00ff88; font-weight: bold; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -49,7 +50,7 @@
     <main class="main-content flex flex-col items-center justify-center px-6 py-12">
         <div class="card-veritas max-w-lg w-full shadow-2xl">
             <h2 class="text-3xl font-black mb-2 tracking-tight">Submit Review</h2>
-            <p class="text-gray-500 text-sm mb-8 italic">Blockchain-verified feedback for honest businesses.</p>
+            <p class="text-gray-500 text-sm mb-8 italic">Verified feedback powered by Paseo Asset Hub.</p>
             
             <div id="setupData" class="space-y-4 mb-6">
                 <div class="space-y-2">
@@ -58,48 +59,39 @@
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold uppercase opacity-50 ml-1">Receipt ID</label>
-                    <input id="receiptInput" type="text" placeholder="Enter your receipt code">
+                    <input id="receiptInput" type="text" placeholder="Enter receipt code">
                 </div>
-                <button onclick="processValidation()" class="btn-outline w-full py-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition">Verify Purchase</button>
+                <button onclick="processValidation()" class="btn-outline w-full py-4 transition">Verify on Blockchain</button>
             </div>
 
             <div id="denied" class="hidden p-4 mb-6 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-xl text-sm border border-red-200">
-                <strong>Access Restricted:</strong> <span id="reason"></span>
+                <strong>Safety Check:</strong> <span id="reason"></span>
             </div>
 
-            <div id="reviewForm" class="hidden space-y-6 animate-in fade-in duration-500">
+            <div id="reviewForm" class="hidden space-y-6">
                 <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800">
-                    <p class="text-blue-600 dark:text-blue-400 font-bold" id="storeNameDisplay">Validating Store...</p>
+                    <p class="text-blue-600 dark:text-blue-400 font-bold" id="storeNameDisplay">Analyzing Store...</p>
                 </div>
                 
-                <div>
-                    <label class="block text-xs font-bold uppercase mb-2 opacity-50">Your Public Name</label>
-                    <input id="custName" type="text" placeholder="Display name (e.g. Satoshi)">
-                </div>
+                <input id="custName" type="text" placeholder="Your Display Name">
+                
+                <select id="ratingSelect">
+                    <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                    <option value="4">⭐⭐⭐⭐ Great</option>
+                    <option value="3">⭐⭐⭐ Average</option>
+                    <option value="2">⭐⭐ Poor</option>
+                    <option value="1">⭐ Terrible</option>
+                </select>
 
-                <div>
-                    <label class="block text-xs font-bold uppercase mb-2 opacity-50">Rating</label>
-                    <select id="ratingSelect">
-                        <option value="5">⭐⭐⭐⭐⭐ Exceptional</option>
-                        <option value="4">⭐⭐⭐⭐ Great</option>
-                        <option value="3">⭐⭐⭐ Average</option>
-                        <option value="2">⭐⭐ Poor</option>
-                        <option value="1">⭐ Terrible</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase mb-2 opacity-50">Your Experience</label>
-                    <textarea id="reviewText" placeholder="How was the service?" rows="4"></textarea>
-                </div>
+                <textarea id="reviewText" placeholder="Describe your experience..." rows="4"></textarea>
 
                 <button id="submitBtn" onclick="sendReview()" class="btn-primary w-full py-4 text-lg shadow-xl shadow-blue-500/20">
-                    Publish to Asset Hub
+                    Publish On-Chain
                 </button>
             </div>
 
             <div id="debugConsole">
-                <div>> Veritas Console Ready. Waiting for input...</div>
+                <div>> Veritas Diagnostic Console v3.0</div>
             </div>
         </div>
     </main>
@@ -107,7 +99,7 @@
     <footer>
         <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-30 tracking-widest">
             <div>The White Rabbit bored creation</div>
-            <div>Powered by Polkadot Paseo Testnet</div>
+            <div>Paseo Testnet Protocol</div>
         </div>
     </footer>
 
@@ -122,51 +114,44 @@
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
-        const urlParams = new URLSearchParams(window.location.search);
-        
         window.onload = async () => {
-            logDebug("Review page initialized.");
-            const b = urlParams.get('business');
-            const r = urlParams.get('receipt');
+            const params = new URLSearchParams(window.location.search);
+            const b = params.get('business');
+            const r = params.get('receipt');
             if(b) document.getElementById('bizInput').value = b;
             if(r) document.getElementById('receiptInput').value = r;
             
             if(b && r && localStorage.getItem('veritas_connected')) {
-                logDebug("QR data detected. Auto-verifying...");
-                setTimeout(processValidation, 800);
+                logDebug("Auto-validating QR parameters...");
+                setTimeout(processValidation, 1000);
             }
         };
 
         async function processValidation() {
             const bizAddr = document.getElementById('bizInput').value.trim();
             const receiptID = document.getElementById('receiptInput').value.trim();
-            logDebug(`Validating merchant: ${bizAddr.slice(0,10)}...`, "warn");
+            logDebug(`Connecting to contract for: ${bizAddr.slice(0,10)}...`, "warn");
 
             try {
-                if(!contract) {
-                    logDebug("Connecting to wallet...", "warn");
-                    await connectWallet();
-                }
-
+                if(!contract) await connectWallet();
                 const userAddr = (await signer.getAddress()).toLowerCase();
                 const bizData = await contract.businesses(bizAddr);
 
                 if(!bizData.isActive) throw new Error("MERCHANT_NOT_REGISTERED");
-                if(userAddr === bizAddr.toLowerCase()) throw new Error("OWNER_SELF_REVIEW_BLOCKED");
+                if(userAddr === bizAddr.toLowerCase()) throw new Error("SELF_REVIEW_BLOCKED");
 
                 const receiptHash = ethers.id(receiptID);
                 const isUsed = await contract.usedReceipts(receiptHash);
-
                 if(isUsed) throw new Error("RECEIPT_ALREADY_SPENT");
 
                 document.getElementById('denied').classList.add('hidden');
                 document.getElementById('setupData').classList.add('hidden');
                 document.getElementById('reviewForm').classList.remove('hidden');
                 document.getElementById('storeNameDisplay').innerText = "Verified Store: " + bizData.name;
-                logDebug("Validation successful. Review form unlocked.", "info");
+                logDebug("Access granted. Balance check required for next step.", "success");
 
             } catch (e) {
-                logDebug("GATE ERROR: " + e.message, "error");
+                logDebug("VALIDATION FAILED: " + e.message, "error");
                 document.getElementById('denied').classList.remove('hidden');
                 document.getElementById('reason').innerText = e.message;
             }
@@ -180,40 +165,53 @@
             const comment = document.getElementById('reviewText').value.trim();
             const rating = document.getElementById('ratingSelect').value;
 
-            logDebug("Starting blockchain broadcast...", "warn");
+            logDebug("Starting Transaction Diagnostic...", "warn");
 
             try {
-                btn.innerText = "Check Wallet...";
+                btn.innerText = "Processing...";
                 btn.disabled = true;
 
-                const receiptHash = ethers.id(receiptID);
-                logDebug(`Hash created: ${receiptHash.slice(0,12)}...`);
+                // 1. Check Balance
+                const balance = await provider.getBalance(await signer.getAddress());
+                const balanceEth = ethers.formatEther(balance);
+                logDebug(`Wallet Balance: ${balanceEth} PAS`);
 
-                // GAS OVERRIDE: Evita l'errore -32603 forzando il limite di gas
-                logDebug("Sending TX with Gas Override (500k units)...", "warn");
+                if (balance === 0n) {
+                    throw new Error("EMPTY_WALLET: You need PAS tokens from a faucet.");
+                }
+
+                // 2. Prepare Transaction
+                const receiptHash = ethers.id(receiptID);
+                logDebug("Broadcasting Review (Manual Gas Override: 300k)...", "warn");
+
+                // 3. Execution with Legacy Type to avoid RPC conflict
                 const tx = await contract.postReview(
                     bizAddr, 
                     name, 
                     rating, 
                     comment, 
-                    receiptHash, 
-                    { gasLimit: 500000 } 
+                    receiptHash,
+                    { 
+                        gasLimit: 300000,
+                        type: 0 
+                    }
                 );
                 
-                logDebug("TX Broadcasted! Hash: " + tx.hash.slice(0,15) + "...", "info");
+                logDebug("TX SENT! Hash: " + tx.hash.slice(0,15) + "...", "success");
                 await tx.wait();
                 
-                logDebug("Success! Confirming and redirecting...", "info");
+                logDebug("Review confirmed. Redirecting...", "success");
                 window.location.href = `store.html?id=${bizAddr}`;
 
             } catch (e) {
-                console.error(e);
-                let msg = e.reason || e.message;
-                if(msg.includes("insufficient funds")) msg = "OUT OF GAS: You need Paseo PAS tokens.";
+                console.error("Full Error:", e);
+                let msg = e.message;
+                if (e.message.includes("-32603")) msg = "RPC Error -32603: Often caused by 0 PAS balance.";
+                if (e.message.includes("insufficient funds")) msg = "Insufficient funds for gas.";
                 
-                logDebug("TX FAILED: " + msg.slice(0, 50), "error");
-                alert("Error: " + msg);
-                btn.innerText = "Publish Review";
+                logDebug("CRITICAL: " + msg, "error");
+                alert("Blockchain Error: " + msg);
+                btn.innerText = "Publish On-Chain";
                 btn.disabled = false;
             }
         }
