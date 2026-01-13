@@ -83,47 +83,62 @@
             } catch (e) { logV3(e.message, "err"); alert(e.message); }
         }
 
-        async function sendReview() {
-            const btn = document.getElementById('subBtn');
-            try {
-                btn.disabled = true; btn.innerText = "Encoding...";
-                
-                const bizAddr = document.getElementById('bizInput').value.trim();
-                const rid = document.getElementById('receiptInput').value.trim();
-                const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
+       async function sendReview() {
+    const btn = document.getElementById('subBtn');
+    try {
+        btn.disabled = true; 
+        btn.innerText = "Aligning ABI...";
 
-                // FORZATURA NUMERICA E PULIZIA TESTO
-                const ratingValue = parseInt(document.getElementById('rating').value);
-                const nameClean = (document.getElementById('custName').value || "Anon").replace(/[^a-zA-Z0-9 ]/g, "");
-                const commentClean = (document.getElementById('comment').value || "Verified").replace(/[^a-zA-Z0-9 ]/g, "");
+        const bizAddr = document.getElementById('bizInput').value.trim();
+        const rid = document.getElementById('receiptInput').value.trim();
+        
+        // Dati puliti
+        const nameClean = (document.getElementById('custName').value || "Anon").substring(0, 20);
+        const commentClean = (document.getElementById('comment').value || "Verified").substring(0, 100);
+        const ratingValue = parseInt(document.getElementById('rating').value);
+        const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
 
-                logV3(`Preparing TX: Rating=${ratingValue}, Name=${nameClean}`);
-                logV3("Forcing Legacy Transaction Type...");
+        logV3(`Target: ${bizAddr.slice(0,10)}...`);
+        logV3(`Data: Name=${nameClean}, Rating=${ratingValue}`);
 
-                const tx = await contract.postReview(
-                    bizAddr,
-                    nameClean,
-                    ratingValue, // Inviato come numero puro
-                    commentClean,
-                    hash,
-                    { 
-                        gasLimit: 800000,
-                        type: 0 // Modalità super-compatibile
-                    }
-                );
+        // VERIFICA RETE
+        const network = await provider.getNetwork();
+        logV3(`Network ChainID: ${network.chainId}`);
 
-                logV3("TX Broadcasted! Hash: " + tx.hash.slice(0,10), "warn");
-                await tx.wait();
-                logV3("CONFIRMED ON PASEO!", "ok");
-                window.location.href = `store.html?id=${bizAddr}`;
-
-            } catch (e) {
-                console.error(e);
-                logV3("RPC REJECTED: Logic or Encoding error.", "err");
-                btn.disabled = false; btn.innerText = "Publish to Blockchain";
-                alert("Errore Blockchain: " + e.message);
+        // CHIAMATA ALLINEATA ALL'ABI DEFINITO
+        // Ordine: _business, _customerName, _rating, _content, _receiptId
+        const tx = await contract.postReview(
+            bizAddr,        // address
+            nameClean,      // string
+            ratingValue,    // uint8
+            commentClean,   // string
+            hash,           // bytes32
+            { 
+                gasLimit: 500000,
+                type: 0 
             }
+        );
+
+        logV3("Signature Received! Broadcasting...", "warn");
+        await tx.wait();
+        logV3("SUCCESS! Confirmed on-chain.", "ok");
+        window.location.href = `store.html?id=${bizAddr}`;
+
+    } catch (e) {
+        console.error("Full Error:", e);
+        let errorMsg = e.message;
+        
+        // Se l'errore è ancora -32603, proviamo a estrarre la causa reale
+        if (e.data) {
+            logV3("Revert Data found: " + e.data, "err");
         }
+        
+        logV3("FAILED: Check console for full trace", "err");
+        alert("Blockchain Error: " + errorMsg.slice(0, 100));
+        btn.disabled = false; 
+        btn.innerText = "Retry Alignment";
+    }
+}
     </script>
 </body>
 </html>
