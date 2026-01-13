@@ -19,12 +19,10 @@ async function connectWallet(silent = false) {
     try {
         provider = new ethers.BrowserProvider(window.ethereum, "any");
         const network = await provider.getNetwork();
-        
         if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
-            if(!silent) alert(`Switch to Paseo (ID: ${EXPECTED_CHAIN_ID})`);
+            if(!silent) alert(`Switch to Chain ID: ${EXPECTED_CHAIN_ID}`);
             return false;
         }
-
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         if (accounts.length > 0) {
             signer = await provider.getSigner();
