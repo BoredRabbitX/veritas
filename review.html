@@ -158,63 +158,53 @@
         }
 
         async function sendReview() {
-            const btn = document.getElementById('submitBtn');
-            const bizAddr = document.getElementById('bizInput').value.trim();
-            const receiptID = document.getElementById('receiptInput').value.trim();
-            const name = document.getElementById('custName').value.trim() || "Anonymous";
-            const comment = document.getElementById('reviewText').value.trim();
-            const rating = document.getElementById('ratingSelect').value;
+    const btn = document.getElementById('submitBtn');
+    const bizAddr = document.getElementById('bizInput').value.trim();
+    const receiptID = document.getElementById('receiptInput').value.trim();
+    const name = document.getElementById('custName').value.trim() || "Customer";
+    const comment = document.getElementById('reviewText').value.trim();
+    const rating = document.getElementById('ratingSelect').value;
 
-            logDebug("Starting Transaction Diagnostic...", "warn");
+    logDebug("Bypassing RPC Estimation...", "warn");
 
-            try {
-                btn.innerText = "Processing...";
-                btn.disabled = true;
+    try {
+        btn.innerText = "Check Metamask...";
+        btn.disabled = true;
 
-                // 1. Check Balance
-                const balance = await provider.getBalance(await signer.getAddress());
-                const balanceEth = ethers.formatEther(balance);
-                logDebug(`Wallet Balance: ${balanceEth} PAS`);
-
-                if (balance === 0n) {
-                    throw new Error("EMPTY_WALLET: You need PAS tokens from a faucet.");
-                }
-
-                // 2. Prepare Transaction
-                const receiptHash = ethers.id(receiptID);
-                logDebug("Broadcasting Review (Manual Gas Override: 300k)...", "warn");
-
-                // 3. Execution with Legacy Type to avoid RPC conflict
-                const tx = await contract.postReview(
-                    bizAddr, 
-                    name, 
-                    rating, 
-                    comment, 
-                    receiptHash,
-                    { 
-                        gasLimit: 300000,
-                        type: 0 
-                    }
-                );
-                
-                logDebug("TX SENT! Hash: " + tx.hash.slice(0,15) + "...", "success");
-                await tx.wait();
-                
-                logDebug("Review confirmed. Redirecting...", "success");
-                window.location.href = `store.html?id=${bizAddr}`;
-
-            } catch (e) {
-                console.error("Full Error:", e);
-                let msg = e.message;
-                if (e.message.includes("-32603")) msg = "RPC Error -32603: Often caused by 0 PAS balance.";
-                if (e.message.includes("insufficient funds")) msg = "Insufficient funds for gas.";
-                
-                logDebug("CRITICAL: " + msg, "error");
-                alert("Blockchain Error: " + msg);
-                btn.innerText = "Publish On-Chain";
-                btn.disabled = false;
+        const receiptHash = ethers.id(receiptID);
+        
+        // FORZIAMO I PARAMETRI: 
+        // gasLimit alto e disattivazione EIP-1559 se il nodo non lo supporta bene
+        const tx = await contract.postReview(
+            bizAddr, 
+            name, 
+            rating, 
+            comment, 
+            receiptHash,
+            { 
+                gasLimit: 1000000, // Limite molto alto per sicurezza
+                gasPrice: (await provider.getFeeData()).gasPrice // Forza modalità Legacy
             }
-        }
+        );
+        
+        logDebug("Transaction Sent! waiting for block...", "info");
+        await tx.wait();
+        window.location.href = `store.html?id=${bizAddr}`;
+
+    } catch (e) {
+        console.error("Full Error Debug:", e);
+        let msg = "Transaction Failed";
+        
+        if (e.message.includes("rejected")) msg = "User rejected signature.";
+        else if (e.message.includes("used")) msg = "Receipt ID already used!";
+        else msg = "Check if you are the Merchant (Self-review not allowed)";
+
+        logDebug("CRITICAL: " + msg, "error");
+        alert("Error: " + msg);
+        btn.innerText = "Publish Review";
+        btn.disabled = false;
+    }
+}
     </script>
 </body>
 </html>
