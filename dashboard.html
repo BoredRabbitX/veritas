@@ -1,64 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>Merchant Console | Veritas</title>
+    <meta charset="UTF-8"><title>Merchant Console</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <nav class="p-4 border-b border-gray-200 flex justify-between items-center bg-[var(--nav-bg)]">
-        <div class="flex items-center gap-2">
-            <a href="index.html" class="text-xl font-medium text-blue-600">Veritas</a>
-            <span class="text-gray-400">|</span>
-            <span class="text-sm font-medium">Merchant Console</span>
-        </div>
-        <div class="flex items-center gap-4">
-            <button id="darkModeToggle" class="p-2 rounded-full border border-gray-300">🌓</button>
-            <button id="connectBtn" class="btn-google">Connect Wallet</button>
-        </div>
+    <nav class="p-4 border-b border-[var(--border-color)] flex justify-between bg-[var(--nav-bg)]">
+        <a href="index.html" class="font-bold text-blue-600">VERITAS</a>
+        <button id="connectBtn" class="btn-google" onclick="handleLogin()">Login with Wallet</button>
     </nav>
-
-    <main class="max-w-4xl mx-auto mt-12 px-6 grid md:grid-cols-2 gap-8">
-        <div class="card-google">
-            <h2 class="text-xl font-medium mb-4">1. Register Store</h2>
-            <input id="bizName" type="text" placeholder="Store Name" class="w-full mb-4">
-            <input id="bizCat" type="text" placeholder="Category" class="w-full mb-4">
-            <button id="regBtn" onclick="registerBusiness()" class="btn-google w-full">Activate on Paseo</button>
-            <p id="regSuccess" class="mt-4 text-xs text-green-500 hidden text-center font-bold">✓ Store Activated!</p>
-        </div>
-
-        <div class="card-google">
-            <h2 class="text-xl font-medium mb-4">2. Create QR Receipt</h2>
-            <input id="receiptId" type="text" placeholder="Receipt/Order ID" class="w-full mb-4">
-            <button onclick="generateQR()" class="btn-google-outline w-full">Generate QR</button>
-            <div id="qrcode" class="mt-6 flex justify-center p-4 bg-white rounded-lg"></div>
+    <main class="max-w-4xl mx-auto mt-12 px-6">
+        <div id="statusMsg" class="mb-6 p-4 rounded bg-blue-100 text-blue-800 text-center">Connetti il wallet per gestire il tuo store.</div>
+        <div id="mainContent" class="grid md:grid-cols-2 gap-8 opacity-30 pointer-events-none">
+            <div class="card-google" id="regForm">
+                <h2 class="font-bold mb-4">Registra Negozio</h2>
+                <input id="n" placeholder="Nome Negozio" class="mb-2">
+                <input id="c" placeholder="Categoria" class="mb-4">
+                <button onclick="reg()" class="btn-google w-full">Attiva</button>
+            </div>
+            <div class="card-google" id="qrForm">
+                <h2 class="font-bold mb-4">Genera QR Ricevuta</h2>
+                <input id="rid" placeholder="ID Ricevuta (es. #101)" class="mb-4">
+                <button onclick="gen()" class="btn-google-outline w-full">Crea QR Code</button>
+                <div id="qrcode" class="mt-4 flex justify-center p-2 bg-white rounded"></div>
+            </div>
         </div>
     </main>
-
     <script src="app.js"></script>
     <script>
-        async function registerBusiness() {
-            try {
-                const btn = document.getElementById('regBtn');
-                btn.innerText = "Registering...";
-                await connectWallet();
-                const tx = await contract.registerBusiness(document.getElementById('bizName').value, document.getElementById('bizCat').value);
-                await tx.wait();
-                document.getElementById('regSuccess').classList.remove('hidden');
-                btn.innerText = "Activate on Paseo";
-            } catch (e) { alert(e.reason || e.message); btn.innerText = "Activate on Paseo"; }
+        async function handleLogin() {
+            if(await connectWallet()) {
+                const b = await contract.businesses(await signer.getAddress());
+                document.getElementById('mainContent').style.opacity = "1";
+                document.getElementById('mainContent').style.pointerEvents = "auto";
+                if(b.isActive) {
+                    document.getElementById('regForm').innerHTML = `<h2 class='font-bold text-green-600'>Store Attivo</h2><p>${b.name}</p>`;
+                    document.getElementById('statusMsg').innerText = "Dashboard Attiva";
+                } else {
+                    document.getElementById('statusMsg').innerText = "Registra il tuo business per generare QR.";
+                }
+            }
         }
-
-        async function generateQR() {
-            await connectWallet();
-            const addr = await signer.getAddress();
-            const id = document.getElementById('receiptId').value;
-            const url = `${window.location.origin}/veritas/review.html?business=${addr}&receipt=${encodeURIComponent(id)}`;
+        async function reg() {
+            const tx = await contract.registerBusiness(document.getElementById('n').value, document.getElementById('c').value);
+            await tx.wait(); location.reload();
+        }
+        function gen() {
+            const id = document.getElementById('rid').value;
+            const url = `${window.location.origin}/veritas/review.html?business=${signer.address}&receipt=${id}`;
             document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById('qrcode'), { text: url, width: 160, height: 160, colorDark: "#1a73e8" });
+            new QRCode(document.getElementById('qrcode'), { text: url, width: 128, height: 128 });
         }
     </script>
 </body>
