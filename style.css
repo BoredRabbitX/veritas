@@ -17,7 +17,6 @@ body.dark-mode {
     --nav-bg: rgba(30, 30, 30, 0.9);
 }
 
-/* Layout Fixing */
 html, body {
     height: 100%;
     margin: 0;
@@ -28,7 +27,7 @@ body {
     background-color: var(--bg);
     color: var(--text);
     display: flex;
-    flex-direction: column; /* Spinge il footer in basso */
+    flex-direction: column;
     transition: background-color 0.2s;
 }
 
@@ -42,7 +41,7 @@ body {
 }
 
 .main-content {
-    flex: 1 0 auto; /* Fa crescere il contenuto per riempire lo spazio */
+    flex: 1 0 auto;
 }
 
 footer {
@@ -52,7 +51,6 @@ footer {
     padding: 2rem 0;
 }
 
-/* Global Elements */
 .card-veritas {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -67,7 +65,18 @@ footer {
     padding: 12px 24px;
     border-radius: 8px;
     font-weight: 600;
-    transition: opacity 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 input, select, textarea {
@@ -77,4 +86,12 @@ input, select, textarea {
     border-radius: 8px;
     padding: 12px;
     width: 100%;
+    outline: none;
+}
+
+#qrcode {
+    padding: 10px;
+    background: white !important;
+    border-radius: 8px;
+    display: inline-block;
 }
