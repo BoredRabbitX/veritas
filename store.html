@@ -1,51 +1,82 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Store Profile</title>
+    <meta charset="UTF-8">
+    <title>Verified Store Profile | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body>
-    <nav class="p-4 border-b border-[var(--border-color)] flex justify-between">
-        <a href="index.html" class="font-bold text-blue-600 underline">← Home</a>
-        <button id="connectBtn" class="btn-google text-xs">Connetti</button>
-    </nav>
-    <main class="max-w-3xl mx-auto mt-12 px-6">
-        <div class="flex justify-between items-end border-b pb-8 mb-8">
-            <div>
-                <h1 id="sn" class="text-4xl font-bold">...</h1>
-                <p id="sc" class="text-blue-500 uppercase text-xs">...</p>
-            </div>
-            <div class="text-right">
-                <span id="ar" class="text-5xl font-bold">0.0</span>
-                <p class="text-xs text-gray-500">Rating Medio</p>
+    <nav class="nav-container p-4">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-blue-600 font-bold">← Home</a>
+            <div class="flex items-center gap-4">
+                <button id="darkModeToggle">🌓</button>
+                <button id="connectBtn" class="btn-primary text-xs px-4 py-2">Connect</button>
             </div>
         </div>
-        <div id="rc" class="space-y-4">Caricamento recensioni...</div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto mt-16 px-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[var(--border)] pb-12 mb-12">
+            <div>
+                <span class="text-blue-600 font-bold text-xs uppercase tracking-widest">Verified Business</span>
+                <h1 id="sn" class="text-5xl font-extrabold mt-2">Loading Store...</h1>
+                <p id="sc" class="text-gray-500 mt-2 text-lg italic">Category</p>
+            </div>
+            <div class="mt-8 md:mt-0 text-center bg-gray-50 dark:bg-gray-800/50 p-6 rounded-3xl border border-[var(--border)]">
+                <div id="ar" class="text-6xl font-black">0.0</div>
+                <div class="text-xs text-gray-400 font-bold uppercase mt-1">Trust Score</div>
+            </div>
+        </div>
+
+        <h3 class="text-xl font-bold mb-8">Customer Log</h3>
+        <div id="rc" class="space-y-6 mb-20">
+            <div class="animate-pulse flex space-x-4">
+                <div class="flex-1 space-y-4 py-1">
+                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div class="space-y-2">
+                        <div class="h-4 bg-gray-200 rounded"></div>
+                        <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
+
     <script src="app.js"></script>
     <script>
         window.onload = async () => {
             const id = new URLSearchParams(window.location.search).get('id');
+            if(!id) return;
+            
             await connectWallet();
-            const b = await contract.businesses(id);
-            document.getElementById('sn').innerText = b.name;
-            document.getElementById('sc').innerText = b.category;
+            try {
+                const b = await contract.businesses(id);
+                document.getElementById('sn').innerText = b.name;
+                document.getElementById('sc').innerText = b.category;
 
-            const logs = await contract.queryFilter(contract.filters.ReviewAdded(id), -5000);
-            const container = document.getElementById('rc');
-            container.innerHTML = logs.length ? "" : "Nessuna recensione.";
-            let sum = 0;
-            logs.reverse().forEach(l => {
-                sum += Number(l.args.rating);
-                container.innerHTML += `<div class='card-google'>
-                    <div class='text-yellow-500 mb-1'>${"★".repeat(l.args.rating)}</div>
-                    <p class='text-sm'>${l.args.content}</p>
-                    <p class='text-[10px] mt-2 text-gray-400'>Da: ${l.args.author.slice(0,10)}...</p>
-                </div>`;
-            });
-            if(logs.length) document.getElementById('ar').innerText = (sum/logs.length).toFixed(1);
+                const logs = await contract.queryFilter(contract.filters.ReviewAdded(id), -10000);
+                const container = document.getElementById('rc');
+                container.innerHTML = logs.length ? "" : "<p class='text-gray-400 italic'>No on-chain reviews found for this address.</p>";
+                
+                let sum = 0;
+                logs.reverse().forEach(l => {
+                    const r = Number(l.args.rating);
+                    sum += r;
+                    container.innerHTML += `
+                        <div class="card-veritas border-l-4 border-l-blue-600">
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="text-yellow-500 font-bold text-lg">${"★".repeat(r)}${"☆".repeat(5-r)}</div>
+                                <span class="text-[10px] font-mono opacity-50">${l.args.author.slice(0,12)}...</span>
+                            </div>
+                            <p class="text-lg opacity-90 leading-relaxed">"${l.args.content}"</p>
+                            <div class="mt-4 text-[10px] uppercase font-bold tracking-widest text-blue-500">Verified Purchase</div>
+                        </div>`;
+                });
+                if(logs.length) document.getElementById('ar').innerText = (sum/logs.length).toFixed(1);
+            } catch (e) { console.error(e); }
         };
     </script>
 </body>
