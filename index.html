@@ -1,79 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Veritas | Verified Reviews on Polkadot</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="bg-white min-h-screen flex flex-col">
-    <nav class="border-b border-gray-200 px-6 py-3 flex justify-between items-center bg-white sticky top-0 z-50">
-        <div class="flex items-center gap-6">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-sm flex items-center justify-center text-white font-bold text-xl">V</div>
-                <span class="text-xl text-gray-600 font-normal tracking-tight">Veritas</span>
-            </div>
-            <div class="hidden md:flex gap-4 text-sm text-gray-500">
-                <a href="#" class="hover:text-blue-600">Overview</a>
-                <a href="dashboard.html" class="hover:text-blue-600">Merchant Tools</a>
-                <a href="https://paseo-asset-hub.statescan.io/address/0xe17041d9af0220cb6d12958a80f78cfd45cfad81" target="_blank" class="hover:text-blue-600">Explorer</a>
-            </div>
-        </div>
+<nav class="p-4 border-b border-gray-200 flex justify-between items-center bg-[var(--nav-bg)] transition-colors">
+    <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-blue-600 rounded-sm"></div>
+        <span class="text-xl font-medium">Veritas</span>
+    </div>
+    <div class="flex items-center gap-4">
+        <button id="darkModeToggle" title="Toggle Dark Mode">🌓</button>
         <button id="connectBtn" class="btn-google">Connect Wallet</button>
-    </nav>
+    </div>
+</nav>
 
-    <main class="flex-grow flex flex-col items-center justify-center px-4 py-16">
-        <div class="text-center max-w-3xl">
-            <h2 class="text-5xl md:text-6xl font-normal text-gray-900 mb-6 tracking-tight">
-                Authentic reviews <br>for the Web3 era.
-            </h2>
-            <p class="text-xl text-gray-500 mb-10 leading-relaxed">
-                Veritas ensures every review is backed by a verified purchase on the 
-                <span class="text-blue-600 font-medium">Paseo Asset Hub</span>. 
-                No bots, no fakes, just the truth.
-            </p>
+<main class="max-w-5xl mx-auto mt-24 px-6 text-center">
+    <h2 class="text-5xl font-normal mb-4">Verified reviews, simplified.</h2>
+    <p class="text-gray-500 mb-12">New Contract: <span class="font-mono text-xs">0x4cb4...05f7</span></p>
 
-            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <a href="dashboard.html" class="btn-google text-sm px-8 py-3">
-                    Grow your Business
-                </a>
-                <a href="review.html" class="btn-google-outline text-sm px-8 py-3">
-                    Post a Review
-                </a>
-            </div>
+    <div class="grid md:grid-cols-2 gap-6 text-left">
+        <div class="card-google">
+            <h3 class="text-lg font-medium mb-4">Business Portal</h3>
+            <a href="dashboard.html" class="text-blue-500 font-medium">Register your store →</a>
         </div>
-
-        <div class="grid md:grid-cols-3 gap-12 mt-24 max-w-6xl w-full border-t border-gray-100 pt-16">
-            <div>
-                <h4 class="text-lg font-medium text-gray-800 mb-3">Immutable Trust</h4>
-                <p class="text-sm text-gray-500">All reviews are stored on-chain, making them impossible to delete or manipulate by centralized entities.</p>
-            </div>
-            <div>
-                <h4 class="text-lg font-medium text-gray-800 mb-3">Proof of Experience</h4>
-                <p class="text-sm text-gray-500">Users can only review if they hold a valid digital receipt signed by the merchant.</p>
-            </div>
-            <div>
-                <h4 class="text-lg font-medium text-gray-800 mb-3">Zero Barriers</h4>
-                <p class="text-sm text-gray-500">Seamlessly integrates with your existing payment flow via a simple QR code scan.</p>
-            </div>
+        <div class="card-google">
+            <h3 class="text-lg font-medium mb-4">Customer Portal</h3>
+            <a href="review.html" class="text-blue-500 font-medium">Write a review →</a>
         </div>
-    </main>
-
-    <footer class="border-t border-gray-200 py-8 bg-gray-50">
-        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-4 text-xs text-gray-500 uppercase tracking-widest">
-                <span>Paseo Network</span>
-                <span>•</span>
-                <span>Open Source</span>
-            </div>
-            <div class="text-xs text-gray-400 font-mono">
-                Contract: 0xe1704...fad81
-            </div>
-        </div>
-    </footer>
-
-    <script src="app.js"></script>
-</body>
-</html>
+    </div>
+</main>
