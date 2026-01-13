@@ -9,10 +9,6 @@ const abi = [
 
 let provider, signer, contract;
 
-(function initTheme() {
-    if (localStorage.getItem('veritas_dark') === 'true') document.documentElement.classList.add('dark-mode');
-})();
-
 async function connectWallet(silent = false) {
     if (!window.ethereum) return false;
     try {
@@ -25,9 +21,9 @@ async function connectWallet(silent = false) {
             signer = await provider.getSigner();
             contract = new ethers.Contract(contractAddress, abi, signer);
             const addr = await signer.getAddress();
-            const btn = document.getElementById('connectBtn');
-            if (btn) btn.innerText = addr.slice(0,6) + "..." + addr.slice(-4);
             localStorage.setItem('veritas_connected', 'true');
+            const btn = document.getElementById('connectBtn');
+            if(btn) btn.innerText = addr.slice(0,6) + "..." + addr.slice(-4);
             return true;
         }
     } catch (e) { console.error(e); }
@@ -35,11 +31,15 @@ async function connectWallet(silent = false) {
 }
 
 window.addEventListener('load', async () => {
-    if (localStorage.getItem('veritas_dark') === 'true') document.body.classList.add('dark-mode');
-    document.getElementById('darkModeToggle')?.addEventListener('click', () => {
-        const isDark = document.body.classList.toggle('dark-mode');
-        document.documentElement.classList.toggle('dark-mode');
-        localStorage.setItem('veritas_dark', isDark);
-    });
+    if (localStorage.getItem('veritas_dark') === 'true') {
+        document.documentElement.classList.add('dark-mode');
+        document.body.classList.add('dark-mode');
+    }
     if (localStorage.getItem('veritas_connected') === 'true') await connectWallet(true);
+});
+
+document.getElementById('darkModeToggle')?.addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark-mode');
+    document.documentElement.classList.toggle('dark-mode');
+    localStorage.setItem('veritas_dark', isDark);
 });
