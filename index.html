@@ -1,30 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Veritas | On-Chain Trust</title>
-    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veritas | On-Chain Trust Protocol</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
+
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="font-black text-2xl tracking-tighter italic">VERITAS</a>
-            <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
-                <a href="explore.html" class="opacity-60 hover:opacity-100">Explore</a>
-                <a href="review.html" class="opacity-60 hover:opacity-100">Submit Review</a>
-                <a href="dashboard.html" class="opacity-60 hover:opacity-100">Merchant Hub</a>
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/20">V</div>
+                    <span class="text-2xl font-black tracking-tighter uppercase italic">Veritas</span>
+                </a>
+                <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
+                    <a href="explore.html" class="opacity-60 hover:opacity-100 transition">Explore</a>
+                    <a href="review.html" class="opacity-60 hover:opacity-100 transition">Submit Review</a>
+                    <a href="dashboard.html" class="opacity-60 hover:opacity-100 transition">Merchant Hub</a>
+                </div>
             </div>
-            <button id="connectBtn" class="btn-primary text-xs px-6" onclick="connectWallet()">Connect</button>
+            <button id="connectBtn" class="btn-primary text-xs py-2 px-6" onclick="connectWallet()">Connect Wallet</button>
         </nav>
     </div>
-    <main class="main-content flex-grow flex flex-col items-center justify-center text-center px-6">
-        <h1 class="text-7xl font-black mb-6 italic tracking-tighter leading-none">TRUST IS <span class="text-blue-600">ON-CHAIN.</span></h1>
-        <p class="text-xl opacity-60 max-w-2xl mb-12 italic">The protocol for verified reviews powered by Paseo AssetHub.</p>
-        <div class="flex gap-4">
-            <a href="explore.html" class="btn-primary py-5 px-10 text-lg shadow-xl">Explore Stores</a>
-            <a href="dashboard.html" class="btn-outline py-5 px-10 text-lg">Merchant Hub</a>
+
+    <main class="main-content flex-grow flex flex-col items-center justify-center px-6 text-center">
+        <div class="max-w-4xl">
+            <div class="inline-block px-4 py-1 border border-blue-600/30 rounded-full text-blue-600 text-[10px] font-bold uppercase tracking-[0.2em] mb-8 animate-pulse">
+                Paseo AssetHub Protocol V3.5
+            </div>
+            
+            <h1 class="text-7xl md:text-8xl font-black mb-8 tracking-tighter italic leading-none">
+                TRUST IS <br><span class="text-blue-600">ON-CHAIN.</span>
+            </h1>
+            
+            <p class="text-xl opacity-60 max-w-2xl mx-auto mb-12 italic leading-relaxed">
+                The decentralized protocol for verified reviews. Every feedback is mathematically linked to an on-chain cryptographic receipt.
+            </p>
+
+            <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
+                <a href="explore.html" class="btn-primary py-5 px-12 text-lg shadow-2xl shadow-blue-500/20 w-full md:w-auto">
+                    Explore Stores
+                </a>
+                <a href="review.html" class="btn-outline py-5 px-12 text-lg w-full md:w-auto bg-white/5">
+                    Write a Review
+                </a>
+            </div>
+        </div>
+
+        <div class="mt-24 grid grid-cols-2 md:grid-cols-3 gap-12 opacity-30">
+            <div class="text-center">
+                <div class="text-2xl font-black italic">100%</div>
+                <div class="text-[9px] uppercase font-bold tracking-widest">Verifiable</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-black italic">PASEO</div>
+                <div class="text-[9px] uppercase font-bold tracking-widest">Network</div>
+            </div>
+            <div class="hidden md:block text-center">
+                <div class="text-2xl font-black italic">V3.5.1</div>
+                <div class="text-[9px] uppercase font-bold tracking-widest">Protocol Version</div>
+            </div>
         </div>
     </main>
+
+    <footer>
+        <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center border-t border-white/5 gap-6">
+            <div class="text-[10px] uppercase font-bold opacity-30 tracking-[0.3em]">
+                The White Rabbit bored creation
+            </div>
+            <div class="flex gap-8 text-[10px] font-black uppercase tracking-widest opacity-30">
+                <a href="#" class="hover:text-blue-600 transition">Smart Contract</a>
+                <a href="#" class="hover:text-blue-600 transition">Paseo Explorer</a>
+                <a href="#" class="hover:text-blue-600 transition">Documentation</a>
+            </div>
+            <div class="text-[10px] font-black text-blue-600 tracking-widest uppercase">
+                Veritas Protocol © 2026
+            </div>
+        </div>
+    </footer>
+
     <script src="app.js"></script>
 </body>
 </html>
