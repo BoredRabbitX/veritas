@@ -1,80 +1,84 @@
-📜 Veritas: On-Chain Verified Reviews
-Veritas is a decentralized Web3 application built on Polkadot Asset Hub (Paseo Testnet). It solves the problem of fake reviews by ensuring that every feedback is linked to a verified proof of experience (a digital receipt) signed by the business owner.
+# 📜 VERITAS | On-Chain Reputation Protocol
+### *Verified Reviews Powered by Polkadot Asset Hub*
 
-🚀 The Problem & The Solution
-Traditional review platforms (like TripAdvisor or Yelp) are plagued by bots and fake reviews. Veritas uses blockchain technology to create a trustless ecosystem:
+![Polkadot](https://img.shields.io/badge/Polkadot-E2007A?style=for-the-badge&logo=polkadot&logoColor=white)
+![Solidity](https://img.shields.io/badge/Solidity-%23363636.svg?style=for-the-badge&logo=solidity&logoColor=white)
+![Paseo](https://img.shields.io/badge/Network-Paseo_Asset_Hub-blueviolet?style=for-the-badge)
 
-Businesses generate unique, signed QR codes for their customers.
+**Veritas** is a decentralized application (dApp) designed to eliminate fake reviews. By leveraging the **Asset Hub system parachain**, Veritas ensures that every feedback is mathematically linked to a real transaction, creating an immutable trail of trust.
 
-Customers scan the QR to unlock the ability to post a review.
+---
 
-Veracity is guaranteed: No receipt = No review.
+## 🏗 System Architecture
 
-🛠 Tech Stack
-Blockchain: Polkadot Asset Hub (Paseo Testnet)
+The protocol operates on a "Proof of Purchase" mechanism:
+1. **Merchant** signs a unique Receipt ID off-chain.
+2. **Customer** receives a QR code containing the signature.
+3. **Smart Contract** verifies the signature and the Receipt ID uniqueness.
+4. **Blockchain** stores the review permanently.
 
-Smart Contracts: Solidity (EVM-compatible)
 
-Frontend: HTML5, Tailwind CSS, JavaScript (ES6)
 
-Web3 Library: Ethers.js (v6)
+---
 
-Contract Address: 0xb3dc45518cc51c759193da59772a407dad584852
+## ⛓️ On-Chain Identity & Deployment
 
-📂 Project Structure
-Plaintext
+The core logic is deployed on the **Paseo Asset Hub (EVM layer)**.
 
+| Parameter | Value |
+| :--- | :--- |
+| **Contract Address** | `0xb3dc45518cc51c759193da59772a407dad584852` |
+| **Network** | Paseo Asset Hub (Testnet) |
+| **Chain ID** | `424` |
+| **Currency** | `PAS` (Paseo Token) |
+| **Explorer** | [Statescan - Paseo Asset Hub](https://paseo-asset-hub.statescan.io/) |
+
+---
+
+## 🚀 Live Demo & Folder Structure
+
+The project is hosted in the `/veritas` directory for easy access via GitHub Pages.
+
+```text
 /veritas
-├── index.html       # Landing page and navigation
-├── dashboard.html   # Merchant portal to generate QR codes
-├── review.html      # Customer portal to submit reviews
-├── app.js           # Core Web3 logic and contract interaction
-└── style.css        # Custom UI styling and animations
-🔧 Installation & Setup
-Clone the repository:
+├── index.html       # Entry point: Hero section & Navigation
+├── dashboard.html   # Business portal: QR Generation logic
+├── review.html      # User portal: Signature verification & Transaction UI
+├── app.js           # Ethers.js v6 implementation & ABI Bridge
+└── style.css        # Web3-optimized UI/UX components
+🛠️ How to Test
+1. Configure your Wallet
+Add the Paseo Asset Hub network to MetaMask:
 
-Bash
-
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-cd veritas
-Serve the files: Since this is a static site using CDN-based libraries, you don't need npm install. You can simply use a "Live Server" extension in VS Code or open index.html in your browser.
-
-Configure MetaMask:
-
-Network Name: Paseo Asset Hub
-
-RPC URL: https://paseo-asset-hub-rpc.polkadot.io
+RPC: https://paseo-asset-hub-rpc.polkadot.io
 
 Chain ID: 424
 
-Currency Symbol: PAS
+Symbol: PAS
 
-📝 How to Use
-For Merchants:
-Go to dashboard.html.
+2. Get Test Tokens
+Visit the Paseo Faucet to receive free PAS tokens to cover gas fees.
 
-Connect your wallet (ensure you are on the Paseo network).
+3. Run Locally
+git clone [https://github.com/YOUR_USER/YOUR_REPO.git](https://github.com/YOUR_USER/YOUR_REPO.git)
+# Open /veritas/index.html in any modern browser
 
-Register your business (one-time transaction).
+🔐 Security Features
+Anti-Replay: Each ReceiptID is hashed and mapped. Once a review is posted, the ID is "burned" on-chain.
 
-Enter a Receipt ID and click "Generate QR".
+Merchant Auth: Only signatures from the registered business address can authorize a review entry.
 
-For Customers:
-Scan the QR code provided by the merchant.
+Privacy: Reviews are linked to the transaction, but user personal data remains off-chain.
 
-You will be redirected to review.html with the business and receipt data pre-filled.
+🗺️ Roadmap
+[x] Smart Contract Deployment on Paseo
 
-Write your review, select a rating, and click "Publish".
+[x] MVP Web Interface
 
-Confirm the transaction in MetaMask.
+[ ] IPFS Integration for high-resolution images
 
-📜 Smart Contract Logic
-The contract VeritasProtocol.sol ensures that:
+[ ] Native Polkadot Identity (People Chain) integration
 
-Each ReceiptID can only be used once.
+[ ] Rewards system using native Assets on Asset Hub
 
-Only registered businesses can authorize reviews.
-
-All data is stored immutably on the Paseo Asset Hub.
-
-Created with ❤️ for the Polkadot Ecosystem.
+Developed for the Polkadot Web3 Ecosystem.
