@@ -14,17 +14,12 @@ const abi = [
 
 let provider, signer, contract;
 
-// Funzione principale di connessione
 async function connectWallet(silent = false) {
-    if (!window.ethereum) {
-        if(!silent) alert("MetaMask not found!");
-        return false;
-    }
-
+    if (!window.ethereum) return false;
     try {
         provider = new ethers.BrowserProvider(window.ethereum, "any");
         
-        // Se silent è true, proviamo a vedere se siamo già autorizzati
+        // Modalità silenziosa per autoconnessione
         const accounts = silent 
             ? await window.ethereum.request({ method: 'eth_accounts' }) 
             : await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -32,7 +27,7 @@ async function connectWallet(silent = false) {
         if (accounts.length > 0) {
             const network = await provider.getNetwork();
             if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
-                if(!silent) alert(`Please switch to Paseo (Chain ID: ${EXPECTED_CHAIN_ID})`);
+                if(!silent) alert("Switch to Paseo AssetHub (420420422)");
                 return false;
             }
 
@@ -43,26 +38,16 @@ async function connectWallet(silent = false) {
             const btn = document.getElementById('connectBtn');
             if (btn) btn.innerText = addr.slice(0,6) + "...";
             
-            // Salviamo lo stato per le altre pagine
             localStorage.setItem('veritas_autoconnect', 'true');
             return true;
         }
-    } catch (e) {
-        console.error("Connection error:", e);
-    }
+    } catch (e) { console.error("Conn Error:", e); }
     return false;
 }
 
-// AUTOMATISMO: Eseguito su OGNI pagina al caricamento
-(async () => {
+// Esegui autoconnessione al caricamento di ogni pagina
+window.addEventListener('load', () => {
     if (localStorage.getItem('veritas_autoconnect') === 'true') {
-        // Proviamo a connetterci silenziosamente
-        await connectWallet(true);
+        connectWallet(true);
     }
-})();
-
-// Gestione cambio account o rete
-if (window.ethereum) {
-    window.ethereum.on('accountsChanged', () => location.reload());
-    window.ethereum.on('chainChanged', () => location.reload());
-}
+});
