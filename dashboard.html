@@ -1,160 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Merchant Dashboard | Veritas</title>
+    <meta charset="UTF-8"><title>Dashboard | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
-
-    <div class="nav-container">
-        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <div class="flex items-center gap-8">
-                <a href="index.html" class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">V</div>
-                    <span class="text-2xl font-bold tracking-tight">Veritas</span>
-                </a>
-                <div class="hidden md:flex gap-6 text-sm font-medium opacity-70">
-                    <a href="dashboard.html" class="text-blue-600 font-bold">Merchant Dashboard</a>
-                    <a href="review.html" class="hover:text-blue-600 transition">Customer Portal</a>
-                </div>
-            </div>
-            <div class="flex items-center gap-4">
-                <button id="darkModeToggle" class="p-2 rounded-full transition">🌓</button>
-                <button id="connectBtn" class="btn-primary text-sm" onclick="handleLogin()">Connect Wallet</button>
-            </div>
-        </nav>
-    </div>
+<body>
+    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="flex items-center gap-2"><div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">V</div><span class="text-2xl font-bold">Veritas</span></a><div class="flex items-center gap-6"><a href="review.html" class="text-sm">Customer Portal</a><button id="darkModeToggle">🌓</button><button id="connectBtn" class="btn-primary text-sm" onclick="handleLogin()">Login</button></div></nav></div>
 
     <main class="main-content max-w-5xl mx-auto px-6 py-12">
-        <header class="mb-12">
-            <h1 class="text-4xl font-extrabold mb-2">Merchant Console</h1>
-            <p id="statusMsg" class="text-gray-500">Connect your wallet to manage your business and receipts.</p>
-        </header>
-
-        <div id="mainContent" class="grid md:grid-cols-2 gap-8 opacity-20 pointer-events-none transition-all duration-500">
-            
+        <h1 class="text-4xl font-bold mb-8">Merchant Console</h1>
+        <div id="mainContent" class="grid md:grid-cols-2 gap-8 opacity-20 pointer-events-none transition-all">
             <div class="card-veritas" id="regForm">
-                <h2 class="text-xl font-bold mb-6 text-blue-600">Business Activation</h2>
-                <div class="space-y-4">
-                    <input id="bizName" type="text" placeholder="Official Business Name">
-                    <input id="bizCat" type="text" placeholder="Industry Category (e.g. Restaurant)">
-                    <button onclick="registerBusiness()" class="btn-primary w-full mt-4">Register on Paseo</button>
-                </div>
+                <h2 class="text-xl font-bold mb-4">Registration</h2>
+                <input id="n" type="text" placeholder="Store Name" class="mb-2">
+                <input id="c" type="text" placeholder="Category" class="mb-4">
+                <button onclick="reg()" class="btn-primary w-full">Activate Store</button>
             </div>
-
-            <div class="card-veritas" id="qrForm">
-                <h2 class="text-xl font-bold mb-6 text-blue-600">Verification Hub</h2>
-                <p class="text-sm text-gray-500 mb-6">Enter a receipt ID to generate a unique review link.</p>
-                <div class="space-y-4">
-                    <div class="flex flex-col gap-2">
-                        <div class="flex justify-between items-center">
-                            <label class="text-[10px] font-bold uppercase opacity-50">Receipt ID</label>
-                            <button onclick="generateRandomID()" class="text-[10px] text-blue-600 font-bold hover:underline">GENERATE RANDOM</button>
-                        </div>
-                        <input id="rid" type="text" placeholder="e.g. INV-2024-001">
-                    </div>
-                    <button onclick="gen()" class="btn-outline w-full py-4">Create QR Receipt</button>
-                    
-                    <div class="mt-8 flex flex-col items-center justify-center">
-                        <div id="qrcode"></div>
-                        <p id="qrHint" class="hidden mt-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Customer scans this to review</p>
-                    </div>
-                </div>
+            <div class="card-veritas">
+                <h2 class="text-xl font-bold mb-4">QR / Code Generator</h2>
+                <input id="rid" type="text" placeholder="Receipt ID" class="mb-4">
+                <button onclick="gen()" class="btn-outline w-full mb-6">Create Verification QR</button>
+                <div id="qrcode" class="flex justify-center mx-auto"></div>
             </div>
         </div>
     </main>
 
-    <footer class="border-t border-[var(--border)] py-8 bg-[var(--surface)]">
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase tracking-widest font-bold opacity-50">
-            <div>The White Rabbit bored creation</div>
-            <div>Powered by Polkadot paseo testnet</div>
-        </div>
-    </footer>
-
+    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-50"><div>The White Rabbit bored creation</div><div>Powered by Polkadot paseo testnet</div></div></footer>
     <script src="app.js"></script>
     <script>
-        // LOGIN & STATUS CHECK
         async function handleLogin() {
-            const connected = await connectWallet();
-            if(connected) {
-                const address = await signer.getAddress();
-                const biz = await contract.businesses(address);
-                
+            if(await connectWallet()) {
+                const b = await contract.businesses(await signer.getAddress());
                 document.getElementById('mainContent').classList.remove('opacity-20', 'pointer-events-none');
-                
-                if(biz.isActive) {
-                    document.getElementById('regForm').innerHTML = `
-                        <div class="text-center py-10">
-                            <div class="text-5xl mb-4">🏛️</div>
-                            <h3 class="text-2xl font-bold">${biz.name}</h3>
-                            <p class="text-blue-500 font-bold uppercase text-xs tracking-widest mt-1">${biz.category}</p>
-                            <a href="store.html?id=${address}" class="text-xs opacity-50 mt-10 block underline">View Public Profile</a>
-                        </div>`;
-                    document.getElementById('statusMsg').innerText = "Dashboard Ready. You can now generate receipts.";
-                } else {
-                    document.getElementById('statusMsg').innerText = "Please register your store to enable the QR generator.";
-                }
+                if(b.isActive) document.getElementById('regForm').innerHTML = `<h2 class="text-2xl font-bold text-blue-600">${b.name}</h2><p class="opacity-60">${b.category}</p>`;
             }
         }
-
-        // REGISTRATION
-        async function registerBusiness() {
-            const name = document.getElementById('bizName').value.trim();
-            const cat = document.getElementById('bizCat').value.trim();
-            
-            if(!name || !cat) return alert("Please fill all fields");
-
-            try {
-                const tx = await contract.registerBusiness(name, cat);
-                await tx.wait();
-                location.reload();
-            } catch (e) {
-                alert("Registration failed: " + e.message);
-            }
+        async function reg() {
+            const tx = await contract.registerBusiness(document.getElementById('n').value, document.getElementById('c').value);
+            await tx.wait(); location.reload();
         }
-
-        // HELPER: RANDOM ID
-        function generateRandomID() {
-            const id = "REC-" + Math.random().toString(36).substring(2, 9).toUpperCase();
-            document.getElementById('rid').value = id;
-        }
-
-        // QR GENERATION LOGIC
         function gen() {
-            const receiptID = document.getElementById('rid').value.trim();
-            const qrcodeContainer = document.getElementById('qrcode');
-            
-            if(!receiptID) {
-                alert("Please enter a Receipt ID first.");
-                return;
-            }
-
-            if(!signer) {
-                alert("Please connect your wallet.");
-                return;
-            }
-
-            // Build robust URL for GitHub Pages
-            const baseUrl = window.location.href.split('dashboard.html')[0];
-            const finalUrl = `${baseUrl}review.html?business=${signer.address}&receipt=${encodeURIComponent(receiptID)}`;
-
-            // Clear and render
-            qrcodeContainer.innerHTML = "";
-            new QRCode(qrcodeContainer, {
-                text: finalUrl,
-                width: 160,
-                height: 160,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-
-            document.getElementById('qrHint').classList.remove('hidden');
-            console.log("QR Link Generated: " + finalUrl);
+            const url = `${window.location.origin}/veritas/review.html?business=${signer.address}&receipt=${document.getElementById('rid').value}`;
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById('qrcode'), { text: url, width: 150, height: 150 });
         }
     </script>
 </body>
