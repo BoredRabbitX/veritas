@@ -17,20 +17,19 @@ let provider, signer, contract;
 async function connectWallet(silent = false) {
     if (!window.ethereum) return false;
     try {
+        // Ensure "any" network to allow live switching
         provider = new ethers.BrowserProvider(window.ethereum, "any");
         const network = await provider.getNetwork();
+        
         if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
             if(!silent) alert(`Switch to Chain ID: ${EXPECTED_CHAIN_ID}`);
             return false;
         }
+
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         if (accounts.length > 0) {
             signer = await provider.getSigner();
             contract = new ethers.Contract(contractAddress, abi, signer);
-            const addr = await signer.getAddress();
-            const btn = document.getElementById('connectBtn');
-            if (btn) btn.innerText = addr.slice(0,6) + "...";
-            localStorage.setItem('veritas_connected', 'true');
             return true;
         }
     } catch (e) { console.error(e); }
