@@ -88,36 +88,63 @@
             }
         }
 
-        async function sendReview() {
-            const b = document.getElementById('subBtn');
-            try {
-                b.disabled = true; b.innerText = "Signing...";
-                const rid = document.getElementById('receiptInput').value.trim();
-                const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
-                
-                logV3("Checking Gas & Balance...");
-                const bal = await provider.getBalance(await signer.getAddress());
-                logV3(`Balance: ${ethers.formatEther(bal)} PAS`);
+       async function sendReview() {
+    const btn = document.getElementById('subBtn');
+    try {
+        btn.disabled = true; 
+        btn.innerText = "Encoding Data...";
 
-                const tx = await contract.postReview(
-                    document.getElementById('bizInput').value,
-                    document.getElementById('custName').value || "Anon",
-                    document.getElementById('rating').value,
-                    document.getElementById('comment').value,
-                    hash,
-                    { gasLimit: 500000 }
-                );
-                
-                logV3("TX Sent! Waiting for block...");
-                await tx.wait();
-                logV3("Confirmed! Redirecting...", "info");
-                window.location.href = `store.html?id=${document.getElementById('bizInput').value}`;
-            } catch (e) {
-                logV3(e.message, "err");
-                alert(e.message);
-                b.disabled = false; b.innerText = "Publish to Blockchain";
+        const bizAddr = document.getElementById('bizInput').value.trim();
+        const rid = document.getElementById('receiptInput').value.trim();
+        
+        // Pulizia stringhe: evitiamo caratteri speciali che rompono l'ABI
+        const name = (document.getElementById('custName').value || "Anon").replace(/[^a-zA-Z0-9 ]/g, "");
+        const comment = (document.getElementById('comment').value || "Review").replace(/[^a-zA-Z0-9 ]/g, "");
+        const rating = parseInt(document.getElementById('rating').value);
+        
+        const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
+        
+        logV3("Final pre-flight check...");
+        logV3(`Target: ${bizAddr.slice(0,10)}...`);
+        logV3(`Rating: ${rating} Stars`);
+
+        // Eseguiamo la chiamata forzando la codifica ABI pulita
+        const tx = await contract.postReview(
+            bizAddr,
+            name,
+            rating,
+            comment,
+            hash,
+            { 
+                gasLimit: 400000,
+                // Rimuoviamo il tipo per permettere a MetaMask di negoziare il formato migliore
             }
+        );
+        
+        logV3("TX Sent! Waiting for block confirmation...", "warn");
+        const receipt = await tx.wait();
+        
+        if(receipt.status === 1) {
+            logV3("Success! Review stored on-chain.", "info");
+            window.location.href = `store.html?id=${bizAddr}`;
+        } else {
+            throw new Error("Transaction failed on-chain.");
         }
+
+    } catch (e) {
+        console.error("Critical Error Detail:", e);
+        let errorMsg = e.message;
+        
+        if (e.message.includes("Internal JSON-RPC error")) {
+            errorMsg = "RPC Conflict: Try changing the 'Name' or 'Comment' to simple text.";
+        }
+        
+        logV3(errorMsg, "err");
+        alert("Blockchain Error: " + errorMsg);
+        btn.disabled = false; 
+        btn.innerText = "Publish to Blockchain";
+    }
+}
     </script>
 </body>
 </html>
