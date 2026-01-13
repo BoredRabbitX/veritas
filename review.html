@@ -52,8 +52,8 @@
 
                 <div class="grid grid-cols-1 gap-6">
                     <div>
-                        <label class="block text-xs font-bold uppercase mb-2 opacity-50">Your Display Name</label>
-                        <input id="customerName" type="text" placeholder="E.g. Mario Rossi" class="w-full">
+                        <label class="block text-xs font-bold uppercase mb-2 opacity-50">Your Name</label>
+                        <input id="customerName" type="text" placeholder="E.g. John Doe" class="w-full">
                     </div>
 
                     <div>
@@ -69,7 +69,7 @@
 
                     <div>
                         <label class="block text-xs font-bold uppercase mb-2 opacity-50">Review Details</label>
-                        <textarea id="reviewText" placeholder="Describe your service or purchase..." rows="5"></textarea>
+                        <textarea id="reviewText" placeholder="Describe your experience..." rows="5"></textarea>
                     </div>
                 </div>
 
@@ -89,7 +89,6 @@
 
     <script src="app.js"></script>
     <script>
-        // Gestione parametri URL (per chi arriva da QR)
         window.onload = async () => {
             const params = new URLSearchParams(window.location.search);
             const b = params.get('business');
@@ -124,7 +123,6 @@
                 if(userAddr === bizAddr.toLowerCase()) throw new Error("Security Alert: Merchants cannot review their own store.");
                 if(isUsed) throw new Error("Security Alert: This receipt has already been used for a review.");
 
-                // Successo: Sblocca il form
                 deniedDiv.classList.add('hidden');
                 document.getElementById('setupData').classList.add('hidden');
                 document.getElementById('reviewForm').classList.remove('hidden');
@@ -136,8 +134,11 @@
         }
 
         function showError(msg) {
-            document.getElementById('denied').classList.remove('hidden');
-            document.getElementById('reason').innerText = msg;
+            const reasonP = document.getElementById('reason');
+            if(reasonP) {
+                document.getElementById('denied').classList.remove('hidden');
+                reasonP.innerText = msg;
+            }
         }
 
         async function sendReview() {
@@ -148,16 +149,14 @@
             const comment = document.getElementById('reviewText').value.trim();
             const rating = document.getElementById('ratingSelect').value;
 
-            // Concateniamo Nome e Commento nel campo content del contratto
+            // Save Name and Comment combined into the content field
             const fullContent = `[${name}] ${comment}`;
 
             try {
                 btn.innerText = "Broadcasting to Blockchain...";
                 btn.disabled = true;
 
-                // Calcolo dell'hash della ricevuta per il contratto
                 const receiptHash = ethers.id(receiptID);
-
                 const tx = await contract.postReview(bizAddr, rating, fullContent, receiptHash, "0x");
                 await tx.wait();
                 
