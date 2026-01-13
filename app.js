@@ -8,15 +8,18 @@ const abi = [
 
 let provider, signer, contract;
 
-// IMMEDIATE DARK MODE CHECK (To avoid flicker)
+// IMMEDIATE THEME CHECK
 (function initTheme() {
     const isDark = localStorage.getItem('veritas_dark') === 'true';
-    if (isDark) document.documentElement.classList.add('dark-mode');
+    if (isDark) {
+        document.documentElement.classList.add('dark-mode');
+    }
 })();
 
 window.addEventListener('DOMContentLoaded', () => {
-    const isDark = localStorage.getItem('veritas_dark') === 'true';
-    if (isDark) document.body.classList.add('dark-mode');
+    if (localStorage.getItem('veritas_dark') === 'true') {
+        document.body.classList.add('dark-mode');
+    }
 
     document.getElementById('darkModeToggle')?.addEventListener('click', () => {
         const isDarkNow = document.body.classList.toggle('dark-mode');
@@ -27,13 +30,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
 async function connectWallet() {
     if (window.ethereum) {
-        provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
-        contract = new ethers.Contract(contractAddress, abi, signer);
-        const address = await signer.getAddress();
-        document.getElementById('connectBtn').innerText = address.slice(0,6) + "..." + address.slice(-4);
-        return true;
+        try {
+            provider = new ethers.BrowserProvider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = await provider.getSigner();
+            contract = new ethers.Contract(contractAddress, abi, signer);
+            const address = await signer.getAddress();
+            const btn = document.getElementById('connectBtn');
+            if (btn) btn.innerText = address.slice(0,6) + "..." + address.slice(-4);
+            return true;
+        } catch (e) {
+            console.error("Connection failed", e);
+            return false;
+        }
     }
+    alert("Please install MetaMask!");
     return false;
 }
