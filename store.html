@@ -1,73 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-    <meta charset="UTF-8"><title>Store Profile | Veritas</title>
+    <meta charset="UTF-8"><title>Store Profile</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <nav class="p-4 border-b border-gray-200 flex justify-between items-center bg-[var(--nav-bg)]">
-        <a href="index.html" class="text-xl font-medium text-blue-600 font-bold">VERITAS</a>
-        <div class="flex items-center gap-4">
-            <button id="darkModeToggle" class="p-2 rounded-full border border-gray-300">🌓</button>
-            <button id="connectBtn" class="btn-google text-xs">Connect</button>
-        </div>
+    <nav class="p-4 border-b border-[var(--border-color)] flex justify-between">
+        <a href="index.html" class="font-bold text-blue-600 underline">← Home</a>
+        <button id="connectBtn" class="btn-google text-xs">Connetti</button>
     </nav>
-
-    <main class="max-w-4xl mx-auto mt-12 px-6">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-12 pb-8 border-b border-[var(--border-color)]">
+    <main class="max-w-3xl mx-auto mt-12 px-6">
+        <div class="flex justify-between items-end border-b pb-8 mb-8">
             <div>
-                <h1 id="storeName" class="text-4xl font-normal">Loading...</h1>
-                <p id="storeCat" class="text-blue-500 uppercase text-xs font-bold tracking-widest mt-2">Category</p>
+                <h1 id="sn" class="text-4xl font-bold">...</h1>
+                <p id="sc" class="text-blue-500 uppercase text-xs">...</p>
             </div>
-            <div class="text-center mt-6 md:mt-0 px-8 py-4 bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)]">
-                <span id="avgRating" class="text-6xl font-bold">0.0</span>
-                <p class="text-[10px] text-gray-500 mt-1 uppercase">Avg Rating</p>
+            <div class="text-right">
+                <span id="ar" class="text-5xl font-bold">0.0</span>
+                <p class="text-xs text-gray-500">Rating Medio</p>
             </div>
         </div>
-
-        <div id="reviewsContainer" class="space-y-6 pb-20">
-            <p class="text-center text-gray-400">Loading verified reviews...</p>
-        </div>
+        <div id="rc" class="space-y-4">Caricamento recensioni...</div>
     </main>
-
     <script src="app.js"></script>
     <script>
         window.onload = async () => {
-            initDarkMode(); // Assicura che la dark mode sia coerente
-            const storeId = new URLSearchParams(window.location.search).get('id');
-            if(!storeId) return;
-            
+            const id = new URLSearchParams(window.location.search).get('id');
             await connectWallet();
-            
-            try {
-                const biz = await contract.businesses(storeId);
-                document.getElementById('storeName').innerText = biz.name;
-                document.getElementById('storeCat').innerText = biz.category;
+            const b = await contract.businesses(id);
+            document.getElementById('sn').innerText = b.name;
+            document.getElementById('sc').innerText = b.category;
 
-                const filter = contract.filters.ReviewAdded(storeId);
-                const logs = await contract.queryFilter(filter, -10000); 
-                
-                const container = document.getElementById('reviewsContainer');
-                container.innerHTML = logs.length ? "" : "<p class='text-center text-gray-400'>No reviews found.</p>";
-                
-                let sum = 0;
-                logs.reverse().forEach(log => {
-                    const { author, rating, content } = log.args;
-                    sum += Number(rating);
-                    container.innerHTML += `
-                        <div class="card-google border-none border-b border-[var(--border-color)] rounded-none pb-6">
-                            <div class="flex items-center gap-3 mb-2">
-                                <span class="text-blue-500 font-bold">${rating}.0</span>
-                                <div class="text-yellow-500 text-xs">${"★".repeat(rating)}${"☆".repeat(5-rating)}</div>
-                                <span class="text-[10px] text-gray-500 ml-auto font-mono">${author.slice(0,6)}...</span>
-                            </div>
-                            <p class="text-sm opacity-80">${content}</p>
-                        </div>`;
-                });
-                if(logs.length) document.getElementById('avgRating').innerText = (sum / logs.length).toFixed(1);
-            } catch (e) { console.error(e); }
+            const logs = await contract.queryFilter(contract.filters.ReviewAdded(id), -5000);
+            const container = document.getElementById('rc');
+            container.innerHTML = logs.length ? "" : "Nessuna recensione.";
+            let sum = 0;
+            logs.reverse().forEach(l => {
+                sum += Number(l.args.rating);
+                container.innerHTML += `<div class='card-google'>
+                    <div class='text-yellow-500 mb-1'>${"★".repeat(l.args.rating)}</div>
+                    <p class='text-sm'>${l.args.content}</p>
+                    <p class='text-[10px] mt-2 text-gray-400'>Da: ${l.args.author.slice(0,10)}...</p>
+                </div>`;
+            });
+            if(logs.length) document.getElementById('ar').innerText = (sum/logs.length).toFixed(1);
         };
     </script>
 </body>
