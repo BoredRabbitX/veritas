@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lascia Recensione - Veritas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div class="max-w-lg mx-auto pt-12 px-4">
+        <a href="index.html" class="text-blue-600 font-medium mb-8 inline-block">← Torna alla Home</a>
+        
+        <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+            <h2 class="text-3xl font-bold mb-2">Recensisci</h2>
+            <p id="businessDisplay" class="text-gray-500 text-sm mb-6 break-all">Caricamento dati attività...</p>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Voto</label>
+                    <select id="rating" class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="5">⭐⭐⭐⭐⭐ (Eccellente)</option>
+                        <option value="4">⭐⭐⭐⭐ (Ottimo)</option>
+                        <option value="3">⭐⭐⭐ (Buono)</option>
+                        <option value="2">⭐⭐ (Sufficiente)</option>
+                        <option value="1">⭐ (Scarso)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Il tuo commento</label>
+                    <textarea id="comment" rows="4" class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Scrivi qui la tua esperienza..."></textarea>
+                </div>
+
+                <div class="p-4 bg-blue-50 rounded-xl">
+                    <p class="text-xs text-blue-700"><b>ID Scontrino:</b> <span id="receiptDisplay">Nessuno</span></p>
+                    <p class="text-xs text-blue-700 mt-1">Questa recensione sarà salvata permanentemente su <b>Paseo Asset Hub</b>.</p>
+                </div>
+
+                <button id="submitBtn" onclick="handlePostReview()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition flex justify-center items-center">
+                    Pubblica Recensione Verificata
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Logica specifica per la pagina review
+        const params = new URLSearchParams(window.location.search);
+        const businessAddr = params.get('business');
+        const receiptId = params.get('receipt');
+
+        if (businessAddr && receiptId) {
+            document.getElementById('businessDisplay').innerText = "Attività: " + businessAddr;
+            document.getElementById('receiptDisplay').innerText = receiptId;
+        } else {
+            alert("QR Code non valido o mancante di dati!");
+        }
+
+        async function handlePostReview() {
+            const btn = document.getElementById('submitBtn');
+            const rating = document.getElementById('rating').value;
+            const comment = document.getElementById('comment').value;
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = "Invio in corso...";
+                
+                await connectWallet(); // Assicura che il wallet sia connesso
+
+                // Convertiamo il receiptId in bytes32 per il contratto
+                const receiptBytes32 = ethers.id(receiptId);
+                
+                // NOTA: In questa versione semplificata la firma viene simulata 
+                // o gestita dal contratto base. Se il tuo contratto richiede la firma 
+                // passata dal QR, dovresti recuperarla dall'URL come fatto con receiptId.
+                const dummySignature = "0x"; 
+
+                const tx = await contract.postReview(
+                    businessAddr,
+                    rating,
+                    comment, // Qui andrebbe il CID IPFS, per ora passiamo testo piano
+                    receiptBytes32,
+                    dummySignature
+                );
+
+                console.log("Transazione inviata:", tx.hash);
+                alert("Grazie! Recensione inviata con successo. Hash: " + tx.hash);
+                window.location.href = "index.html";
+                
+            } catch (err) {
+                console.error(err);
+                alert("Errore durante l'invio: " + (err.reason || err.message));
+                btn.disabled = false;
+                btn.innerHTML = "Pubblica Recensione Verificata";
+            }
+        }
+    </script>
+</body>
+</html>
