@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Store Profile | Veritas</title>
+    <meta charset="UTF-8"><title>Store Profile V3</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body>
-    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-bold text-blue-600">← Back Home</a><div id="ar" class="text-3xl font-black">0.0</div></nav></div>
+    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-bold text-blue-600">← Home</a><div id="ar" class="text-3xl font-black text-blue-600">0.0</div></nav></div>
 
     <main class="main-content max-w-4xl mx-auto px-6 py-12">
-        <h1 id="sn" class="text-6xl font-black tracking-tighter mb-2">...</h1>
-        <p id="sc" class="text-blue-600 font-bold uppercase text-xs mb-12">...</p>
+        <h1 id="sn" class="text-6xl font-black mb-12 italic tracking-tighter">...</h1>
         <div id="rc" class="space-y-6">Loading verified logs...</div>
     </main>
+    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-30"><div>The White Rabbit</div><div>VERITAS PROTOCOL V3</div></div></footer>
     <script src="app.js"></script>
     <script>
         window.onload = async () => {
@@ -21,17 +21,16 @@
             await connectWallet(true);
             const b = await contract.businesses(id);
             document.getElementById('sn').innerText = b.name;
-            document.getElementById('sc').innerText = b.category;
             
             const filter = contract.filters.ReviewAdded(id);
             const events = await contract.queryFilter(filter, -10000);
             const container = document.getElementById('rc');
-            container.innerHTML = events.length ? "" : "No verified reviews yet.";
+            container.innerHTML = events.length ? "" : "No verified reviews found.";
             
             let sum = 0;
             events.reverse().forEach(ev => {
                 sum += Number(ev.args.rating);
-                container.innerHTML += `<div class="card-veritas"><div class="flex justify-between mb-4"><span class="font-bold text-blue-600">${ev.args.customerName}</span><span class="text-yellow-500">${"★".repeat(ev.args.rating)}</span></div><p class="text-lg opacity-90 leading-relaxed">"${ev.args.content}"</p><div class="mt-4 text-[9px] uppercase font-bold opacity-30">TX: ${ev.transactionHash.slice(0,20)}...</div></div>`;
+                container.innerHTML += `<div class="card-veritas"><div class="flex justify-between mb-4"><span class="font-bold text-blue-600">Verified User</span><span class="text-yellow-500">${"★".repeat(ev.args.rating)}</span></div><p class="text-lg opacity-80">"${ev.args.content}"</p></div>`;
             });
             if(events.length) document.getElementById('ar').innerText = (sum/events.length).toFixed(1);
         };
