@@ -8,6 +8,23 @@ const abi = [
 
 let provider, signer, contract;
 
+// IMMEDIATE DARK MODE CHECK (To avoid flicker)
+(function initTheme() {
+    const isDark = localStorage.getItem('veritas_dark') === 'true';
+    if (isDark) document.documentElement.classList.add('dark-mode');
+})();
+
+window.addEventListener('DOMContentLoaded', () => {
+    const isDark = localStorage.getItem('veritas_dark') === 'true';
+    if (isDark) document.body.classList.add('dark-mode');
+
+    document.getElementById('darkModeToggle')?.addEventListener('click', () => {
+        const isDarkNow = document.body.classList.toggle('dark-mode');
+        document.documentElement.classList.toggle('dark-mode');
+        localStorage.setItem('veritas_dark', isDarkNow);
+    });
+});
+
 async function connectWallet() {
     if (window.ethereum) {
         provider = new ethers.BrowserProvider(window.ethereum);
@@ -18,16 +35,5 @@ async function connectWallet() {
         document.getElementById('connectBtn').innerText = address.slice(0,6) + "..." + address.slice(-4);
         return true;
     }
-    alert("Installa MetaMask!");
     return false;
 }
-
-function initDarkMode() {
-    if (localStorage.getItem('veritas_dark') === 'true') document.body.classList.add('dark-mode');
-    document.getElementById('darkModeToggle')?.addEventListener('click', () => {
-        const isDark = document.body.classList.toggle('dark-mode');
-        localStorage.setItem('veritas_dark', isDark);
-    });
-}
-
-document.addEventListener('DOMContentLoaded', initDarkMode);
