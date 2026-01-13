@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Store Profile | Veritas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="p-4 bg-white border-b border-gray-200 flex justify-between items-center">
+        <a href="index.html" class="text-xl font-medium text-blue-600">Veritas</a>
+        <button id="connectBtn" class="btn-google">Connect Wallet</button>
+    </nav>
+
+    <main class="max-w-4xl mx-auto mt-10 px-6">
+        <div class="bg-white card-google mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+                <h1 id="storeName" class="text-3xl font-normal text-gray-900">Loading Store...</h1>
+                <p id="storeCat" class="text-gray-500 uppercase tracking-widest text-xs mt-1">Category</p>
+                <p id="storeAddr" class="text-gray-400 text-xs mt-2 font-mono">0x...</p>
+            </div>
+            <div class="text-center bg-blue-50 p-6 rounded-xl min-w-[160px]">
+                <div id="avgRating" class="text-4xl font-bold text-blue-600">0.0</div>
+                <div class="text-yellow-400 text-xl">★★★★★</div>
+                <div id="totalReviews" class="text-xs text-blue-800 mt-1 uppercase font-medium">0 Reviews</div>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-medium mb-6 text-gray-800">Verified Experiences</h2>
+        <div id="reviewsContainer" class="space-y-4">
+            <p class="text-gray-400 italic">Scanning Asset Hub for reviews...</p>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const storeId = params.get('id');
+
+        async function loadStoreData() {
+            await connectWallet();
+            
+            try {
+                // 1. Fetch Business Info
+                const biz = await contract.businesses(storeId);
+                if (!biz.isActive) {
+                    document.getElementById('storeName').innerText = "Store Not Found";
+                    return;
+                }
+
+                document.getElementById('storeName').innerText = biz.name;
+                document.getElementById('storeCat').innerText = biz.category;
+                document.getElementById('storeAddr').innerText = storeId;
+                document.getElementById('totalReviews').innerText = `${biz.reviewCount} Reviews`;
+
+                // 2. Fetch Reviews 
+                // Note: If your contract doesn't have a direct 'getReviews' function,
+                // you would normally fetch these via Events or a dedicated getter.
+                // For this MVP, we simulate the fetch logic:
+                renderReviews(storeId);
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderReviews(id) {
+            const container = document.getElementById('reviewsContainer');
+            container.innerHTML = ""; // Clear loader
+
+            // This is a placeholder. In a real Substrate/EVM app, 
+            // you'd query the contract's Review array or an Indexer.
+            const mockReviews = [
+                { author: "0x71C...4a2", rating: 5, comment: "Amazing service! Everything was verified on-chain.", date: "2 mins ago" },
+                { author: "0x32B...91f", rating: 4, comment: "Very good quality, I love the transparency of this store.", date: "1 day ago" }
+            ];
+
+            mockReviews.forEach(rev => {
+                container.innerHTML += `
+                    <div class="card-google hover:shadow-md transition-shadow">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-xs font-mono text-gray-400">${rev.author}</span>
+                            <span class="text-xs text-gray-400">${rev.date}</span>
+                        </div>
+                        <div class="text-yellow-400 mb-2"> ${"★".repeat(rev.rating)}${"☆".repeat(5-rev.rating)}</div>
+                        <p class="text-gray-700 text-sm">${rev.comment}</p>
+                    </div>
+                `;
+            });
+        }
+
+        window.onload = loadStoreData;
+    </script>
+</body>
+</html>
