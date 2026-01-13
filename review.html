@@ -2,89 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Post a Review | Veritas</title>
+    <title>Submit Review | Veritas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-50 min-h-screen">
-    <div class="max-w-lg mx-auto pt-12 px-4 text-center">
-        <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 text-left">
-            <h2 class="text-3xl font-bold mb-2">Verified Review</h2>
-            <p id="businessDisplay" class="text-gray-500 text-sm mb-6 break-all italic italic">Fetching business data...</p>
-
-            <div class="space-y-6">
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Rating</label>
-                    <select id="rating" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="5">⭐⭐⭐⭐⭐ (Excellent)</option>
-                        <option value="4">⭐⭐⭐⭐ (Great)</option>
-                        <option value="3">⭐⭐⭐ (Good)</option>
-                        <option value="2">⭐⭐ (Average)</option>
-                        <option value="1">⭐ (Poor)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Your Experience</label>
-                    <textarea id="comment" rows="4" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Tell us about your visit..."></textarea>
-                </div>
-
-                <div class="p-4 bg-blue-50 rounded-xl">
-                    <p class="text-xs text-blue-700"><b>Receipt ID:</b> <span id="receiptDisplay">None</span></p>
-                    <p class="text-xs text-blue-700 mt-1">This review will be permanently stored on <b>Paseo Asset Hub</b>.</p>
-                </div>
-
-                <button id="submitBtn" onclick="handlePostReview()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition">
-                    Publish Verified Review
-                </button>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+    <div class="max-w-md w-full p-6 bg-white card-google">
+        <h2 class="text-2xl font-normal mb-6">Write a Review</h2>
+        <div class="space-y-4">
+            <div id="infoBox" class="p-3 bg-blue-50 rounded text-xs text-blue-800 break-all mb-4">
+                Loading business details...
             </div>
+            <select id="rating" class="w-full"><option value="5">5 Stars</option><option value="4">4 Stars</option><option value="3">3 Stars</option><option value="2">2 Stars</option><option value="1">1 Star</option></select>
+            <textarea id="comment" placeholder="Your experience..." rows="4" class="w-full"></textarea>
+            <button id="subBtn" onclick="submitReview()" class="btn-google w-full uppercase text-sm font-medium">Submit On-Chain</button>
         </div>
     </div>
 
     <script src="app.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
-        const businessAddr = params.get('business');
-        const receiptId = params.get('receipt');
+        const biz = params.get('business');
+        const receipt = params.get('receipt');
 
-        if (businessAddr && receiptId) {
-            document.getElementById('businessDisplay').innerText = "Store: " + businessAddr;
-            document.getElementById('receiptDisplay').innerText = receiptId;
+        if(biz && receipt) {
+            document.getElementById('infoBox').innerText = `Business: ${biz}\nReceipt: ${receipt}`;
         }
 
-        async function handlePostReview() {
-            const btn = document.getElementById('submitBtn');
-            const rating = document.getElementById('rating').value;
-            const comment = document.getElementById('comment').value;
-
+        async function submitReview() {
             try {
-                btn.disabled = true;
-                btn.innerHTML = "Processing...";
-                
+                const btn = document.getElementById('subBtn');
+                btn.innerText = "Submitting...";
                 await connectWallet();
-
-                const receiptHash = ethers.id(receiptId);
-                const dummySignature = "0x"; // Placeholder for off-chain signature
-
-                const tx = await contract.postReview(
-                    businessAddr,
-                    rating,
-                    comment,
-                    receiptHash,
-                    dummySignature
-                );
-
-                alert("Success! Review published. Transaction: " + tx.hash);
+                const receiptHash = ethers.id(receipt);
+                // Inviando al nuovo contratto 0xe17...
+                const tx = await contract.postReview(biz, document.getElementById('rating').value, document.getElementById('comment').value, receiptHash, "0x");
+                await tx.wait();
+                alert("Review Published!");
                 window.location.href = "index.html";
-                
-            } catch (err) {
-                console.error(err);
-                alert("Error: " + (err.reason || err.message));
-                btn.disabled = false;
-                btn.innerHTML = "Publish Verified Review";
-            }
+            } catch (e) { alert(e.reason || e.message); btn.innerText = "Submit On-Chain"; }
         }
     </script>
 </body>
