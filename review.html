@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Review Verification | Veritas</title>
+    <meta charset="UTF-8"><title>Submit Review | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
@@ -12,34 +11,35 @@
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
             <a href="index.html" class="flex items-center gap-2">
                 <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">V</div>
-                <span class="text-2xl font-bold tracking-tight">Veritas</span>
+                <span class="text-2xl font-bold">Veritas</span>
             </a>
-            <button id="darkModeToggle" class="p-2 rounded-full">🌓</button>
+            <div class="hidden md:flex gap-6 text-sm font-medium opacity-70">
+                <a href="dashboard.html">Merchant Dashboard</a>
+                <a href="review.html" class="text-blue-600 font-bold">Customer Portal</a>
+            </div>
+            <button id="darkModeToggle" class="p-2">🌓</button>
         </nav>
     </div>
 
-    <main class="main-content flex items-center justify-center px-6 py-10">
-        <div id="connectGate" class="card-veritas max-w-md w-full text-center">
+    <main class="main-content flex items-center justify-center px-6 py-20">
+        <div id="connectPrompt" class="card-veritas max-w-md w-full text-center">
             <div class="text-5xl mb-6">🦊</div>
             <h2 class="text-2xl font-bold mb-4">Identity Verification</h2>
-            <p class="text-gray-500 mb-8">To prevent spam and ensure review authenticity, you must connect your wallet before posting.</p>
-            <button onclick="unlockAndCheck()" class="btn-primary w-full py-4">Connect Wallet to Continue</button>
+            <p class="text-gray-500 mb-8">Please connect your wallet to verify your purchase and post a review.</p>
+            <button onclick="handleManualConnect()" class="btn-primary w-full py-4 text-lg">Connect Wallet</button>
         </div>
 
-        <div id="deniedGate" class="hidden card-veritas max-w-md w-full text-center border-red-500">
-            <div class="text-5xl mb-6">⚠️</div>
-            <h2 class="text-2xl font-bold text-red-600 mb-4">Access Denied</h2>
-            <p id="denialReason" class="text-gray-500 mb-8"></p>
-            <a href="index.html" class="btn-outline inline-block w-full">Back to Home</a>
+        <div id="denied" class="hidden card-veritas max-w-md text-center border-red-500">
+            <h2 class="text-2xl font-bold text-red-600 mb-4">Invalid Access</h2>
+            <p id="reason" class="opacity-60 mb-6"></p>
+            <a href="index.html" class="btn-outline inline-block w-full">Return Home</a>
         </div>
 
-        <div id="reviewForm" class="hidden card-veritas max-w-md w-full">
-            <div class="mb-6 border-b border-[var(--border)] pb-4">
-                <span class="text-[10px] font-bold text-green-600 uppercase tracking-widest">Receipt Verified</span>
-                <h2 id="storeName" class="text-2xl font-bold mt-1">Reviewing Store</h2>
-            </div>
+        <div id="form" class="hidden card-veritas max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-2">Verified Review</h2>
+            <p id="bizLabel" class="text-blue-600 font-bold text-sm mb-6"></p>
             
-            <label class="block text-xs font-bold uppercase mb-2 opacity-50">Rating</label>
+            <label class="block text-xs font-bold uppercase mb-2 opacity-50">Score</label>
             <select id="r" class="mb-4">
                 <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
                 <option value="4">⭐⭐⭐⭐ Great</option>
@@ -48,10 +48,10 @@
                 <option value="1">⭐ Terrible</option>
             </select>
 
-            <label class="block text-xs font-bold uppercase mb-2 opacity-50">Your Comment</label>
-            <textarea id="msg" placeholder="Describe your experience..." rows="4" class="mb-6"></textarea>
+            <label class="block text-xs font-bold uppercase mb-2 opacity-50">Your Feedback</label>
+            <textarea id="msg" placeholder="Share your experience..." rows="5" class="mb-6"></textarea>
             
-            <button id="submitBtn" onclick="send()" class="btn-primary w-full py-4 text-lg">Post on Asset Hub</button>
+            <button id="submitBtn" onclick="send()" class="btn-primary w-full py-4">Publish on Asset Hub</button>
         </div>
     </main>
 
@@ -64,82 +64,82 @@
 
     <script src="app.js"></script>
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const businessAddr = params.get('business')?.toLowerCase();
-        const receiptID = params.get('receipt');
+        const p = new URLSearchParams(window.location.search);
+        const bA = p.get('business')?.toLowerCase();
+        const rid = p.get('receipt');
 
-        // Main entry point
+        // Initial load check
         window.onload = async () => {
-            if(!businessAddr || !receiptID) {
-                showDenial("Invalid QR Code. No receipt or business data found.");
-                return;
+            if(!bA || !rid) {
+                return showD("Invalid QR Code. Missing business or receipt data.");
             }
+            
             // Check if already connected
             if (window.ethereum) {
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    unlockAndCheck();
+                const acc = await window.ethereum.request({ method: 'eth_accounts' });
+                if (acc.length > 0) {
+                    processValidation();
                 }
             }
         };
 
-        async function unlockAndCheck() {
-            const connected = await connectWallet();
-            if(!connected) return;
-
-            try {
-                const userAddr = (await signer.getAddress()).toLowerCase();
-                const biz = await contract.businesses(businessAddr);
-                const isUsed = await contract.usedReceipts(ethers.id(receiptID));
-
-                // GATE 1: Store existence
-                if(!biz.isActive) {
-                    showDenial("This business is not registered on the Veritas protocol.");
-                    return;
-                }
-
-                // GATE 2: Anti-Self Review
-                if(userAddr === businessAddr) {
-                    showDenial("Owner Protection: You cannot review your own business.");
-                    return;
-                }
-
-                // GATE 3: One-time Use Receipt
-                if(isUsed) {
-                    showDenial("This receipt has already been used to post a review.");
-                    return;
-                }
-
-                // SUCCESS: Show form, hide gates
-                document.getElementById('connectGate').classList.add('hidden');
-                document.getElementById('deniedGate').classList.add('hidden');
-                document.getElementById('reviewForm').classList.remove('hidden');
-                document.getElementById('storeName').innerText = `Reviewing: ${biz.name}`;
-
-            } catch (err) {
-                console.error(err);
-                showDenial("Blockchain error: " + err.message);
+        // Manual connection trigger
+        async function handleManualConnect() {
+            const success = await connectWallet();
+            if (success) {
+                processValidation();
             }
         }
 
-        function showDenial(reason) {
-            document.getElementById('connectGate').classList.add('hidden');
-            document.getElementById('reviewForm').classList.add('hidden');
-            document.getElementById('deniedGate').classList.remove('hidden');
-            document.getElementById('denialReason').innerText = reason;
+        // The "Security Gate" logic
+        async function processValidation() {
+            try {
+                // Ensure contract is ready
+                if(!contract) await connectWallet();
+                
+                const uA = (await signer.getAddress()).toLowerCase();
+                const b = await contract.businesses(bA);
+                const used = await contract.usedReceipts(ethers.id(rid));
+
+                // Gate 1: Store Existence
+                if(!b.isActive) return showD("This business is not registered on our protocol.");
+                
+                // Gate 2: Anti-Self Review
+                if(uA === bA) return showD("Merchant Protection: You cannot review your own business.");
+                
+                // Gate 3: Double Spending
+                if(used) return showD("This receipt has already been used for a review.");
+
+                // Success
+                document.getElementById('connectPrompt').classList.add('hidden');
+                document.getElementById('denied').classList.add('hidden');
+                document.getElementById('form').classList.remove('hidden');
+                document.getElementById('bizLabel').innerText = `Verified for: ${b.name}`;
+
+            } catch (e) {
+                console.error(e);
+                showD("Blockchain error: " + e.message);
+            }
+        }
+
+        function showD(m) {
+            document.getElementById('connectPrompt').classList.add('hidden');
+            document.getElementById('form').classList.add('hidden');
+            document.getElementById('denied').classList.remove('hidden');
+            document.getElementById('reason').innerText = m;
         }
 
         async function send() {
             const btn = document.getElementById('submitBtn');
             try {
-                btn.innerText = "Processing...";
+                btn.innerText = "Broadcasting...";
                 btn.disabled = true;
-                const tx = await contract.postReview(businessAddr, document.getElementById('r').value, document.getElementById('msg').value, ethers.id(receiptID), "0x");
+                const tx = await contract.postReview(bA, document.getElementById('r').value, document.getElementById('msg').value, ethers.id(rid), "0x");
                 await tx.wait();
-                window.location.href = `store.html?id=${businessAddr}`;
-            } catch (e) {
-                alert(e.message);
-                btn.innerText = "Post on Asset Hub";
+                window.location.href = `store.html?id=${bA}`;
+            } catch (e) { 
+                alert(e.message); 
+                btn.innerText = "Publish on Asset Hub";
                 btn.disabled = false;
             }
         }
