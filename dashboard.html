@@ -1,78 +1,75 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-    <meta charset="UTF-8"><title>Merchant Hub V3 | Veritas</title>
+    <meta charset="UTF-8"><title>Veritas V3.5 | Merchant</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body>
-    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl">VERITAS</a><button id="connectBtn" class="btn-primary text-sm" onclick="handleLogin()">Connect Wallet</button></nav></div>
+<body class="flex flex-col min-h-screen">
+    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl">VERITAS</a><button id="connectBtn" class="btn-primary" onclick="handleLogin()">Login Wallet</button></nav></div>
 
-    <main class="main-content max-w-6xl mx-auto px-6 py-12">
-        <div id="mainContent" class="opacity-20 pointer-events-none transition-all">
-            <div class="grid md:grid-cols-2 gap-12">
-                <div class="card-veritas" id="regCard">
-                    <h2 class="text-2xl font-bold mb-6">Business Registration</h2>
-                    <div id="regForm">
-                        <input id="bizN" type="text" placeholder="Store Name" class="mb-2">
-                        <input id="bizC" type="text" placeholder="Industry" class="mb-4">
-                        <button onclick="register()" class="btn-primary w-full">Activate Store</button>
-                    </div>
-                    <div id="activeProfile" class="hidden text-center py-4">
-                        <h3 id="activeName" class="text-3xl font-black">...</h3>
-                        <p id="activeCat" class="text-blue-600 font-bold uppercase text-xs">...</p>
-                    </div>
+    <main class="main-content max-w-5xl mx-auto px-6 py-12">
+        <div id="dashboardUI" class="grid md:grid-cols-2 gap-10 opacity-20 pointer-events-none transition-all duration-500">
+            <div class="card-veritas">
+                <h2 class="text-xl font-bold mb-4 uppercase tracking-wider">Business Info</h2>
+                <div id="regForm">
+                    <input id="bn" type="text" placeholder="Nome Negozio" class="mb-2">
+                    <input id="bc" type="text" placeholder="Settore" class="mb-4">
+                    <button onclick="registerBiz()" class="btn-primary w-full shadow-lg">Attiva Business</button>
                 </div>
+                <div id="activeInfo" class="hidden py-4 text-center">
+                    <div class="text-4xl mb-2">🏢</div>
+                    <h3 id="storeName" class="text-2xl font-black text-blue-600"></h3>
+                    <p class="text-[10px] font-bold opacity-50 uppercase mt-2">Stato: Registrato On-Chain</p>
+                </div>
+            </div>
 
-                <div class="card-veritas">
-                    <h2 class="text-2xl font-bold mb-4">Issue Digital Receipt</h2>
-                    <p class="text-xs opacity-50 mb-6">This will register a unique ID on-chain for your customer.</p>
-                    <button id="genBtn" onclick="issueAndGen()" class="btn-primary w-full py-4 mb-6">Register & Generate QR</button>
-                    <div id="qrcode" class="flex justify-center p-4 bg-white rounded-xl"></div>
-                    <input id="ridDisplay" type="text" readonly class="mt-4 text-center border-none opacity-40 font-mono text-sm">
-                </div>
+            <div class="card-veritas">
+                <h2 class="text-xl font-bold mb-4 uppercase tracking-wider">Issue Receipt</h2>
+                <p class="text-xs opacity-50 mb-6">Genera un codice univoco e registralo sulla blockchain per il cliente.</p>
+                <button id="gBtn" onclick="issueReceipt()" class="btn-primary w-full py-4 mb-6">REGISTRA & GENERA QR</button>
+                <div id="qrcode" class="flex justify-center p-3 bg-white rounded-2xl"></div>
+                <input id="rid" type="text" readonly class="mt-4 text-center font-mono text-xs border-none opacity-40">
             </div>
         </div>
     </main>
-    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] font-bold opacity-30"><div>VERITAS V3</div></div></footer>
+    <footer class="text-center p-8 opacity-30 text-[9px] font-bold tracking-widest">VERITAS PROTOCOL V3.5 - CHAIN 420420422</footer>
     <script src="app.js"></script>
     <script>
         async function handleLogin() {
             if(await connectWallet()) {
-                document.getElementById('mainContent').classList.remove('opacity-20', 'pointer-events-none');
+                document.getElementById('dashboardUI').classList.remove('opacity-20', 'pointer-events-none');
                 const biz = await contract.businesses(await signer.getAddress());
                 if(biz.isActive) {
                     document.getElementById('regForm').classList.add('hidden');
-                    document.getElementById('activeProfile').classList.remove('hidden');
-                    document.getElementById('activeName').innerText = biz.name;
-                    document.getElementById('activeCat').innerText = biz.category;
+                    document.getElementById('activeInfo').classList.remove('hidden');
+                    document.getElementById('storeName').innerText = biz.name;
                 }
             }
         }
-        async function register() {
-            try {
-                const tx = await contract.registerBusiness(document.getElementById('bizN').value, document.getElementById('bizC').value);
-                await tx.wait(); location.reload();
-            } catch(e) { alert(e.message); }
+        async function registerBiz() {
+            const tx = await contract.registerBusiness(document.getElementById('bn').value, document.getElementById('bc').value);
+            await tx.wait(); location.reload();
         }
-        async function issueAndGen() {
-            const btn = document.getElementById('genBtn');
-            const randomID = "V3-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+        async function issueReceipt() {
+            const btn = document.getElementById('gBtn');
+            const randomID = "V35-" + Math.random().toString(36).substring(2, 10).toUpperCase();
             const hash = ethers.keccak256(ethers.toUtf8Bytes(randomID));
             try {
-                btn.innerText = "Registering on-chain..."; btn.disabled = true;
-                const tx = await contract.issueReceipt(hash, { gasLimit: 200000 });
+                btn.innerText = "Registrazione in corso..."; btn.disabled = true;
+                const tx = await contract.issueReceipt(hash);
                 await tx.wait();
                 
                 const baseUrl = window.location.href.split('dashboard.html')[0];
                 const url = `${baseUrl}review.html?business=${await signer.getAddress()}&receipt=${randomID}`;
                 document.getElementById('qrcode').innerHTML = "";
-                new QRCode(document.getElementById('qrcode'), { text: url, width: 160, height: 160 });
-                document.getElementById('ridDisplay').value = randomID;
-                btn.innerText = "Receipt Registered!";
-            } catch(e) { alert(e.message); btn.innerText = "Register & Generate QR"; btn.disabled = false; }
+                new QRCode(document.getElementById('qrcode'), { text: url, width: 140, height: 140 });
+                document.getElementById('rid').value = randomID;
+                btn.innerText = "REGISTRATO CON SUCCESSO";
+                btn.disabled = false;
+            } catch(e) { alert(e.message); btn.innerText = "REGISTRA & GENERA QR"; btn.disabled = false; }
         }
     </script>
 </body>
