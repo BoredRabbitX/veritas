@@ -34,6 +34,8 @@ async function connectWallet(silent = false) {
             if (btn) btn.innerText = addr.slice(0,6) + "...";
             return true;
         }
-    } catch (e) { console.error("Errore connessione:", e); }
+    } catch (e) { 
+        console.error("Errore connessione:", e); 
+    }
     return false;
 }
