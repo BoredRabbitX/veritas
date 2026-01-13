@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8"><title>Explore Stores | Veritas V3.5</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl">VERITAS</a><button id="connectBtn" class="btn-primary" onclick="connectWallet()">Connetti Wallet</button></nav></div>
+
+    <main class="main-content max-w-5xl mx-auto px-6 py-12">
+        <h1 class="text-5xl font-black mb-2 italic tracking-tighter">Verified Stores</h1>
+        <p class="opacity-50 mb-12 uppercase text-[10px] font-bold tracking-widest">Esplora le attività registrate on-chain</p>
+        
+        <div id="storeGrid" class="grid md:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-20 opacity-20">Scansione blockchain in corso...</div>
+        </div>
+    </main>
+
+    <footer class="text-center p-8 opacity-30 text-[9px] font-bold tracking-widest">VERITAS PROTOCOL V3.5</footer>
+
+    <script src="app.js"></script>
+    <script>
+        window.onload = async () => {
+            const connected = await connectWallet(true);
+            const grid = document.getElementById('storeGrid');
+            
+            try {
+                // Cerchiamo tutti gli eventi di registrazione dall'inizio del contratto
+                const filter = contract.filters.BusinessRegistered();
+                const events = await contract.queryFilter(filter, 0); // Scansione da blocco 0
+                
+                if(events.length === 0) {
+                    grid.innerHTML = "<div class='col-span-full opacity-50'>Nessun negozio trovato.</div>";
+                    return;
+                }
+
+                grid.innerHTML = "";
+                // Usiamo un Set per evitare duplicati se un merchant si è registrato più volte
+                const seen = new Set();
+
+                for(let ev of events.reverse()) {
+                    const addr = ev.args.owner;
+                    if(seen.has(addr)) continue;
+                    seen.add(addr);
+
+                    const biz = await contract.businesses(addr);
+                    if(biz.isActive) {
+                        grid.innerHTML += `
+                            <a href="store.html?id=${addr}" class="card-veritas hover:scale-[1.02] transition-transform">
+                                <div class="text-xs font-bold text-blue-600 mb-2 uppercase">${biz.category}</div>
+                                <h3 class="text-2xl font-black mb-4">${biz.name}</h3>
+                                <div class="text-[10px] opacity-40 font-mono">${addr.slice(0,20)}...</div>
+                                <div class="mt-4 text-blue-600 font-bold text-sm italic">Vedi Recensioni →</div>
+                            </a>`;
+                    }
+                }
+            } catch(e) { 
+                console.error(e);
+                grid.innerHTML = "<div class='col-span-full text-red-500'>Errore durante il caricamento. Assicurati di essere sulla rete corretta.</div>";
+            }
+        };
+    </script>
+</body>
+</html>
