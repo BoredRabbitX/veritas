@@ -21,155 +21,203 @@
         </nav>
     </div>
 
-    <main class="flex-grow max-w-5xl mx-auto px-6 py-12 w-full">
-        <h1 class="text-6xl font-black italic tracking-tighter uppercase mb-12">Merchant Hub</h1>
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+    <div id="loadingOverlay" class="fixed inset-0 bg-black z-50 flex items-center justify-center transition-opacity duration-500">
+        <div class="text-blue-600 font-black animate-pulse tracking-widest uppercase text-xs">Initializing Blockchain...</div>
+    </div>
 
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="space-y-6">
-                <div class="card-veritas border-l-4 border-blue-600">
-                    <h3 class="text-[10px] font-bold uppercase opacity-40 mb-4 tracking-widest">Merchant Profile</h3>
-                    <div id="merchantStatus">
-                        <p class="text-sm italic opacity-50">Connetti il wallet per verificare il tuo status...</p>
-                    </div>
-                </div>
-
-                <div class="card-veritas bg-blue-600/5 border-blue-600/20">
-                    <h3 class="text-[10px] font-bold uppercase opacity-40 mb-4 tracking-widest">Reputation Score</h3>
-                    <div class="flex items-end gap-2">
-                        <span id="merchantStars" class="text-4xl font-black text-blue-600">--</span>
-                        <span class="text-yellow-500 text-xl mb-1">★</span>
-                    </div>
-                    <p class="text-[10px] font-bold opacity-40 uppercase mt-2">Basato su <span id="merchantRevCount">0</span> recensioni on-chain</p>
-                </div>
-            </div>
-
-            <div class="md:col-span-2 space-y-6">
-                <div id="regBox" class="card-veritas hidden">
-                    <h2 class="text-2xl font-black italic mb-6 uppercase">Register Business</h2>
-                    <div class="space-y-4">
-                        <input id="bizName" type="text" placeholder="Nome Attività">
-                        <input id="bizCat" type="text" placeholder="Categoria (es. Ristorante, Tech)">
-                        <button onclick="register()" class="btn-primary w-full py-4">Invia alla Blockchain</button>
-                    </div>
-                </div>
-
-                <div id="receiptBox" class="card-veritas hidden">
-                    <h2 class="text-2xl font-black italic mb-6 uppercase">Issue Receipt</h2>
-                    <p class="text-xs opacity-50 mb-6 uppercase font-bold">Genera un ID univoco per permettere al cliente di recensirti.</p>
-                    <div class="flex gap-4">
-                        <input id="rawReceipt" type="text" placeholder="ID Ordine o Casuale">
-                        <button onclick="issue()" class="btn-primary">Genera</button>
-                    </div>
-                    <div id="receiptResult" class="mt-6 p-4 bg-zinc-900 rounded-xl hidden">
-                        <p class="text-[10px] uppercase font-bold opacity-40 mb-2">Hash Generato (da dare al cliente):</p>
-                        <code id="resHash" class="text-xs text-blue-400 break-all"></code>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 py-10 border-t border-white/5 flex justify-between items-center">
-            <div class="text-[10px] uppercase font-bold opacity-30 tracking-widest">The White Rabbit bored creation</div>
-            <div class="text-[10px] font-black text-blue-600 uppercase">Veritas Protocol V3.5.2</div>
-        </div>
-    </footer>
-
-    <script src="app.js"></script>
-    <script>
-        // Funzione per caricare i dati del merchant
-        async function loadMerchantData() {
-            if (!signer) return;
-            const addr = await signer.getAddress();
+    <div id="dashboardContent" class="hidden opacity-0 transition-opacity duration-700">
+        <div class="grid lg:grid-cols-3 gap-8">
             
+            <div class="space-y-6">
+                <div class="card-veritas bg-gradient-to-br from-blue-600/10 to-transparent border-blue-600/30">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl shadow-lg">🏪</div>
+                        <div>
+                            <h2 id="dispStoreName" class="text-2xl font-black italic uppercase leading-none">Store Name</h2>
+                            <p id="dispStoreCat" class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-1">Category</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4 border-t border-white/5 pt-4">
+                        <div class="flex justify-between items-end">
+                            <span class="text-[9px] font-bold opacity-40 uppercase">Rating Score</span>
+                            <div class="flex items-center gap-2">
+                                <span id="dispAvg" class="text-3xl font-black text-blue-600">--</span>
+                                <span class="text-yellow-500 text-sm">★</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <span class="text-[9px] font-bold opacity-40 uppercase">Verified Reviews</span>
+                            <span id="dispCount" class="text-xl font-black">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-veritas">
+                    <h3 class="text-[9px] font-bold uppercase opacity-30 tracking-widest mb-4">Wallet Identity</h3>
+                    <div id="dispAddr" class="font-mono text-[9px] break-all opacity-60 bg-black/30 p-3 rounded-lg border border-white/5 italic">0x...</div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div id="boxRegister" class="card-veritas hidden">
+                    <h2 class="text-2xl font-black italic uppercase mb-2">Join the Protocol</h2>
+                    <p class="text-xs opacity-50 mb-8 leading-relaxed">Your business is not yet registered on the Paseo AssetHub. Complete the form to start receiving verified on-chain reviews.</p>
+                    <div class="grid md:grid-cols-2 gap-4 mb-6">
+                        <input id="inName" type="text" placeholder="Official Business Name">
+                        <input id="inCat" type="text" placeholder="Industry (e.g. Fashion, Tech)">
+                    </div>
+                    <button onclick="registerBusiness()" class="btn-primary w-full py-4 text-sm tracking-widest">Activate Business Profile</button>
+                </div>
+
+                <div id="boxReceipt" class="card-veritas hidden">
+                    <h2 class="text-2xl font-black italic uppercase mb-6">Issue Receipt QR</h2>
+                    <div class="flex flex-col md:flex-row gap-8">
+                        <div class="flex-grow space-y-6">
+                            <p class="text-xs opacity-60 leading-relaxed italic">Generate a unique ID for your customer. The hash will be stored on-chain to prevent fake reviews.</p>
+                            <div class="space-y-4">
+                                <div class="relative">
+                                    <input id="receiptRaw" type="text" placeholder="Transaction ID or Random String" class="pr-32">
+                                    <button onclick="generateQR()" class="absolute right-2 top-2 bg-blue-600 text-white text-[10px] font-black px-4 py-2 rounded-lg hover:bg-blue-700 transition">GENERATE</button>
+                                </div>
+                                <p class="text-[9px] opacity-30 uppercase font-bold text-center">Important: One receipt = One review</p>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full md:w-48 flex flex-col items-center justify-center bg-white p-4 rounded-2xl shadow-inner min-h-[192px]">
+                            <div id="qrcode" class="opacity-20 flex items-center justify-center text-[10px] text-black font-bold text-center uppercase tracking-tighter">QR Ready<br>to generate</div>
+                            <div id="qrStatus" class="mt-2 text-[8px] text-blue-600 font-black hidden uppercase">Registered On-Chain!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loggedOutContent" class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center text-3xl mb-6 grayscale opacity-50">🔒</div>
+        <h2 class="text-3xl font-black italic mb-4 uppercase">Restricted Access</h2>
+        <p class="opacity-40 max-w-sm mb-12 text-sm italic">You must connect your merchant wallet to manage your profile and issue receipts.</p>
+        <button onclick="connectWallet()" class="btn-primary px-12 py-4">Connect Wallet Now</button>
+    </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+    // Inizializzazione pagina
+    window.addEventListener('load', async () => {
+        // Aspettiamo un attimo per permettere ad app.js di caricare
+        setTimeout(async () => {
+            const connected = await connectWallet(true);
+            updateUI(connected);
+            document.getElementById('loadingOverlay').classList.add('opacity-0', 'pointer-events-none');
+        }, 800);
+    });
+
+    async function updateUI(connected) {
+        const dashboard = document.getElementById('dashboardContent');
+        const loggedOut = document.getElementById('loggedOutContent');
+        
+        if (connected && signer) {
+            dashboard.classList.remove('hidden');
+            setTimeout(() => dashboard.classList.add('opacity-100'), 50);
+            loggedOut.classList.add('hidden');
+            
+            const addr = await signer.getAddress();
+            document.getElementById('dispAddr').innerText = addr;
+            
+            // Carica dati business
             try {
                 const biz = await contract.businesses(addr);
-                const statusDiv = document.getElementById('merchantStatus');
-                
                 if (biz.isActive) {
-                    // Stato Attivo
-                    statusDiv.innerHTML = `
-                        <p class="text-2xl font-black italic uppercase text-white">${biz.name}</p>
-                        <p class="text-blue-600 text-[10px] font-bold uppercase mt-1">${biz.category}</p>
-                        <p class="text-[8px] font-mono opacity-20 mt-4 break-all">${addr}</p>
-                    `;
-                    document.getElementById('receiptBox').classList.remove('hidden');
+                    document.getElementById('boxReceipt').classList.remove('hidden');
+                    document.getElementById('boxRegister').classList.add('hidden');
+                    document.getElementById('dispStoreName').innerText = biz.name;
+                    document.getElementById('dispStoreCat').innerText = biz.category;
                     
-                    // CARICAMENTO STELLE E RECENSIONI
-                    loadReputation(addr);
+                    // Carica reputazione
+                    loadStats(addr);
                 } else {
-                    // Stato Non Registrato
-                    statusDiv.innerHTML = `<p class="text-amber-500 font-bold uppercase text-xs">Merchant non registrato</p>`;
-                    document.getElementById('regBox').classList.remove('hidden');
+                    document.getElementById('boxRegister').classList.remove('hidden');
+                    document.getElementById('boxReceipt').classList.add('hidden');
                 }
-            } catch (e) {
-                console.error(e);
+            } catch(e) { console.error(e); }
+        } else {
+            loggedOut.classList.remove('hidden');
+            dashboard.classList.add('hidden');
+        }
+    }
+
+    async function loadStats(addr) {
+        try {
+            const filter = contract.filters.ReviewAdded(addr);
+            const events = await contract.queryFilter(filter, 0);
+            if (events.length > 0) {
+                let sum = 0;
+                events.forEach(ev => sum += Number(ev.args.rating));
+                document.getElementById('dispAvg').innerText = (sum / events.length).toFixed(1);
+                document.getElementById('dispCount').innerText = events.length;
+            } else {
+                document.getElementById('dispAvg').innerText = "0.0";
             }
+        } catch(e) { console.error("Stats fail", e); }
+    }
+
+    async function registerBusiness() {
+        const name = document.getElementById('inName').value;
+        const cat = document.getElementById('inCat').value;
+        if(!name || !cat) return alert("All fields are required.");
+        try {
+            const tx = await contract.registerBusiness(name, cat);
+            await tx.wait();
+            location.reload();
+        } catch(e) { alert(e.message); }
+    }
+
+    async function generateQR() {
+        const raw = document.getElementById('receiptRaw').value.trim();
+        if(!raw) return alert("Please enter a receipt ID.");
+        
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerText = "SIGNING...";
+
+        try {
+            const hash = ethers.keccak256(ethers.toUtf8Bytes(raw));
+            const tx = await contract.issueReceipt(hash);
+            await tx.wait();
+
+            // Costruiamo URL per review.html
+            const baseUrl = window.location.href.replace('dashboard.html', 'review.html');
+            const addr = await signer.getAddress();
+            const url = `${baseUrl}?business=${addr}&receipt=${encodeURIComponent(raw)}`;
+
+            // Generazione QR
+            const qrBox = document.getElementById('qrcode');
+            qrBox.innerHTML = "";
+            qrBox.classList.remove('opacity-20');
+            new QRCode(qrBox, {
+                text: url,
+                width: 160,
+                height: 160,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('qrStatus').classList.remove('hidden');
+            btn.innerText = "DONE";
+            setTimeout(() => { btn.disabled = false; btn.innerText = "GENERATE"; }, 3000);
+
+        } catch(e) { 
+            console.error(e);
+            alert("Blockchain rejected: Receipt might already exist.");
+            btn.disabled = false;
+            btn.innerText = "GENERATE";
         }
-
-        async function loadReputation(addr) {
-            try {
-                const filter = contract.filters.ReviewAdded(addr);
-                let events = [];
-                try {
-                    events = await contract.queryFilter(filter, 0);
-                } catch(e) {
-                    events = await contract.queryFilter(filter, -10000);
-                }
-
-                if (events.length > 0) {
-                    let sum = 0;
-                    events.forEach(ev => sum += Number(ev.args.rating));
-                    const avg = (sum / events.length).toFixed(1);
-                    document.getElementById('merchantStars').innerText = avg;
-                    document.getElementById('merchantRevCount').innerText = events.length;
-                } else {
-                    document.getElementById('merchantStars').innerText = "0.0";
-                    document.getElementById('merchantRevCount').innerText = "0";
-                }
-            } catch (e) {
-                console.error("Errore reputazione:", e);
-            }
-        }
-
-        // Automatismo per questa pagina specifica
-        window.addEventListener('load', async () => {
-            // Aspetta un secondo che l'autoconnect di app.js finisca
-            setTimeout(async () => {
-                if (typeof signer !== 'undefined' && signer !== null) {
-                    await loadMerchantData();
-                } else if (localStorage.getItem('veritas_autoconnect') === 'true') {
-                    // Se non è ancora connesso ma dovrebbe, forza il check
-                    const ok = await connectWallet(true);
-                    if(ok) await loadMerchantData();
-                }
-            }, 500);
-        });
-
-        async function register() {
-            const name = document.getElementById('bizName').value;
-            const cat = document.getElementById('bizCat').value;
-            if(!name || !cat) return alert("Compila tutto");
-            try {
-                const tx = await contract.registerBusiness(name, cat);
-                await tx.wait();
-                location.reload();
-            } catch(e) { alert(e.message); }
-        }
-
-        async function issue() {
-            const raw = document.getElementById('rawReceipt').value;
-            if(!raw) return alert("Inserisci un ID");
-            try {
-                const hash = ethers.keccak256(ethers.toUtf8Bytes(raw));
-                const tx = await contract.issueReceipt(hash);
-                await tx.wait();
-                document.getElementById('receiptResult').classList.remove('hidden');
-                document.getElementById('resHash').innerText = raw; // Mostriamo il codice raw da dare al cliente
-                alert("Ricevuta registrata sulla blockchain!");
-            } catch(e) { alert(e.message); }
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
