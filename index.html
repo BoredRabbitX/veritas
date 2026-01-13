@@ -1,66 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Veritas | Blockchain Reputation Protocol</title>
+    <meta charset="UTF-8"><title>Veritas | Decentralized Trust</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
+<body>
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/20">V</div>
-                <span class="text-2xl font-bold tracking-tighter">VERITAS</span>
-            </a>
+            <a href="index.html" class="text-2xl font-extrabold tracking-tighter">VERITAS</a>
             <div class="flex items-center gap-6">
-                <div class="hidden md:flex gap-8 text-sm font-semibold opacity-60">
-                    <a href="dashboard.html" class="hover:text-blue-600 transition">Merchant Hub</a>
-                    <a href="review.html" class="hover:text-blue-600 transition">Verify Purchase</a>
-                </div>
-                <button id="darkModeToggle" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition">🌓</button>
-                <button id="connectBtn" class="btn-primary text-sm shadow-md" onclick="connectWallet()">Connect Wallet</button>
+                <a href="dashboard.html" class="text-sm font-semibold opacity-60 hover:opacity-100">Merchant Hub</a>
+                <a href="review.html" class="text-sm font-semibold opacity-60 hover:opacity-100">Consumer Portal</a>
+                <button id="darkModeToggle" class="p-2">🌓</button>
+                <button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect Wallet</button>
             </div>
         </nav>
     </div>
 
-    <main class="main-content">
-        <section class="max-w-7xl mx-auto px-6 pt-24 pb-20 text-center">
-            <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">Powered by Polkadot Paseo</span>
-            <h1 class="text-7xl font-black mb-8 tracking-tighter leading-[0.9]">Truth is <span class="text-blue-600">Immutable.</span></h1>
-            <p class="text-xl text-gray-500 max-w-2xl mx-auto mb-12 leading-relaxed">
-                The first decentralized reputation protocol that eliminates fake reviews using cryptographic receipt verification. 
-            </p>
-            
-            <div class="max-w-2xl mx-auto relative group">
-                <input id="searchAddr" type="text" placeholder="Search a store by wallet address (0x...)" class="w-full px-8 py-5 rounded-2xl border-2 border-gray-100 dark:border-gray-800 focus:border-blue-500 transition-all outline-none shadow-2xl shadow-blue-500/5">
-                <button onclick="window.location.href='store.html?id='+document.getElementById('searchAddr').value" class="absolute right-3 top-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-bold transition-all">Search</button>
-            </div>
-        </section>
+    <main class="main-content flex flex-col items-center justify-center text-center px-6 py-20">
+        <h1 class="text-7xl font-black mb-6 tracking-tighter">Reviews you can <span class="text-blue-600">trust.</span></h1>
+        <p class="text-xl opacity-60 max-w-2xl mb-12 leading-relaxed">The immutable reputation protocol built on Polkadot Paseo. No fake reviews, no censorship, just the truth.</p>
+        
+        <div class="w-full max-w-xl relative mb-24">
+            <input id="searchAddr" type="text" placeholder="Search store address (0x...)" class="py-5 px-8 rounded-2xl shadow-xl border-none ring-1 ring-gray-200">
+            <button onclick="window.location.href='store.html?id='+document.getElementById('searchAddr').value" class="absolute right-3 top-3 btn-primary py-2 px-6">Search</button>
+        </div>
 
-        <section class="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-8 pb-32">
-            <div class="card-veritas p-8 hover:translate-y-[-5px] transition-transform">
-                <div class="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center text-blue-600 mb-6 text-2xl">🛡️</div>
-                <h3 class="text-xl font-bold mb-3">Anti-Fraud Gate</h3>
-                <p class="text-sm opacity-60 leading-relaxed">Every review requires a unique on-chain receipt hash. No receipt, no review. Period.</p>
+        <div class="grid md:grid-cols-2 gap-8 w-full max-w-4xl text-left">
+            <div class="card-veritas bg-blue-600 text-white border-none">
+                <h3 class="text-2xl font-bold mb-2">For Merchants</h3>
+                <p class="opacity-80 mb-6">Register your business and build an unhackable reputation.</p>
+                <a href="dashboard.html" class="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold inline-block">Go to Console</a>
             </div>
-            <div class="card-veritas p-8 hover:translate-y-[-5px] transition-transform">
-                <div class="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center text-green-600 mb-6 text-2xl">⚡</div>
-                <h3 class="text-xl font-bold mb-3">Zero-Deletions</h3>
-                <p class="text-sm opacity-60 leading-relaxed">Reviews are events on the Asset Hub. Neither merchants nor we can delete honest feedback.</p>
+            <div class="card-veritas">
+                <h3 class="text-2xl font-bold mb-2">For Consumers</h3>
+                <p class="opacity-60 mb-6">Verify your purchase and share your honest feedback.</p>
+                <a href="review.html" class="btn-primary inline-block">Write Review</a>
             </div>
-            <div class="card-veritas p-8 hover:translate-y-[-5px] transition-transform">
-                <div class="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 rounded-lg flex items-center justify-center text-purple-600 mb-6 text-2xl">💎</div>
-                <h3 class="text-xl font-bold mb-3">Business Equity</h3>
-                <p class="text-sm opacity-60 leading-relaxed">Build a portable reputation that you own, independent of centralized platforms.</p>
-            </div>
-        </section>
+        </div>
     </main>
 
     <footer>
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold tracking-widest opacity-40">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-30">
             <div>The White Rabbit bored creation</div>
-            <div>Paseo Asset Hub Protocol v1.0</div>
+            <div>Powered by Polkadot paseo testnet</div>
         </div>
     </footer>
     <script src="app.js"></script>
