@@ -39,13 +39,14 @@ The core logic is deployed on the **Paseo Asset Hub (EVM layer)**.
 
 The project is hosted in the `/veritas` directory for easy access via GitHub Pages.
 
-
+```
 /veritas
 ├── index.html       # Entry point: Hero section & Navigation
 ├── dashboard.html   # Business portal: QR Generation logic
 ├── review.html      # User portal: Signature verification & Transaction UI
 ├── app.js           # Ethers.js v6 implementation & ABI Bridge
 └── style.css        # Web3-optimized UI/UX components
+```
 ---
 🛠️ How to Test
 1. Configure your Wallet
