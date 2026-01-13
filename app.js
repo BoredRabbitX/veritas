@@ -14,28 +14,55 @@ const abi = [
 
 let provider, signer, contract;
 
+// Funzione principale di connessione
 async function connectWallet(silent = false) {
-    if (!window.ethereum) return false;
+    if (!window.ethereum) {
+        if(!silent) alert("MetaMask not found!");
+        return false;
+    }
+
     try {
         provider = new ethers.BrowserProvider(window.ethereum, "any");
-        const network = await provider.getNetwork();
         
-        if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
-            if(!silent) alert(`Per favore, connettiti alla rete Paseo (Chain ID: ${EXPECTED_CHAIN_ID})`);
-            return false;
-        }
+        // Se silent è true, proviamo a vedere se siamo già autorizzati
+        const accounts = silent 
+            ? await window.ethereum.request({ method: 'eth_accounts' }) 
+            : await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         if (accounts.length > 0) {
+            const network = await provider.getNetwork();
+            if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
+                if(!silent) alert(`Please switch to Paseo (Chain ID: ${EXPECTED_CHAIN_ID})`);
+                return false;
+            }
+
             signer = await provider.getSigner();
             contract = new ethers.Contract(contractAddress, abi, signer);
+            
             const addr = await signer.getAddress();
             const btn = document.getElementById('connectBtn');
             if (btn) btn.innerText = addr.slice(0,6) + "...";
+            
+            // Salviamo lo stato per le altre pagine
+            localStorage.setItem('veritas_autoconnect', 'true');
             return true;
         }
-    } catch (e) { 
-        console.error("Errore connessione:", e); 
+    } catch (e) {
+        console.error("Connection error:", e);
     }
     return false;
+}
+
+// AUTOMATISMO: Eseguito su OGNI pagina al caricamento
+(async () => {
+    if (localStorage.getItem('veritas_autoconnect') === 'true') {
+        // Proviamo a connetterci silenziosamente
+        await connectWallet(true);
+    }
+})();
+
+// Gestione cambio account o rete
+if (window.ethereum) {
+    window.ethereum.on('accountsChanged', () => location.reload());
+    window.ethereum.on('chainChanged', () => location.reload());
 }
