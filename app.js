@@ -1,10 +1,13 @@
-const contractAddress = "0x5860842523425f8ba94f56eba115492265792935";
+const contractAddress = "0x7ca8b8cddaa0381509961d042c51f52867ccfd05";
 const abi = [
-    "function registerBusiness(string _name, string _category) external",
-    "function postReview(address _business, string _customerName, uint8 _rating, string _content, bytes32 _receiptId) external",
-    "function businesses(address) view returns (string name, string category, bool isActive)",
-    "function usedReceipts(bytes32) view returns (bool)",
-    "event ReviewAdded(address indexed business, address indexed author, string customerName, uint8 rating, string content, uint256 timestamp)"
+	"function registerBusiness(string _name, string _category) external",
+	"function issueReceipt(bytes32 _receiptHash) external",
+	"function postReview(address _business, string _customerName, uint8 _rating, string _content, bytes32 _receiptId) external",
+	"function businesses(address) view returns (string name, string category, bool isActive)",
+	"function usedReceipts(bytes32) view returns (bool)",
+	"function validReceipts(bytes32) view returns (bool)",
+	"event ReviewAdded(address indexed business, address indexed author, uint8 rating, string content)",
+	"event ReceiptIssued(address indexed business, bytes32 indexed receiptHash)"
 ];
 
 let provider, signer, contract;
@@ -21,12 +24,12 @@ async function connectWallet(silent = false) {
             signer = await provider.getSigner();
             contract = new ethers.Contract(contractAddress, abi, signer);
             const addr = await signer.getAddress();
-            localStorage.setItem('veritas_connected', 'true');
             const btn = document.getElementById('connectBtn');
-            if(btn) btn.innerText = addr.slice(0,6) + "..." + addr.slice(-4);
+            if (btn) btn.innerText = addr.slice(0,6) + "..." + addr.slice(-4);
+            localStorage.setItem('veritas_connected', 'true');
             return true;
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Connection failed", e); }
     return false;
 }
 
@@ -36,10 +39,4 @@ window.addEventListener('load', async () => {
         document.body.classList.add('dark-mode');
     }
     if (localStorage.getItem('veritas_connected') === 'true') await connectWallet(true);
-});
-
-document.getElementById('darkModeToggle')?.addEventListener('click', () => {
-    const isDark = document.body.classList.toggle('dark-mode');
-    document.documentElement.classList.toggle('dark-mode');
-    localStorage.setItem('veritas_dark', isDark);
 });
