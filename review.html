@@ -1,55 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Post Review | Veritas</title>
+    <meta charset="UTF-8"><title>Review Portal | Veritas Debug Mode</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        #debugConsole {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 20px;
+            border: 1px solid #333;
+        }
+        .debug-err { color: #ff4444; }
+        .debug-warn { color: #ffaa00; }
+    </style>
 </head>
-<body>
-    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl">VERITAS</a><button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect</button></nav></div>
+<body class="flex flex-col min-h-screen">
+    <div class="nav-container">
+        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
+            <a href="index.html" class="font-black text-2xl tracking-tighter">VERITAS</a>
+            <button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect Wallet</button>
+        </nav>
+    </div>
 
-    <main class="main-content flex items-center justify-center px-6 py-12">
+    <main class="main-content flex flex-col items-center justify-center px-6 py-12">
         <div class="card-veritas max-w-lg w-full">
-            <h2 class="text-3xl font-black mb-8">Submit Review</h2>
-            <div id="setupData" class="space-y-4 mb-8">
+            <h2 class="text-3xl font-black mb-6">Verified Review</h2>
+            
+            <div id="setupData" class="space-y-4 mb-6">
+                <p class="text-[10px] font-bold opacity-50 uppercase tracking-widest">Verification Steps</p>
                 <input id="bizInput" type="text" placeholder="Merchant Wallet (0x...)">
-                <input id="receiptInput" type="text" placeholder="Receipt ID">
-                <button onclick="processValidation()" class="btn-primary w-full">Verify Purchase</button>
+                <input id="receiptInput" type="text" placeholder="Receipt / Order ID">
+                <button onclick="processValidation()" class="btn-primary w-full py-4">Verify On-Chain</button>
             </div>
-            <div id="form" class="hidden space-y-6">
-                <p id="storeName" class="text-blue-600 font-bold"></p>
-                <input id="custName" type="text" placeholder="Your Name">
-                <select id="rating"><option value="5">⭐⭐⭐⭐⭐ Excellent</option><option value="4">⭐⭐⭐⭐ Great</option><option value="3">⭐⭐⭐ Good</option><option value="2">⭐⭐ Poor</option><option value="1">⭐ Terrible</option></select>
-                <textarea id="comment" placeholder="Describe your experience..." rows="4"></textarea>
-                <button id="submitBtn" onclick="send()" class="btn-primary w-full py-4">Publish On-Chain</button>
+
+            <div id="denied" class="hidden p-4 mb-6 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-xl text-sm border border-red-200">
+                <strong>Error:</strong> <span id="reason"></span>
+            </div>
+
+            <div id="reviewForm" class="hidden space-y-4">
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100">
+                    <p class="text-blue-600 font-bold text-sm" id="storeNameDisplay">Store: Loading...</p>
+                </div>
+                <input id="custName" type="text" placeholder="Your Display Name">
+                <select id="ratingSelect">
+                    <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                    <option value="4">⭐⭐⭐⭐ Very Good</option>
+                    <option value="3">⭐⭐⭐ Good</option>
+                    <option value="2">⭐⭐ Fair</option>
+                    <option value="1">⭐ Poor</option>
+                </select>
+                <textarea id="reviewText" placeholder="Write your experience here..." rows="4"></textarea>
+                <button id="submitBtn" onclick="sendReview()" class="btn-primary w-full py-4">Publish Review</button>
+            </div>
+
+            <div id="debugConsole">
+                <div>> Debugger Initialized. System ready.</div>
             </div>
         </div>
     </main>
+
+    <footer>
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-30">
+            <div>The White Rabbit bored creation</div>
+            <div>Paseo Testnet Console v2.1</div>
+        </div>
+    </footer>
+
     <script src="app.js"></script>
     <script>
-        const p = new URLSearchParams(window.location.search);
-        window.onload = () => {
-            if(p.get('business')) document.getElementById('bizInput').value = p.get('business');
-            if(p.get('receipt')) document.getElementById('receiptInput').value = p.get('receipt');
-        };
-        async function processValidation() {
-            const bA = document.getElementById('bizInput').value;
-            if(!contract) await connectWallet();
-            const b = await contract.businesses(bA);
-            if(b.isActive) {
-                document.getElementById('setupData').classList.add('hidden');
-                document.getElementById('form').classList.remove('hidden');
-                document.getElementById('storeName').innerText = "Reviewing: " + b.name;
-            } else { alert("Store not found."); }
+        // --- DEBUGGER CORE ---
+        function logDebug(msg, type = 'info') {
+            const consoleEl = document.getElementById('debugConsole');
+            const entry = document.createElement('div');
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            entry.className = type === 'error' ? 'debug-err' : (type === 'warn' ? 'debug-warn' : '');
+            entry.innerText = `[${time}] ${msg}`;
+            consoleEl.appendChild(entry);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
         }
-        async function send() {
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.innerText = "Confirming...";
+
+        const params = new URLSearchParams(window.location.search);
+        
+        window.onload = async () => {
+            logDebug("Page loaded. Checking URL parameters...");
+            const b = params.get('business');
+            const r = params.get('receipt');
+            if(b) { document.getElementById('bizInput').value = b; logDebug("Merchant address found in URL."); }
+            if(r) { document.getElementById('receiptInput').value = r; logDebug("Receipt ID found in URL."); }
+            
+            if(b && r && localStorage.getItem('veritas_connected')) {
+                logDebug("Auto-validating parameters...");
+                setTimeout(processValidation, 1000);
+            }
+        };
+
+        async function processValidation() {
+            const bizAddr = document.getElementById('bizInput').value.trim();
+            const receiptID = document.getElementById('receiptInput').value.trim();
+            logDebug(`Starting validation for: ${bizAddr.slice(0,10)}...`);
+
             try {
-                const tx = await contract.postReview(document.getElementById('bizInput').value, document.getElementById('custName').value || "Anonymous", document.getElementById('rating').value, document.getElementById('comment').value, ethers.id(document.getElementById('receiptInput').value));
-                await tx.wait(); window.location.href = `store.html?id=${document.getElementById('bizInput').value}`;
-            } catch (e) { alert(e.message); btn.disabled = false; btn.innerText = "Publish On-Chain"; }
+                if(!window.ethereum) throw new Error("MetaMask not detected.");
+                if(!contract) {
+                    logDebug("Contract not initialized. Attempting connection...", "warn");
+                    await connectWallet();
+                }
+
+                const userAddr = (await signer.getAddress()).toLowerCase();
+                logDebug(`User Address: ${userAddr.slice(0,10)}...`);
+
+                const bizData = await contract.businesses(bizAddr);
+                logDebug(`Business Active State: ${bizData.isActive}`);
+
+                if(!bizData.isActive) throw new Error("Store is not registered on-chain.");
+                if(userAddr === bizAddr.toLowerCase()) throw new Error("Self-review blocked (Merchant = User).");
+
+                const receiptHash = ethers.id(receiptID);
+                const isUsed = await contract.usedReceipts(receiptHash);
+                logDebug(`Receipt Usage Status: ${isUsed}`);
+
+                if(isUsed) throw new Error("This receipt has already been used.");
+
+                // SUCCESS
+                document.getElementById('denied').classList.add('hidden');
+                document.getElementById('setupData').classList.add('hidden');
+                document.getElementById('reviewForm').classList.remove('hidden');
+                document.getElementById('storeNameDisplay').innerText = "Reviewing: " + bizData.name;
+                logDebug("Security gates passed. Form unlocked.", "info");
+
+            } catch (e) {
+                logDebug(e.message, "error");
+                document.getElementById('denied').classList.remove('hidden');
+                document.getElementById('reason').innerText = e.message;
+            }
+        }
+
+        async function sendReview() {
+            const btn = document.getElementById('submitBtn');
+            const bizAddr = document.getElementById('bizInput').value.trim();
+            const receiptID = document.getElementById('receiptInput').value.trim();
+            const name = document.getElementById('custName').value.trim() || "Anonymous";
+            const comment = document.getElementById('reviewText').value.trim();
+            const rating = document.getElementById('ratingSelect').value;
+
+            logDebug("Initializing blockchain broadcast...");
+
+            try {
+                btn.innerText = "Check Wallet...";
+                btn.disabled = true;
+
+                const receiptHash = ethers.id(receiptID);
+                logDebug(`Hashing receipt ${receiptID} -> ${receiptHash.slice(0,10)}...`);
+
+                // GAS ESTIMATION TEST
+                logDebug("Estimating gas...", "warn");
+                const tx = await contract.postReview(bizAddr, name, rating, comment, receiptHash);
+                
+                logDebug("Transaction sent! Waiting for block confirmation...", "warn");
+                await tx.wait();
+                
+                logDebug("Success! Redirecting to profile...", "info");
+                window.location.href = `store.html?id=${bizAddr}`;
+
+            } catch (e) {
+                console.error(e);
+                const errMsg = e.reason || e.message;
+                logDebug(`FAILED: ${errMsg.slice(0,100)}...`, "error");
+                alert("Blockchain Error: " + errMsg);
+                btn.innerText = "Publish Review";
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
