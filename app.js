@@ -21,7 +21,7 @@ async function connectWallet(silent = false) {
         const network = await provider.getNetwork();
         
         if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
-            if(!silent) alert(`Please switch to Paseo Network (ID: ${EXPECTED_CHAIN_ID})`);
+            if(!silent) alert(`Switch to Paseo (ID: ${EXPECTED_CHAIN_ID})`);
             return false;
         }
 
