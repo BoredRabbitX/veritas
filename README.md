@@ -25,26 +25,6 @@
 * **Styling:** Custom "Cyber-Pro" CSS (Glassmorphism)
 * **Provider:** MetaMask / Injected Web3
 
-
-
----
-
-## 📦 Installation & Setup
-
-1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/your-username/veritas-protocol.git](https://github.com/your-username/veritas-protocol.git)
-    ```
-2.  **Configure the Contract:**
-    The protocol points to the official V3.5 contract. Check `app.js` for the address:
-    `0x7ca8b8cDdaa0381509961d042C51F52867cCfD05`
-3.  **Network Setup:**
-    Ensure your MetaMask is connected to **Paseo AssetHub**:
-    * **Network Name:** Paseo AssetHub
-    * **RPC URL:** `https://testnet-passet-hub-eth-rpc.polkadot.io`
-    * **Chain ID:** `420420422`
-    * **Symbol:** `PAS`
-
 ---
 
 ## 🗺 Roadmap 2026
