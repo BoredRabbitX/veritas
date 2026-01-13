@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Store Details | Veritas</title>
@@ -8,16 +8,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
-
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
             <a href="index.html" class="font-black text-2xl italic tracking-tighter">VERITAS</a>
             <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
-                <a href="explore.html" class="opacity-60 hover:opacity-100">Explore</a>
-                <a href="review.html" class="opacity-60 hover:opacity-100">Submit Review</a>
-                <a href="dashboard.html" class="opacity-60 hover:opacity-100">Merchant Hub</a>
+                <a href="explore.html">Explore</a>
+                <a href="review.html">Submit Review</a>
+                <a href="dashboard.html">Merchant Hub</a>
             </div>
-            <button id="connectBtn" class="btn-primary text-xs" onclick="connectWallet()">Connect</button>
+            <button id="connectBtn" class="btn-primary" onclick="connectWallet()">Connect</button>
         </nav>
     </div>
 
@@ -25,33 +24,31 @@
         <div class="card-veritas mb-12 border-b-4 border-blue-600">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <span id="storeCat" class="text-blue-600 font-bold text-[10px] uppercase tracking-widest">Categoria</span>
-                    <h1 id="storeName" class="text-6xl font-black italic tracking-tighter uppercase mt-2">Caricamento...</h1>
+                    <span id="storeCat" class="text-blue-600 font-bold text-[10px] uppercase tracking-widest">Category</span>
+                    <h1 id="storeName" class="text-6xl font-black italic tracking-tighter uppercase mt-2">Loading...</h1>
                     <p id="storeAddr" class="font-mono text-[10px] opacity-30 mt-2 break-all"></p>
                 </div>
                 <div class="flex gap-4">
                     <div class="bg-zinc-900 p-6 rounded-2xl text-center min-w-[120px] border border-white/5">
                         <div id="avgRate" class="text-4xl font-black text-blue-600">0.0</div>
-                        <div class="text-[8px] uppercase font-bold opacity-40 mt-1">Rating Media</div>
+                        <div class="text-[8px] uppercase font-bold opacity-40 mt-1">Average Rating</div>
                     </div>
                     <div class="bg-zinc-900 p-6 rounded-2xl text-center min-w-[120px] border border-white/5">
                         <div id="totalRev" class="text-4xl font-black text-white">0</div>
-                        <div class="text-[8px] uppercase font-bold opacity-40 mt-1">Recensioni</div>
+                        <div class="text-[8px] uppercase font-bold opacity-40 mt-1">Reviews</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <h2 class="text-sm font-bold mb-8 uppercase tracking-widest opacity-40 italic">Verified Feedback Stream</h2>
-        <div id="reviewsList" class="space-y-4 text-center py-10 opacity-30 italic">
-            Sincronizzazione con la blockchain...
-        </div>
+        <div id="reviewsList" class="space-y-4">Scanning blockchain logs...</div>
     </main>
 
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 py-10 flex flex-col md:flex-row justify-between items-center border-t border-white/5 gap-4">
-            <div class="text-[10px] uppercase font-bold opacity-30 tracking-[0.3em]">The White Rabbit bored creation</div>
-            <div class="text-[10px] font-black text-blue-600 tracking-widest uppercase">Veritas Protocol V3.5.2</div>
+    <footer class="py-10 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center opacity-30 text-[10px] font-bold">
+            <div>THE WHITE RABBIT BORED CREATION</div>
+            <div>VERITAS PROTOCOL V3.5.2</div>
         </div>
     </footer>
 
@@ -59,33 +56,29 @@
     <script>
         window.onload = async () => {
             const id = new URLSearchParams(window.location.search).get('id');
-            if(!id) { window.location.href = 'explore.html'; return; }
+            if(!id) return;
             document.getElementById('storeAddr').innerText = id;
-
             if(!await connectWallet(true)) {
-                document.getElementById('reviewsList').innerHTML = "Connetti il wallet per visualizzare i dati.";
+                document.getElementById('reviewsList').innerHTML = "Connect wallet to see logs.";
                 return;
             }
 
             try {
-                // Info Business
                 const biz = await contract.businesses(id);
                 document.getElementById('storeName').innerText = biz.name;
                 document.getElementById('storeCat').innerText = biz.category;
 
-                // Recupero Eventi con Fallback
                 const filter = contract.filters.ReviewAdded(id);
                 let events = [];
                 try {
                     events = await contract.queryFilter(filter, 0);
                 } catch(e) {
-                    console.warn("Scan completo fallito, provo ultimi 10k blocchi...");
-                    events = await contract.queryFilter(filter, -10000);
+                    events = await contract.queryFilter(filter, -10000); // Fallback to last 10k blocks
                 }
 
                 const list = document.getElementById('reviewsList');
                 if(events.length === 0) {
-                    list.innerHTML = "Nessuna recensione trovata per questo store.";
+                    list.innerHTML = "No reviews found.";
                     return;
                 }
 
@@ -95,21 +88,18 @@
                     const r = Number(ev.args.rating);
                     sum += r;
                     list.innerHTML += `
-                        <div class="card-veritas text-left border-l-2 border-blue-600/30">
-                            <div class="flex justify-between mb-4">
+                        <div class="card-veritas text-left">
+                            <div class="flex justify-between mb-2">
                                 <span class="text-[9px] font-mono opacity-30">${ev.args.author.slice(0,20)}...</span>
                                 <span class="text-yellow-500 font-bold">${"★".repeat(r)}</span>
                             </div>
                             <p class="text-xl italic opacity-90 leading-relaxed font-medium">"${ev.args.content}"</p>
                         </div>`;
                 });
-
                 document.getElementById('avgRate').innerText = (sum / events.length).toFixed(1);
                 document.getElementById('totalRev').innerText = events.length;
-
             } catch(e) { 
-                console.error(e);
-                document.getElementById('reviewsList').innerHTML = "<span class='text-red-500'>Errore durante il caricamento dei log. Verifica la rete Paseo.</span>";
+                document.getElementById('reviewsList').innerHTML = "<span class='text-red-500'>Error loading logs. Check network connection.</span>";
             }
         };
     </script>
