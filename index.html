@@ -1,51 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Veritas | Decentralized Trust</title>
+    <meta charset="UTF-8"><title>Veritas V3 | Home</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body>
+<body class="flex flex-col min-h-screen">
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-extrabold tracking-tighter">VERITAS</a>
+            <a href="index.html" class="flex items-center gap-2"><div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">V</div><span class="text-2xl font-black">VERITAS</span></a>
             <div class="flex items-center gap-6">
-                <a href="dashboard.html" class="text-sm font-semibold opacity-60 hover:opacity-100">Merchant Hub</a>
-                <a href="review.html" class="text-sm font-semibold opacity-60 hover:opacity-100">Consumer Portal</a>
-                <button id="darkModeToggle" class="p-2">🌓</button>
+                <a href="dashboard.html" class="text-sm font-bold opacity-60">Merchant</a>
+                <a href="review.html" class="text-sm font-bold opacity-60">Customer</a>
                 <button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect Wallet</button>
             </div>
         </nav>
     </div>
 
     <main class="main-content flex flex-col items-center justify-center text-center px-6 py-20">
-        <h1 class="text-7xl font-black mb-6 tracking-tighter">Reviews you can <span class="text-blue-600">trust.</span></h1>
-        <p class="text-xl opacity-60 max-w-2xl mb-12 leading-relaxed">The immutable reputation protocol built on Polkadot Paseo. No fake reviews, no censorship, just the truth.</p>
-        
+        <h1 class="text-7xl font-black mb-6 tracking-tighter">On-chain <span class="text-blue-600">Proof of Review.</span></h1>
+        <p class="text-xl opacity-60 max-w-2xl mb-12">Every feedback is backed by a merchant-issued cryptographic receipt.</p>
         <div class="w-full max-w-xl relative mb-24">
-            <input id="searchAddr" type="text" placeholder="Search store address (0x...)" class="py-5 px-8 rounded-2xl shadow-xl border-none ring-1 ring-gray-200">
+            <input id="searchAddr" type="text" placeholder="Search store address (0x...)" class="py-5 px-8 rounded-2xl shadow-xl">
             <button onclick="window.location.href='store.html?id='+document.getElementById('searchAddr').value" class="absolute right-3 top-3 btn-primary py-2 px-6">Search</button>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-8 w-full max-w-4xl text-left">
-            <div class="card-veritas bg-blue-600 text-white border-none">
-                <h3 class="text-2xl font-bold mb-2">For Merchants</h3>
-                <p class="opacity-80 mb-6">Register your business and build an unhackable reputation.</p>
-                <a href="dashboard.html" class="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold inline-block">Go to Console</a>
-            </div>
-            <div class="card-veritas">
-                <h3 class="text-2xl font-bold mb-2">For Consumers</h3>
-                <p class="opacity-60 mb-6">Verify your purchase and share your honest feedback.</p>
-                <a href="review.html" class="btn-primary inline-block">Write Review</a>
-            </div>
         </div>
     </main>
 
     <footer>
         <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-30">
             <div>The White Rabbit bored creation</div>
-            <div>Powered by Polkadot paseo testnet</div>
+            <div>VERITAS PROTOCOL V3</div>
         </div>
     </footer>
     <script src="app.js"></script>
