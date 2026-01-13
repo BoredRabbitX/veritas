@@ -9,46 +9,22 @@
 <body>
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">V</div>
-                <span class="text-2xl font-bold">Veritas</span>
-            </a>
+            <a href="index.html" class="flex items-center gap-2"><div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">V</div><span class="text-2xl font-bold">Veritas</span></a>
             <div class="flex items-center gap-6">
-                <a href="dashboard.html" class="text-sm font-medium opacity-70 hover:opacity-100">Merchant</a>
-                <a href="review.html" class="text-sm font-medium opacity-70 hover:opacity-100">Customer</a>
-                <button id="darkModeToggle" class="p-2">🌓</button>
+                <a href="dashboard.html" class="text-sm font-medium opacity-70">Merchant</a>
+                <a href="review.html" class="text-sm font-medium opacity-70">Customer</a>
+                <button id="darkModeToggle">🌓</button>
                 <button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect Wallet</button>
             </div>
         </nav>
     </div>
-
     <main class="main-content max-w-7xl mx-auto px-6 py-20 text-center">
         <h1 class="text-6xl font-black mb-6">Verified Reviews. <br><span class="text-blue-600">On-Chain.</span></h1>
-        <p class="text-xl text-gray-500 max-w-2xl mx-auto mb-12">Combat fake feedback with receipt-verified reviews on Polkadot Asset Hub.</p>
         <div class="max-w-xl mx-auto relative mb-20">
-            <input id="searchAddr" type="text" placeholder="Enter store wallet address (0x...)">
+            <input id="searchAddr" type="text" placeholder="Enter store address (0x...)">
             <button onclick="window.location.href='store.html?id='+document.getElementById('searchAddr').value" class="absolute right-2 top-2 bg-blue-600 text-white p-2 px-6 rounded-lg">Search</button>
         </div>
-        <div class="grid md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto">
-            <div class="card-veritas">
-                <h3 class="text-2xl font-bold mb-2">Businesses</h3>
-                <p class="opacity-60 mb-6">Register your brand and manage verified reputation.</p>
-                <a href="dashboard.html" class="btn-outline block text-center">Manage Store</a>
-            </div>
-            <div class="card-veritas">
-                <h3 class="text-2xl font-bold mb-2">Customers</h3>
-                <p class="opacity-60 mb-6">Scan a receipt or enter a code to review your experience.</p>
-                <a href="review.html" class="btn-primary block text-center">Write a Review</a>
-            </div>
-        </div>
     </main>
-
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-50">
-            <div>The White Rabbit bored creation</div>
-            <div>Powered by Polkadot paseo testnet</div>
-        </div>
-    </footer>
     <script src="app.js"></script>
 </body>
 </html>
