@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Store Profile | Veritas</title>
+    <meta charset="UTF-8"><title>Store | Veritas</title>
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
@@ -17,9 +17,10 @@
             <div id="avg" class="text-3xl font-black text-blue-600">0.0</div>
         </nav>
     </div>
-    <main class="max-w-4xl mx-auto px-6 py-12">
+    <main class="flex-grow max-w-4xl mx-auto px-6 py-12 w-full">
         <h1 id="sn" class="text-6xl font-black italic tracking-tighter uppercase mb-2">Loading...</h1>
         <p id="sa" class="font-mono text-[10px] opacity-30 mb-12"></p>
+        <h2 class="text-xl font-bold mb-6 border-b border-white/10 pb-2 uppercase tracking-widest opacity-40 italic">Verified Feed</h2>
         <div id="list" class="space-y-4"></div>
     </main>
     <script src="app.js"></script>
@@ -30,11 +31,13 @@
             await connectWallet(true);
             const b = await contract.businesses(id); document.getElementById('sn').innerText = b.name;
             const ev = await contract.queryFilter(contract.filters.ReviewAdded(id), 0);
-            const list = document.getElementById('list'); list.innerHTML = ev.length ? "" : "No reviews yet.";
+            const list = document.getElementById('list'); list.innerHTML = ev.length ? "" : "<div class='opacity-20 italic py-10'>No reviews yet for this merchant.</div>";
             let sum = 0;
             ev.reverse().forEach(e => {
                 sum += Number(e.args.rating);
-                list.innerHTML += `<div class="card-veritas"><div class="flex justify-between mb-4"><span class="text-[9px] opacity-30 font-mono">${e.args.author}</span><span class="text-yellow-500 font-bold">${"★".repeat(e.args.rating)}</span></div><p class="text-xl italic">"${e.args.content}"</p></div>`;
+                list.innerHTML += `<div class="card-veritas border-l-2 border-blue-600">
+                    <div class="flex justify-between mb-4"><span class="text-[9px] opacity-30 font-mono tracking-tighter uppercase">Verified Reviewer ${e.args.author.slice(0,10)}...</span><span class="text-yellow-500 font-bold">${"★".repeat(e.args.rating)}</span></div>
+                    <p class="text-xl italic opacity-90 leading-relaxed">"${e.args.content}"</p></div>`;
             });
             if(ev.length) document.getElementById('avg').innerText = (sum/ev.length).toFixed(1);
         };
