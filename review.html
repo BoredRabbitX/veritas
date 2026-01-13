@@ -1,19 +1,37 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Lascia Recensione</title>
+    <meta charset="UTF-8">
+    <title>Verified Review | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex items-center justify-center min-h-screen">
-    <div id="container" class="card-google max-w-md w-full mx-4">
-        <h2 class="text-xl font-bold mb-4">Verifica la tua esperienza</h2>
-        <div id="storeInfo" class="mb-4 text-sm text-blue-600 italic">Verifica negozio in corso...</div>
-        <select id="r" class="mb-4"><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
-        <textarea id="msg" placeholder="Com'è stata la tua esperienza?" class="mb-4"></textarea>
-        <button id="btn" onclick="send()" class="btn-google w-full">Pubblica on-chain</button>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="container" class="card-veritas max-w-lg w-full">
+        <div class="mb-8 border-b border-[var(--border)] pb-6">
+            <h2 class="text-3xl font-bold mb-2">Verify Experience</h2>
+            <p id="storeInfo" class="text-blue-500 font-medium">Validating business credentials...</p>
+        </div>
+
+        <div id="formBody">
+            <label class="block text-sm font-semibold mb-2">Service Rating</label>
+            <select id="r" class="mb-6 block w-full">
+                <option value="5">⭐⭐⭐⭐⭐ (Exceptional)</option>
+                <option value="4">⭐⭐⭐⭐ (Great)</option>
+                <option value="3">⭐⭐⭐ (Average)</option>
+                <option value="2">⭐⭐ (Needs Improvement)</option>
+                <option value="1">⭐ (Poor)</option>
+            </select>
+
+            <label class="block text-sm font-semibold mb-2">Your Feedback</label>
+            <textarea id="msg" placeholder="Tell the world about your experience..." rows="5" class="mb-8"></textarea>
+            
+            <button id="btn" onclick="send()" class="btn-primary w-full text-lg py-4">Publish to Blockchain</button>
+            <p class="text-center text-[10px] text-gray-400 mt-4 uppercase tracking-tighter">Powered by Paseo Asset Hub • No deletion possible</p>
+        </div>
     </div>
+
     <script src="app.js"></script>
     <script>
         const p = new URLSearchParams(window.location.search);
@@ -24,17 +42,29 @@
             await connectWallet();
             const b = await contract.businesses(bAddr);
             if(!b.isActive) {
-                document.getElementById('container').innerHTML = "<h1 class='text-red-500'>Store non valido</h1>";
+                document.getElementById('container').innerHTML = `
+                    <div class="text-center py-10">
+                        <h1 class="text-red-500 font-bold text-2xl">Unauthorized Store</h1>
+                        <p class="mt-4 opacity-70">This QR code points to a business not registered on our protocol.</p>
+                        <a href="index.html" class="btn-outline inline-block mt-8">Back Home</a>
+                    </div>`;
             } else {
-                document.getElementById('storeInfo').innerText = `Recensione per: ${b.name}`;
+                document.getElementById('storeInfo').innerText = `Reviewing: ${b.name}`;
             }
         };
 
         async function send() {
-            const hash = ethers.id(rid);
-            const tx = await contract.postReview(bAddr, document.getElementById('r').value, document.getElementById('msg').value, hash, "0x");
-            await tx.wait();
-            alert("Fatto!"); window.location.href = `store.html?id=${bAddr}`;
+            const btn = document.getElementById('btn');
+            btn.innerText = "Broadcasting...";
+            try {
+                const hash = ethers.id(rid);
+                const tx = await contract.postReview(bAddr, document.getElementById('r').value, document.getElementById('msg').value, hash, "0x");
+                await tx.wait();
+                window.location.href = `store.html?id=${bAddr}`;
+            } catch (e) { 
+                alert(e.message); 
+                btn.innerText = "Publish to Blockchain";
+            }
         }
     </script>
 </body>
