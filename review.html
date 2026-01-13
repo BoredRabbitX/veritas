@@ -1,23 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Submit Review | Veritas</title>
+    <meta charset="UTF-8"><title>Submit Review | Veritas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+<body class="flex items-center justify-center min-h-screen">
     <div class="max-w-md w-full p-6 bg-white card-google">
-        <h2 class="text-2xl font-normal mb-6">Write a Review</h2>
-        <div class="space-y-4">
-            <div id="infoBox" class="p-3 bg-blue-50 rounded text-xs text-blue-800 break-all mb-4">
-                Loading business details...
-            </div>
-            <select id="rating" class="w-full"><option value="5">5 Stars</option><option value="4">4 Stars</option><option value="3">3 Stars</option><option value="2">2 Stars</option><option value="1">1 Star</option></select>
-            <textarea id="comment" placeholder="Your experience..." rows="4" class="w-full"></textarea>
-            <button id="subBtn" onclick="submitReview()" class="btn-google w-full uppercase text-sm font-medium">Submit On-Chain</button>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-normal tracking-tight">Post Review</h2>
+            <button id="darkModeToggle" class="text-sm">🌓</button>
         </div>
+        <div id="infoBox" class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded text-[10px] text-blue-800 dark:text-blue-300 break-all mb-4 italic">
+            Fetching transaction details...
+        </div>
+        <select id="rating" class="w-full mb-4">
+            <option value="5">5 Stars (Excellent)</option>
+            <option value="4">4 Stars (Good)</option>
+            <option value="3">3 Stars (Average)</option>
+            <option value="2">2 Stars (Poor)</option>
+            <option value="1">1 Star (Very Poor)</option>
+        </select>
+        <textarea id="comment" placeholder="Describe your experience..." rows="4" class="w-full mb-4"></textarea>
+        <button id="subBtn" onclick="submitReview()" class="btn-google w-full uppercase text-sm font-medium">Submit to Blockchain</button>
     </div>
 
     <script src="app.js"></script>
@@ -27,21 +33,21 @@
         const receipt = params.get('receipt');
 
         if(biz && receipt) {
-            document.getElementById('infoBox').innerText = `Business: ${biz}\nReceipt: ${receipt}`;
+            document.getElementById('infoBox').innerText = `Business: ${biz}\nReceipt ID: ${receipt}`;
         }
 
         async function submitReview() {
             try {
                 const btn = document.getElementById('subBtn');
-                btn.innerText = "Submitting...";
+                btn.innerText = "Processing...";
                 await connectWallet();
                 const receiptHash = ethers.id(receipt);
-                // Inviando al nuovo contratto 0xe17...
+                // Il contratto 0x4cb4f... non usa la firma on-chain, passiamo 0x
                 const tx = await contract.postReview(biz, document.getElementById('rating').value, document.getElementById('comment').value, receiptHash, "0x");
                 await tx.wait();
-                alert("Review Published!");
-                window.location.href = "index.html";
-            } catch (e) { alert(e.reason || e.message); btn.innerText = "Submit On-Chain"; }
+                alert("Review Published Successfully!");
+                window.location.href = `store.html?id=${biz}`;
+            } catch (e) { alert(e.reason || e.message); btn.innerText = "Submit to Blockchain"; }
         }
     </script>
 </body>
