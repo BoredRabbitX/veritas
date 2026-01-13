@@ -31,8 +31,7 @@
 
         <div id="denied" class="hidden card-veritas max-w-md text-center border-red-500">
             <h2 class="text-2xl font-bold text-red-600 mb-4">Invalid Access</h2>
-            <p id="reason" class="opacity-60 mb-6"></p>
-            <a href="index.html" class="btn-outline inline-block w-full">Return Home</a>
+            <p id="reason" class="opacity-60 mb-6"></p> <a href="index.html" class="btn-outline inline-block w-full">Return Home</a>
         </div>
 
         <div id="form" class="hidden card-veritas max-w-md w-full">
@@ -68,13 +67,10 @@
         const bA = p.get('business')?.toLowerCase();
         const rid = p.get('receipt');
 
-        // Initial load check
         window.onload = async () => {
             if(!bA || !rid) {
                 return showD("Invalid QR Code. Missing business or receipt data.");
             }
-            
-            // Check if already connected
             if (window.ethereum) {
                 const acc = await window.ethereum.request({ method: 'eth_accounts' });
                 if (acc.length > 0) {
@@ -83,50 +79,44 @@
             }
         };
 
-        // Manual connection trigger
         async function handleManualConnect() {
             const success = await connectWallet();
-            if (success) {
-                processValidation();
-            }
+            if (success) processValidation();
         }
 
-        // The "Security Gate" logic
         async function processValidation() {
             try {
-                // Ensure contract is ready
                 if(!contract) await connectWallet();
-                
                 const uA = (await signer.getAddress()).toLowerCase();
                 const b = await contract.businesses(bA);
                 const used = await contract.usedReceipts(ethers.id(rid));
 
-                // Gate 1: Store Existence
-                if(!b.isActive) return showD("This business is not registered on our protocol.");
-                
-                // Gate 2: Anti-Self Review
-                if(uA === bA) return showD("Merchant Protection: You cannot review your own business.");
-                
-                // Gate 3: Double Spending
-                if(used) return showD("This receipt has already been used for a review.");
+                if(!b.isActive) return showD("Business not registered.");
+                if(uA === bA) return showD("Owners cannot review themselves.");
+                if(used) return showD("Receipt already used.");
 
-                // Success
                 document.getElementById('connectPrompt').classList.add('hidden');
                 document.getElementById('denied').classList.add('hidden');
                 document.getElementById('form').classList.remove('hidden');
                 document.getElementById('bizLabel').innerText = `Verified for: ${b.name}`;
-
             } catch (e) {
-                console.error(e);
                 showD("Blockchain error: " + e.message);
             }
         }
 
+        // FUNZIONE CORRETTA: Gli ID 'denied' e 'reason' ora corrispondono all'HTML
         function showD(m) {
-            document.getElementById('connectPrompt').classList.add('hidden');
-            document.getElementById('form').classList.add('hidden');
-            document.getElementById('denied').classList.remove('hidden');
-            document.getElementById('reason').innerText = m;
+            const deniedEl = document.getElementById('denied');
+            const reasonEl = document.getElementById('reason');
+            
+            if (deniedEl && reasonEl) {
+                document.getElementById('connectPrompt').classList.add('hidden');
+                document.getElementById('form').classList.add('hidden');
+                deniedEl.classList.remove('hidden');
+                reasonEl.innerText = m;
+            } else {
+                console.error("Elements 'denied' or 'reason' not found in HTML");
+            }
         }
 
         async function send() {
