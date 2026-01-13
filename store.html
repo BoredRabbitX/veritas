@@ -2,55 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Verified Store Profile | Veritas</title>
+    <title>Business Profile | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body>
-    <nav class="nav-container p-4">
-        <div class="max-w-5xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-blue-600 font-bold">← Home</a>
+<body class="flex flex-col min-h-screen">
+    <div class="nav-container">
+        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2 font-bold text-blue-600 tracking-tighter uppercase">← Veritas Home</a>
             <div class="flex items-center gap-4">
                 <button id="darkModeToggle">🌓</button>
-                <button id="connectBtn" class="btn-primary text-xs px-4 py-2">Connect</button>
+                <button id="connectBtn" class="btn-primary text-xs px-4 py-2">Connect Wallet</button>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </div>
 
-    <main class="max-w-4xl mx-auto mt-16 px-6">
+    <main class="max-w-4xl mx-auto mt-20 px-6 flex-grow pb-32">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-[var(--border)] pb-12 mb-12">
             <div>
-                <span class="text-blue-600 font-bold text-xs uppercase tracking-widest">Verified Business</span>
-                <h1 id="sn" class="text-5xl font-extrabold mt-2">Loading Store...</h1>
-                <p id="sc" class="text-gray-500 mt-2 text-lg italic">Category</p>
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">On-Chain Verified</span>
+                </div>
+                <h1 id="sn" class="text-6xl font-black tracking-tighter">Loading...</h1>
+                <p id="sc" class="text-gray-500 mt-2 text-xl font-medium">Fetching details...</p>
             </div>
-            <div class="mt-8 md:mt-0 text-center bg-gray-50 dark:bg-gray-800/50 p-6 rounded-3xl border border-[var(--border)]">
-                <div id="ar" class="text-6xl font-black">0.0</div>
-                <div class="text-xs text-gray-400 font-bold uppercase mt-1">Trust Score</div>
+            <div class="mt-8 md:mt-0 text-center bg-gray-50 dark:bg-gray-800/50 p-8 rounded-[2rem] border border-[var(--border)] shadow-sm">
+                <div id="ar" class="text-7xl font-black">0.0</div>
+                <div class="text-[10px] text-gray-400 font-black uppercase mt-2 tracking-widest">Average Score</div>
             </div>
         </div>
 
-        <h3 class="text-xl font-bold mb-8">Customer Log</h3>
-        <div id="rc" class="space-y-6 mb-20">
-            <div class="animate-pulse flex space-x-4">
-                <div class="flex-1 space-y-4 py-1">
-                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div class="space-y-2">
-                        <div class="h-4 bg-gray-200 rounded"></div>
-                        <div class="h-4 bg-gray-200 rounded w-5/6"></div>
-                    </div>
-                </div>
-            </div>
+        <div id="rc" class="space-y-8">
+            <p class="text-gray-400 animate-pulse">Scanning Paseo Asset Hub logs...</p>
         </div>
     </main>
+
+    <footer class="border-t border-[var(--border)] py-8 bg-[var(--surface)]">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase tracking-widest font-bold opacity-50">
+            <div>The White Rabbit bored creation</div>
+            <div>Powered by Polkadot paseo testnet</div>
+        </div>
+    </footer>
 
     <script src="app.js"></script>
     <script>
         window.onload = async () => {
             const id = new URLSearchParams(window.location.search).get('id');
             if(!id) return;
-            
             await connectWallet();
             try {
                 const b = await contract.businesses(id);
@@ -59,20 +58,23 @@
 
                 const logs = await contract.queryFilter(contract.filters.ReviewAdded(id), -10000);
                 const container = document.getElementById('rc');
-                container.innerHTML = logs.length ? "" : "<p class='text-gray-400 italic'>No on-chain reviews found for this address.</p>";
+                container.innerHTML = logs.length ? "" : "<p class='text-center py-20 opacity-40'>No reviews found for this store.</p>";
                 
                 let sum = 0;
                 logs.reverse().forEach(l => {
                     const r = Number(l.args.rating);
                     sum += r;
                     container.innerHTML += `
-                        <div class="card-veritas border-l-4 border-l-blue-600">
-                            <div class="flex justify-between items-center mb-4">
-                                <div class="text-yellow-500 font-bold text-lg">${"★".repeat(r)}${"☆".repeat(5-r)}</div>
-                                <span class="text-[10px] font-mono opacity-50">${l.args.author.slice(0,12)}...</span>
+                        <div class="card-veritas transition-all hover:scale-[1.01]">
+                            <div class="flex justify-between items-center mb-6">
+                                <div class="text-yellow-500 font-bold text-xl">${"★".repeat(r)}${"☆".repeat(5-r)}</div>
+                                <span class="text-[10px] font-mono opacity-30">${l.args.author.slice(0,18)}...</span>
                             </div>
-                            <p class="text-lg opacity-90 leading-relaxed">"${l.args.content}"</p>
-                            <div class="mt-4 text-[10px] uppercase font-bold tracking-widest text-blue-500">Verified Purchase</div>
+                            <p class="text-2xl font-medium leading-tight opacity-90">"${l.args.content}"</p>
+                            <div class="mt-6 flex items-center gap-2 text-[10px] font-black uppercase text-blue-600 tracking-tighter">
+                                <div class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                                Verified Purchase Logged on Asset Hub
+                            </div>
                         </div>`;
                 });
                 if(logs.length) document.getElementById('ar').innerText = (sum/logs.length).toFixed(1);
