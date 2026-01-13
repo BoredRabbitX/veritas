@@ -1,4 +1,6 @@
-const contractAddress = "0xb3dc45518cc51c759193da59772a407dad584852";
+// NEW CONTRACT ADDRESS
+const contractAddress = "0xe17041d9af0220cb6d12958a80f78cfd45cfad81";
+
 const abi = [
     "function registerBusiness(string _name, string _category) external",
     "function postReview(address _business, uint8 _rating, string _ipfsContent, bytes32 _receiptId, bytes _signature) external",
@@ -20,11 +22,11 @@ async function connectWallet() {
             if (btn) btn.innerText = address.slice(0,6) + "..." + address.slice(-4);
             return true;
         } catch (error) {
-            console.error("User denied account access");
+            console.error("Connection failed", error);
             return false;
         }
     } else {
-        alert("Please install MetaMask to use this dApp!");
+        alert("Please install MetaMask!");
         return false;
     }
 }
