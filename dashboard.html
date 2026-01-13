@@ -1,41 +1,40 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Veritas V3.5 | Merchant</title>
+    <meta charset="UTF-8"><title>Merchant Dashboard | Veritas V3.5</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
-    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl">VERITAS</a><button id="connectBtn" class="btn-primary" onclick="handleLogin()">Login Wallet</button></nav></div>
+<body>
+    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl">VERITAS</a><button id="connectBtn" class="btn-primary" onclick="handleLogin()">Connect Wallet</button></nav></div>
 
     <main class="main-content max-w-5xl mx-auto px-6 py-12">
-        <div id="dashboardUI" class="grid md:grid-cols-2 gap-10 opacity-20 pointer-events-none transition-all duration-500">
+        <div id="dashboardUI" class="grid md:grid-cols-2 gap-10 opacity-20 pointer-events-none transition-all">
             <div class="card-veritas">
-                <h2 class="text-xl font-bold mb-4 uppercase tracking-wider">Business Info</h2>
+                <h2 class="text-xl font-bold mb-6 uppercase">Business Profile</h2>
                 <div id="regForm">
-                    <input id="bn" type="text" placeholder="Nome Negozio" class="mb-2">
-                    <input id="bc" type="text" placeholder="Settore" class="mb-4">
-                    <button onclick="registerBiz()" class="btn-primary w-full shadow-lg">Attiva Business</button>
+                    <input id="bn" type="text" placeholder="Store Name" class="mb-2">
+                    <input id="bc" type="text" placeholder="Industry (e.g. Food, Tech)" class="mb-4">
+                    <button onclick="registerBiz()" class="btn-primary w-full">Activate On-Chain</button>
                 </div>
-                <div id="activeInfo" class="hidden py-4 text-center">
-                    <div class="text-4xl mb-2">🏢</div>
-                    <h3 id="storeName" class="text-2xl font-black text-blue-600"></h3>
-                    <p class="text-[10px] font-bold opacity-50 uppercase mt-2">Stato: Registrato On-Chain</p>
+                <div id="activeInfo" class="hidden text-center py-6">
+                    <div class="text-5xl mb-4">🏪</div>
+                    <h3 id="storeName" class="text-3xl font-black text-blue-600"></h3>
+                    <p class="text-[10px] font-bold opacity-50 uppercase mt-4">Status: Verified Merchant</p>
                 </div>
             </div>
 
             <div class="card-veritas">
-                <h2 class="text-xl font-bold mb-4 uppercase tracking-wider">Issue Receipt</h2>
-                <p class="text-xs opacity-50 mb-6">Genera un codice univoco e registralo sulla blockchain per il cliente.</p>
-                <button id="gBtn" onclick="issueReceipt()" class="btn-primary w-full py-4 mb-6">REGISTRA & GENERA QR</button>
-                <div id="qrcode" class="flex justify-center p-3 bg-white rounded-2xl"></div>
-                <input id="rid" type="text" readonly class="mt-4 text-center font-mono text-xs border-none opacity-40">
+                <h2 class="text-xl font-bold mb-4 uppercase">Issue Receipt</h2>
+                <p class="text-xs opacity-50 mb-6">Register a unique receipt ID on the blockchain for your customer.</p>
+                <button id="gBtn" onclick="issueReceipt()" class="btn-primary w-full py-4 mb-6 italic">REGISTER & GENERATE QR</button>
+                <div id="qrcode" class="flex justify-center p-3 bg-white rounded-2xl mx-auto w-fit"></div>
+                <input id="rid" type="text" readonly class="mt-4 text-center font-mono text-xs border-none opacity-40 w-full">
             </div>
         </div>
     </main>
-    <footer class="text-center p-8 opacity-30 text-[9px] font-bold tracking-widest">VERITAS PROTOCOL V3.5 - CHAIN 420420422</footer>
     <script src="app.js"></script>
     <script>
         async function handleLogin() {
@@ -58,18 +57,17 @@
             const randomID = "V35-" + Math.random().toString(36).substring(2, 10).toUpperCase();
             const hash = ethers.keccak256(ethers.toUtf8Bytes(randomID));
             try {
-                btn.innerText = "Registrazione in corso..."; btn.disabled = true;
+                btn.innerText = "Confirming on Paseo..."; btn.disabled = true;
                 const tx = await contract.issueReceipt(hash);
                 await tx.wait();
-                
                 const baseUrl = window.location.href.split('dashboard.html')[0];
                 const url = `${baseUrl}review.html?business=${await signer.getAddress()}&receipt=${randomID}`;
                 document.getElementById('qrcode').innerHTML = "";
                 new QRCode(document.getElementById('qrcode'), { text: url, width: 140, height: 140 });
                 document.getElementById('rid').value = randomID;
-                btn.innerText = "REGISTRATO CON SUCCESSO";
+                btn.innerText = "RECEIPT REGISTERED";
                 btn.disabled = false;
-            } catch(e) { alert(e.message); btn.innerText = "REGISTRA & GENERA QR"; btn.disabled = false; }
+            } catch(e) { alert(e.message); btn.innerText = "REGISTER & GENERATE QR"; btn.disabled = false; }
         }
     </script>
 </body>
