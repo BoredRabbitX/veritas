@@ -1,26 +1,97 @@
-<nav class="p-4 border-b border-gray-200 flex justify-between items-center bg-[var(--nav-bg)] transition-colors">
-    <div class="flex items-center gap-2">
-        <div class="w-8 h-8 bg-blue-600 rounded-sm"></div>
-        <span class="text-xl font-medium">Veritas</span>
-    </div>
-    <div class="flex items-center gap-4">
-        <button id="darkModeToggle" title="Toggle Dark Mode">🌓</button>
-        <button id="connectBtn" class="btn-google">Connect Wallet</button>
-    </div>
-</nav>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veritas | Verified Reviews on Polkadot</title>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+</head>
+<body class="transition-colors duration-300">
 
-<main class="max-w-5xl mx-auto mt-24 px-6 text-center">
-    <h2 class="text-5xl font-normal mb-4">Verified reviews, simplified.</h2>
-    <p class="text-gray-500 mb-12">New Contract: <span class="font-mono text-xs">0x4cb4...05f7</span></p>
+    <nav class="border-b border-[var(--border-color)] px-6 py-3 flex justify-between items-center bg-[var(--nav-bg)] sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-sm flex items-center justify-center text-white font-bold">V</div>
+                <span class="text-xl font-medium tracking-tight">Veritas</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="darkModeToggle" class="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Toggle Dark Mode">
+                🌓
+            </button>
+            <button id="connectBtn" class="btn-google text-sm">
+                Connect Wallet
+            </button>
+        </div>
+    </nav>
 
-    <div class="grid md:grid-cols-2 gap-6 text-left">
-        <div class="card-google">
-            <h3 class="text-lg font-medium mb-4">Business Portal</h3>
-            <a href="dashboard.html" class="text-blue-500 font-medium">Register your store →</a>
+    <main class="max-w-5xl mx-auto mt-20 px-6 text-center">
+        <header class="mb-16">
+            <h2 class="text-5xl font-normal mb-6 tracking-tight leading-tight">
+                Authentic reviews, <br>
+                <span class="text-blue-500">certified on-chain.</span>
+            </h2>
+            <p class="text-lg text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Using Polkadot Asset Hub to eliminate fake feedback. 
+                Every review is a permanent record of a real customer experience.
+            </p>
+        </header>
+
+        <section class="max-w-xl mx-auto mb-20 relative">
+            <input id="searchAddr" type="text" 
+                   placeholder="Search a Business by Address (0x...)" 
+                   class="w-full shadow-sm hover:shadow-md transition-shadow">
+            <button onclick="window.location.href='store.html?id=' + document.getElementById('searchAddr').value" 
+                    class="absolute right-2 top-2 bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">
+                🔍
+            </button>
+        </section>
+
+        <section class="grid md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto mb-20">
+            <div class="card-google flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xl font-medium mb-2 text-blue-500">Business Console</h3>
+                    <p class="text-sm opacity-70 mb-6">
+                        Claim your business on the Paseo network, manage your profile, and generate secure QR codes for your clients.
+                    </p>
+                </div>
+                <a href="dashboard.html" class="btn-google-outline w-full text-center block">
+                    Manage Store
+                </a>
+            </div>
+
+            <div class="card-google flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xl font-medium mb-2 text-green-500">Post a Review</h3>
+                    <p class="text-sm opacity-70 mb-6">
+                        Scan a Veritas receipt to share your verified experience. Your review will be immutable and publicly verifiable.
+                    </p>
+                </div>
+                <a href="review.html" class="btn-google w-full text-center block">
+                    Write Review
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="mt-auto border-t border-[var(--border-color)] py-10 bg-[var(--nav-bg)]">
+        <div class="max-w-5xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400 font-medium uppercase tracking-widest">
+            <div>Built on Polkadot Paseo Asset Hub</div>
+            <div class="font-mono lowercase text-gray-500">
+                Contract: 0x4cb4...05f7
+            </div>
+            <div class="flex gap-4">
+                <a href="#" class="hover:text-blue-500">Explorer</a>
+                <a href="#" class="hover:text-blue-500">Docs</a>
+            </div>
         </div>
-        <div class="card-google">
-            <h3 class="text-lg font-medium mb-4">Customer Portal</h3>
-            <a href="review.html" class="text-blue-500 font-medium">Write a review →</a>
-        </div>
-    </div>
-</main>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
