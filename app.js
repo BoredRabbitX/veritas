@@ -1,10 +1,10 @@
-const contractAddress = "0x4cb4f27090ab3b07c0faadddcb8ca473db9e05f7";
+const contractAddress = "0x5860842523425f8ba94f56eba115492265792935";
 const abi = [
     "function registerBusiness(string _name, string _category) external",
-    "function postReview(address _business, uint8 _rating, string _content, bytes32 _receiptId, bytes _signature) external",
-    "function businesses(address) view returns (string name, string category, bool isActive, uint256 reviewCount)",
+    "function postReview(address _business, string _customerName, uint8 _rating, string _content, bytes32 _receiptId) external",
+    "function businesses(address) view returns (string name, string category, bool isActive)",
     "function usedReceipts(bytes32) view returns (bool)",
-    "event ReviewAdded(address indexed business, address indexed author, uint8 rating, string content, uint256 timestamp)"
+    "event ReviewAdded(address indexed business, address indexed author, string customerName, uint8 rating, string content, uint256 timestamp)"
 ];
 
 let provider, signer, contract;
@@ -41,6 +41,5 @@ window.addEventListener('load', async () => {
         document.documentElement.classList.toggle('dark-mode');
         localStorage.setItem('veritas_dark', isDark);
     });
-    // Silent auto-connect
     if (localStorage.getItem('veritas_connected') === 'true') await connectWallet(true);
 });
