@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Merchant Dashboard | Veritas</title>
+    <title>Merchant Console | Veritas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -18,99 +18,55 @@
         <button id="connectBtn" class="btn-google">Connect Wallet</button>
     </nav>
 
-    <main class="max-w-4xl mx-auto mt-12 px-6 grid md:grid-cols-2 gap-10">
-        
+    <main class="max-w-4xl mx-auto mt-12 px-6 grid md:grid-cols-2 gap-8">
         <div class="card-google">
-            <h2 class="text-xl font-medium mb-4">1. Register Business</h2>
-            <p class="text-sm text-gray-500 mb-6">Complete this step once to activate your business on the blockchain.</p>
-            
+            <h2 class="text-xl font-medium mb-2">Business Setup</h2>
+            <p class="text-sm text-gray-500 mb-6">Activate your business on Paseo Asset Hub.</p>
             <div class="space-y-4">
-                <input id="bizName" type="text" placeholder="Business Name (e.g. Mario's Pizza)" class="w-full">
-                <input id="bizCat" type="text" placeholder="Category (e.g. Restaurant)" class="w-full">
-                <button id="regBtn" onclick="registerBusiness()" class="btn-google w-full uppercase tracking-wider text-xs">
-                    Register on Paseo
-                </button>
+                <input id="bizName" type="text" placeholder="Store Name" class="w-full">
+                <input id="bizCat" type="text" placeholder="Category (e.g. Cafe)" class="w-full">
+                <button id="regBtn" onclick="registerBusiness()" class="btn-google w-full uppercase text-xs tracking-widest">Register Now</button>
             </div>
-            <div id="regStatus" class="mt-4 text-xs font-medium text-green-600 hidden text-center">
-                ✓ Business successfully registered!
-            </div>
+            <p id="regSuccess" class="mt-4 text-xs text-green-600 hidden text-center font-medium">✓ Registered successfully!</p>
         </div>
 
         <div class="card-google">
-            <h2 class="text-xl font-medium mb-4">2. Generate Receipt QR</h2>
-            <p class="text-sm text-gray-500 mb-6">Create a unique code for your customer to scan after their purchase.</p>
-
+            <h2 class="text-xl font-medium mb-2">Generate QR</h2>
+            <p class="text-sm text-gray-500 mb-6">Create a unique code for your customer.</p>
             <div class="space-y-4">
-                <input id="receiptId" type="text" placeholder="Receipt Number / ID" class="w-full">
-                <button onclick="generateQR()" class="btn-google-outline w-full uppercase tracking-wider text-xs">
-                    Create QR Code
-                </button>
+                <input id="receiptId" type="text" placeholder="Receipt Number" class="w-full">
+                <button onclick="generateQR()" class="btn-google-outline w-full uppercase text-xs tracking-widest">Generate QR Code</button>
             </div>
-            
-            <div id="qrcode" class="mt-8 flex justify-center"></div>
-            <p id="qrHelp" class="mt-4 text-center text-xs text-gray-400 hidden">
-                Show this QR to your customer
-            </p>
+            <div id="qrcode" class="mt-6 flex justify-center"></div>
         </div>
-
     </main>
 
     <script src="app.js"></script>
     <script>
-        // Logica di Registrazione
         async function registerBusiness() {
             const name = document.getElementById('bizName').value;
             const category = document.getElementById('bizCat').value;
-            const btn = document.getElementById('regBtn');
-
-            if (!name || !category) return alert("Please fill in all fields");
-
+            if (!name || !category) return alert("Fields missing");
             try {
-                btn.disabled = true;
-                btn.innerHTML = "Processing...";
-                
+                const btn = document.getElementById('regBtn');
+                btn.innerText = "Registering...";
                 await connectWallet();
-                
-                // Chiamata alla funzione del tuo smart contract 0xb3dc...
                 const tx = await contract.registerBusiness(name, category);
-                console.log("Tx sent:", tx.hash);
-                
-                await tx.wait(); // Aspetta la conferma on-chain
-                
-                document.getElementById('regStatus').classList.remove('hidden');
-                btn.innerHTML = "Register on Paseo";
-                btn.disabled = false;
-                alert("Business registered successfully!");
-            } catch (err) {
-                console.error(err);
-                alert("Error: " + (err.reason || err.message));
-                btn.disabled = false;
-                btn.innerHTML = "Register on Paseo";
-            }
+                await tx.wait();
+                document.getElementById('regSuccess').classList.remove('hidden');
+                btn.innerText = "Register Now";
+            } catch (e) { alert(e.reason || e.message); }
         }
 
-        // Logica Generazione QR
         async function generateQR() {
             const id = document.getElementById('receiptId').value;
-            if(!id) return alert("Please enter a Receipt ID");
-            
+            if(!id) return alert("Enter ID");
             await connectWallet();
-            const address = await signer.getAddress();
-            
-            const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = "";
-            
-            // Crea il link corretto verso la tua pagina review.html
-            const url = `${window.location.origin}/veritas/review.html?business=${address}&receipt=${encodeURIComponent(id)}`;
-            
-            new QRCode(qrContainer, {
-                text: url,
-                width: 180,
-                height: 180,
-                colorDark : "#1a73e8",
-                colorLight : "#ffffff"
-            });
-            document.getElementById('qrHelp').classList.remove('hidden');
+            const addr = await signer.getAddress();
+            const container = document.getElementById('qrcode');
+            container.innerHTML = "";
+            const url = `${window.location.origin}/veritas/review.html?business=${addr}&receipt=${encodeURIComponent(id)}`;
+            new QRCode(container, { text: url, width: 160, height: 160, colorDark : "#1a73e8" });
         }
     </script>
 </body>
