@@ -10,28 +10,37 @@ const abi = [
 let provider, signer, contract;
 
 (function initTheme() {
-    const isDark = localStorage.getItem('veritas_dark') === 'true';
-    if (isDark) document.documentElement.classList.add('dark-mode');
+    if (localStorage.getItem('veritas_dark') === 'true') document.documentElement.classList.add('dark-mode');
 })();
 
-window.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('veritas_dark') === 'true') document.body.classList.add('dark-mode');
-    document.getElementById('darkModeToggle')?.addEventListener('click', () => {
-        const isDarkNow = document.body.classList.toggle('dark-mode');
-        document.documentElement.classList.toggle('dark-mode');
-        localStorage.setItem('veritas_dark', isDarkNow);
-    });
-});
-
-async function connectWallet() {
-    if (window.ethereum) {
+async function connectWallet(silent = false) {
+    if (!window.ethereum) return false;
+    try {
         provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
-        contract = new ethers.Contract(contractAddress, abi, signer);
-        const address = await signer.getAddress();
-        document.getElementById('connectBtn').innerText = address.slice(0,6) + "..." + address.slice(-4);
-        return true;
-    }
+        const accounts = await (silent ? 
+            window.ethereum.request({ method: 'eth_accounts' }) : 
+            window.ethereum.request({ method: 'eth_requestAccounts' }));
+
+        if (accounts.length > 0) {
+            signer = await provider.getSigner();
+            contract = new ethers.Contract(contractAddress, abi, signer);
+            const addr = await signer.getAddress();
+            const btn = document.getElementById('connectBtn');
+            if (btn) btn.innerText = addr.slice(0,6) + "..." + addr.slice(-4);
+            localStorage.setItem('veritas_connected', 'true');
+            return true;
+        }
+    } catch (e) { console.error(e); }
     return false;
 }
+
+window.addEventListener('load', async () => {
+    if (localStorage.getItem('veritas_dark') === 'true') document.body.classList.add('dark-mode');
+    document.getElementById('darkModeToggle')?.addEventListener('click', () => {
+        const isDark = document.body.classList.toggle('dark-mode');
+        document.documentElement.classList.toggle('dark-mode');
+        localStorage.setItem('veritas_dark', isDark);
+    });
+    // Silent auto-connect
+    if (localStorage.getItem('veritas_connected') === 'true') await connectWallet(true);
+});
