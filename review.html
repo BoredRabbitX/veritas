@@ -159,22 +159,33 @@
 
         async function sendReview() {
     const btn = document.getElementById('submitBtn');
-    const bizAddr = document.getElementById('bizInput').value.trim();
+    const bizAddr = document.getElementById('bizInput').value.trim().toLowerCase();
     const receiptID = document.getElementById('receiptInput').value.trim();
-    const name = document.getElementById('custName').value.trim() || "Customer";
+    const name = document.getElementById('custName').value.trim() || "Anonymous";
     const comment = document.getElementById('reviewText').value.trim();
     const rating = document.getElementById('ratingSelect').value;
 
-    logDebug("Bypassing RPC Estimation...", "warn");
-
     try {
-        btn.innerText = "Check Metamask...";
+        btn.innerText = "Checking Auth...";
         btn.disabled = true;
 
-        const receiptHash = ethers.id(receiptID);
+        const userAddr = (await signer.getAddress()).toLowerCase();
         
-        // FORZIAMO I PARAMETRI: 
-        // gasLimit alto e disattivazione EIP-1559 se il nodo non lo supporta bene
+        // DEBUG IDENTITÀ
+        logDebug(`CONTRACT CHECK:`, "warn");
+        logDebug(`Reviewer (You): ${userAddr}`);
+        logDebug(`Target Merchant: ${bizAddr}`);
+
+        if (userAddr === bizAddr) {
+            throw new Error("IDENTITY_MATCH: You are using the Merchant's wallet. Change account in MetaMask.");
+        }
+
+        const receiptHash = ethers.id(receiptID);
+        logDebug(`Receipt Hash: ${receiptHash.slice(0,15)}...`);
+
+        // FORZA IL BYPASS RPC
+        logDebug("Requesting Signature (Manual Gas Mode)...", "warn");
+        
         const tx = await contract.postReview(
             bizAddr, 
             name, 
@@ -182,25 +193,26 @@
             comment, 
             receiptHash,
             { 
-                gasLimit: 1000000, // Limite molto alto per sicurezza
-                gasPrice: (await provider.getFeeData()).gasPrice // Forza modalità Legacy
+                gasLimit: 1000000,
+                // Alcuni nodi Paseo richiedono il gasPrice esplicito per non fallire la stima
+                gasPrice: (await provider.getFeeData()).gasPrice 
             }
         );
         
-        logDebug("Transaction Sent! waiting for block...", "info");
+        logDebug("Broadcast successful! Wait for confirmation...", "info");
         await tx.wait();
         window.location.href = `store.html?id=${bizAddr}`;
 
     } catch (e) {
-        console.error("Full Error Debug:", e);
-        let msg = "Transaction Failed";
+        console.error("Full Error:", e);
         
-        if (e.message.includes("rejected")) msg = "User rejected signature.";
-        else if (e.message.includes("used")) msg = "Receipt ID already used!";
-        else msg = "Check if you are the Merchant (Self-review not allowed)";
-
-        logDebug("CRITICAL: " + msg, "error");
-        alert("Error: " + msg);
+        // Analisi dell'errore per il debugger
+        let errorHint = "Execution Reverted";
+        if (e.message.includes("rejected")) errorHint = "Signature denied by user.";
+        if (e.message.includes("used")) errorHint = "Receipt ID already used. TRY A NEW ID.";
+        
+        logDebug(`BLOCKER: ${errorHint}`, "error");
+        alert("Transaction Failed: " + errorHint + "\n\nTry changing the Receipt ID to something unique.");
         btn.innerText = "Publish Review";
         btn.disabled = false;
     }
