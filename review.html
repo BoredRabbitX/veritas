@@ -1,222 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Customer Portal | Veritas Protocol</title>
+    <meta charset="UTF-8"><title>Review V3 | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <style>
-        #debugConsole {
-            background: #000;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            max-height: 200px;
-            overflow-y: auto;
-            border-radius: 12px;
-            padding: 15px;
-            margin-top: 20px;
-            border: 1px solid #333;
-            line-height: 1.5;
-        }
-        .debug-err { color: #ff4444; font-weight: bold; }
-        .debug-warn { color: #ffaa00; }
-        .debug-info { color: #00ccff; }
-        .debug-success { color: #00ff88; font-weight: bold; }
-    </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body>
+    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl">VERITAS</a><button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect</button></nav></div>
 
-    <div class="nav-container">
-        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <div class="flex items-center gap-8">
-                <a href="index.html" class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">V</div>
-                    <span class="text-2xl font-extrabold tracking-tighter uppercase">Veritas</span>
-                </a>
-                <div class="hidden md:flex gap-6 text-sm font-bold opacity-60">
-                    <a href="dashboard.html" class="hover:text-blue-600 transition">Merchant Hub</a>
-                    <a href="review.html" class="text-blue-600">Consumer Portal</a>
-                </div>
+    <main class="main-content max-w-lg mx-auto px-6 py-12">
+        <div class="card-veritas">
+            <h2 class="text-3xl font-black mb-8">Write Review</h2>
+            <div id="setupData" class="space-y-4">
+                <input id="bizInput" type="text" placeholder="Merchant 0x...">
+                <input id="receiptInput" type="text" placeholder="Receipt ID (V3-...)">
+                <button onclick="verify()" class="btn-primary w-full">Verify Receipt On-chain</button>
             </div>
-            <div class="flex items-center gap-4">
-                <button id="darkModeToggle" class="p-2">🌓</button>
-                <button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect Wallet</button>
-            </div>
-        </nav>
-    </div>
-
-    <main class="main-content flex flex-col items-center justify-center px-6 py-12">
-        <div class="card-veritas max-w-lg w-full shadow-2xl">
-            <h2 class="text-3xl font-black mb-2 tracking-tight">Submit Review</h2>
-            <p class="text-gray-500 text-sm mb-8 italic">Verified feedback powered by Paseo Asset Hub.</p>
-            
-            <div id="setupData" class="space-y-4 mb-6">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase opacity-50 ml-1">Merchant Wallet</label>
-                    <input id="bizInput" type="text" placeholder="0x...">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase opacity-50 ml-1">Receipt ID</label>
-                    <input id="receiptInput" type="text" placeholder="Enter receipt code">
-                </div>
-                <button onclick="processValidation()" class="btn-outline w-full py-4 transition">Verify on Blockchain</button>
-            </div>
-
-            <div id="denied" class="hidden p-4 mb-6 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-xl text-sm border border-red-200">
-                <strong>Safety Check:</strong> <span id="reason"></span>
-            </div>
-
-            <div id="reviewForm" class="hidden space-y-6">
-                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800">
-                    <p class="text-blue-600 dark:text-blue-400 font-bold" id="storeNameDisplay">Analyzing Store...</p>
-                </div>
-                
-                <input id="custName" type="text" placeholder="Your Display Name">
-                
-                <select id="ratingSelect">
-                    <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-                    <option value="4">⭐⭐⭐⭐ Great</option>
-                    <option value="3">⭐⭐⭐ Average</option>
-                    <option value="2">⭐⭐ Poor</option>
-                    <option value="1">⭐ Terrible</option>
-                </select>
-
-                <textarea id="reviewText" placeholder="Describe your experience..." rows="4"></textarea>
-
-                <button id="submitBtn" onclick="sendReview()" class="btn-primary w-full py-4 text-lg shadow-xl shadow-blue-500/20">
-                    Publish On-Chain
-                </button>
-            </div>
-
-            <div id="debugConsole">
-                <div>> Veritas Diagnostic Console v3.0</div>
+            <div id="reviewForm" class="hidden space-y-4">
+                <p id="storeName" class="text-blue-600 font-bold"></p>
+                <input id="custName" type="text" placeholder="Your Name">
+                <select id="rating"><option value="5">⭐⭐⭐⭐⭐</option><option value="1">⭐</option></select>
+                <textarea id="comment" placeholder="Feedback..." rows="4"></textarea>
+                <button id="submitBtn" onclick="send()" class="btn-primary w-full">Post Review</button>
             </div>
         </div>
     </main>
-
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-30 tracking-widest">
-            <div>The White Rabbit bored creation</div>
-            <div>Paseo Testnet Protocol</div>
-        </div>
-    </footer>
-
+    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-30"><div>The White Rabbit</div><div>VERITAS PROTOCOL V3</div></div></footer>
     <script src="app.js"></script>
     <script>
-        function logDebug(msg, type = 'info') {
-            const consoleEl = document.getElementById('debugConsole');
-            const entry = document.createElement('div');
-            if(type !== 'info') entry.className = `debug-${type}`;
-            entry.innerText = `[${new Date().toLocaleTimeString().split(' ')[0]}] ${msg}`;
-            consoleEl.appendChild(entry);
-            consoleEl.scrollTop = consoleEl.scrollHeight;
-        }
-
-        window.onload = async () => {
-            const params = new URLSearchParams(window.location.search);
-            const b = params.get('business');
-            const r = params.get('receipt');
-            if(b) document.getElementById('bizInput').value = b;
-            if(r) document.getElementById('receiptInput').value = r;
-            
-            if(b && r && localStorage.getItem('veritas_connected')) {
-                logDebug("Auto-validating QR parameters...");
-                setTimeout(processValidation, 1000);
-            }
+        const p = new URLSearchParams(window.location.search);
+        window.onload = () => {
+            if(p.get('business')) document.getElementById('bizInput').value = p.get('business');
+            if(p.get('receipt')) document.getElementById('receiptInput').value = p.get('receipt');
         };
-
-        async function processValidation() {
-            const bizAddr = document.getElementById('bizInput').value.trim();
-            const receiptID = document.getElementById('receiptInput').value.trim();
-            logDebug(`Connecting to contract for: ${bizAddr.slice(0,10)}...`, "warn");
-
+        async function verify() {
+            const bA = document.getElementById('bizInput').value.trim();
+            const rid = document.getElementById('receiptInput').value.trim();
+            if(!contract) await connectWallet();
             try {
-                if(!contract) await connectWallet();
-                const userAddr = (await signer.getAddress()).toLowerCase();
-                const bizData = await contract.businesses(bizAddr);
+                const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
+                const isValid = await contract.validReceipts(hash);
+                const isUsed = await contract.usedReceipts(hash);
+                const biz = await contract.businesses(bA);
 
-                if(!bizData.isActive) throw new Error("MERCHANT_NOT_REGISTERED");
-                if(userAddr === bizAddr.toLowerCase()) throw new Error("SELF_REVIEW_BLOCKED");
-
-                const receiptHash = ethers.id(receiptID);
-                const isUsed = await contract.usedReceipts(receiptHash);
-                if(isUsed) throw new Error("RECEIPT_ALREADY_SPENT");
-
-                document.getElementById('denied').classList.add('hidden');
+                if(!isValid) throw new Error("Receipt NOT found on-chain. Merchant must issue it first.");
+                if(isUsed) throw new Error("Receipt already spent.");
+                
                 document.getElementById('setupData').classList.add('hidden');
                 document.getElementById('reviewForm').classList.remove('hidden');
-                document.getElementById('storeNameDisplay').innerText = "Verified Store: " + bizData.name;
-                logDebug("Access granted. Balance check required for next step.", "success");
-
-            } catch (e) {
-                logDebug("VALIDATION FAILED: " + e.message, "error");
-                document.getElementById('denied').classList.remove('hidden');
-                document.getElementById('reason').innerText = e.message;
-            }
+                document.getElementById('storeName').innerText = "Verified for: " + biz.name;
+            } catch (e) { alert(e.message); }
         }
-
-        async function sendReview() {
-    const btn = document.getElementById('submitBtn');
-    const bizAddr = document.getElementById('bizInput').value.trim().toLowerCase();
-    const receiptID = document.getElementById('receiptInput').value.trim();
-    const name = document.getElementById('custName').value.trim() || "Anonymous";
-    const comment = document.getElementById('reviewText').value.trim();
-    const rating = document.getElementById('ratingSelect').value;
-
-    try {
-        btn.innerText = "Checking Auth...";
-        btn.disabled = true;
-
-        const userAddr = (await signer.getAddress()).toLowerCase();
-        
-        // DEBUG IDENTITÀ
-        logDebug(`CONTRACT CHECK:`, "warn");
-        logDebug(`Reviewer (You): ${userAddr}`);
-        logDebug(`Target Merchant: ${bizAddr}`);
-
-        if (userAddr === bizAddr) {
-            throw new Error("IDENTITY_MATCH: You are using the Merchant's wallet. Change account in MetaMask.");
+        async function send() {
+            const bA = document.getElementById('bizInput').value.trim();
+            const rid = document.getElementById('receiptInput').value.trim();
+            const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
+            try {
+                const tx = await contract.postReview(bA, document.getElementById('custName').value, document.getElementById('rating').value, document.getElementById('comment').value, hash);
+                await tx.wait(); window.location.href = `store.html?id=${bA}`;
+            } catch (e) { alert(e.message); }
         }
-
-        const receiptHash = ethers.id(receiptID);
-        logDebug(`Receipt Hash: ${receiptHash.slice(0,15)}...`);
-
-        // FORZA IL BYPASS RPC
-        logDebug("Requesting Signature (Manual Gas Mode)...", "warn");
-        
-        const tx = await contract.postReview(
-            bizAddr, 
-            name, 
-            rating, 
-            comment, 
-            receiptHash,
-            { 
-                gasLimit: 1000000,
-                // Alcuni nodi Paseo richiedono il gasPrice esplicito per non fallire la stima
-                gasPrice: (await provider.getFeeData()).gasPrice 
-            }
-        );
-        
-        logDebug("Broadcast successful! Wait for confirmation...", "info");
-        await tx.wait();
-        window.location.href = `store.html?id=${bizAddr}`;
-
-    } catch (e) {
-        console.error("Full Error:", e);
-        
-        // Analisi dell'errore per il debugger
-        let errorHint = "Execution Reverted";
-        if (e.message.includes("rejected")) errorHint = "Signature denied by user.";
-        if (e.message.includes("used")) errorHint = "Receipt ID already used. TRY A NEW ID.";
-        
-        logDebug(`BLOCKER: ${errorHint}`, "error");
-        alert("Transaction Failed: " + errorHint + "\n\nTry changing the Receipt ID to something unique.");
-        btn.innerText = "Publish Review";
-        btn.disabled = false;
-    }
-}
     </script>
 </body>
 </html>
