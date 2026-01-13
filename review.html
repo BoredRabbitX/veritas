@@ -1,105 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-    <meta charset="UTF-8"><title>Review V3.4 | Veritas</title>
+    <meta charset="UTF-8"><title>Veritas V3.5 | Review</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <style>
-        #v3Debug { background: #000; color: #0f0; font-family: monospace; font-size: 11px; padding: 15px; border-radius: 12px; margin-top: 20px; max-height: 250px; overflow-y: auto; border: 1px solid #333; }
-        .d-err { color: #f44; } .d-ok { color: #0f8; }
-    </style>
+    <style>#v3Debug { background:#000; color:#0f0; font-family:monospace; font-size:10px; padding:12px; border-radius:12px; margin-top:20px; border:1px solid #333; height:120px; overflow-y:auto; }</style>
 </head>
 <body class="flex flex-col min-h-screen">
-    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl">VERITAS</a><button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect</button></nav></div>
+    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-black text-2xl tracking-tighter">VERITAS</a><button id="connectBtn" class="btn-primary" onclick="connectWallet()">Connetti</button></nav></div>
 
     <main class="main-content max-w-lg mx-auto px-6 py-12">
         <div class="card-veritas shadow-2xl">
-            <h2 class="text-3xl font-black mb-6">Post Review</h2>
-            <div id="gate" class="space-y-4">
-                <input id="bizInput" type="text" placeholder="Merchant Wallet">
-                <input id="receiptInput" type="text" placeholder="Receipt ID (V3-...)">
-                <button onclick="verifyReceipt()" class="btn-primary w-full py-4">Verify Receipt On-chain</button>
-            </div>
-            
-            <div id="form" class="hidden space-y-4">
-                <div class="p-3 bg-blue-900/10 rounded-xl border border-blue-900/20"><p id="storeLabel" class="text-blue-600 font-bold"></p></div>
-                <input id="custName" type="text" placeholder="Your Name">
-                <select id="rating"><option value="5">5 Stars</option><option value="4">4 Stars</option><option value="3">3 Stars</option><option value="2">2 Stars</option><option value="1">1 Star</option></select>
-                <textarea id="comment" placeholder="Feedback (No special chars)..." rows="3"></textarea>
-                <button id="subBtn" onclick="sendReview()" class="btn-primary w-full py-4">Publish to Blockchain</button>
+            <h2 class="text-3xl font-black mb-6 italic">Verifica & Invia</h2>
+            <div id="step1" class="space-y-4">
+                <input id="bizAddr" type="text" placeholder="Indirizzo Negozio">
+                <input id="receiptID" type="text" placeholder="Codice Scontrino (V35-...)">
+                <button onclick="validateOnChain()" class="btn-primary w-full py-4">Verifica Validità On-Chain</button>
             </div>
 
-            <div id="v3Debug"><div>> VERITAS V3.4 READY (CHAIN: 420420422)</div></div>
+            <div id="step2" class="hidden space-y-4 animate-in fade-in duration-500">
+                <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-center"><p id="bizLabel" class="text-blue-600 font-bold"></p></div>
+                <input id="nameIn" type="text" placeholder="Il tuo nome (Semplice)">
+                <select id="rateIn"><option value="5">⭐⭐⭐⭐⭐ 5 Stelle</option><option value="4">⭐⭐⭐⭐ 4 Stelle</option><option value="1">⭐ 1 Stella</option></select>
+                <textarea id="commentIn" placeholder="Il tuo commento (Senza caratteri speciali)..." rows="3"></textarea>
+                <button id="pubBtn" onclick="submitReview()" class="btn-primary w-full py-4 shadow-xl">PUBBLICA SU BLOCKCHAIN</button>
+            </div>
+            <div id="v3Debug">> In attesa di input...</div>
         </div>
     </main>
-    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] font-bold opacity-30"><div>VERITAS V3.4</div></div></footer>
+    <footer class="text-center p-8 opacity-30 text-[9px] font-bold">VERITAS PROTOCOL V3.5</footer>
 
     <script src="app.js"></script>
     <script>
-        function logV3(m, t='info') {
-            const d = document.getElementById('v3Debug');
-            const div = document.createElement('div');
-            if(t === 'err') div.className = 'd-err'; else if(t === 'ok') div.className = 'd-ok';
-            div.innerText = `[${new Date().toLocaleTimeString().split(' ')[0]}] ${m}`;
-            d.appendChild(div); d.scrollTop = d.scrollHeight;
-        }
+        function log(m) { const d = document.getElementById('v3Debug'); d.innerText += "\n> " + m; d.scrollTop = d.scrollHeight; }
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        window.onload = () => {
+            if(urlParams.get('business')) document.getElementById('bizAddr').value = urlParams.get('business');
+            if(urlParams.get('receipt')) document.getElementById('receiptID').value = urlParams.get('receipt');
+        };
 
-        async function verifyReceipt() {
-            const bA = document.getElementById('bizInput').value.trim();
-            const rid = document.getElementById('receiptInput').value.trim();
+        async function validateOnChain() {
             try {
-                if(!contract) {
-                    logV3("Connecting wallet...");
-                    const connected = await connectWallet();
-                    if(!connected) return;
-                }
-                
+                if(!contract) await connectWallet();
+                const rid = document.getElementById('receiptID').value.trim();
                 const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
-                logV3("Checking hash: " + hash.slice(0,12) + "...");
+                log("Controllo scontrino: " + rid);
 
-                // Se qui ricevi 0x, significa che il contratto non è su questa rete
                 const [isValid, isUsed, biz] = await Promise.all([
                     contract.validReceipts(hash),
                     contract.usedReceipts(hash),
-                    contract.businesses(bA)
+                    contract.businesses(document.getElementById('bizAddr').value.trim())
                 ]);
 
-                if(!isValid) throw new Error("Receipt not found on-chain.");
-                if(isUsed) throw new Error("Receipt already used.");
-                
-                document.getElementById('gate').classList.add('hidden');
-                document.getElementById('form').classList.remove('hidden');
-                document.getElementById('storeLabel').innerText = "Store: " + biz.name;
-                logV3("Receipt Validated!", "ok");
-            } catch (e) { 
-                logV3(e.message, "err"); 
-                if(e.message.includes("decode")) logV3("CRITICAL: Contract not found on this network!", "err");
-            }
+                if(!isValid) throw new Error("Scontrino NON emesso dal merchant!");
+                if(isUsed) throw new Error("Scontrino già speso!");
+
+                document.getElementById('step1').classList.add('hidden');
+                document.getElementById('step2').classList.remove('hidden');
+                document.getElementById('bizLabel').innerText = "Negozio: " + biz.name;
+                log("Scontrino VALIDO. Form sbloccato.");
+            } catch(e) { log("ERRORE: " + e.message); alert(e.message); }
         }
 
-        async function sendReview() {
-            const btn = document.getElementById('subBtn');
+        async function submitReview() {
+            const btn = document.getElementById('pubBtn');
             try {
-                btn.disabled = true; btn.innerText = "Processing...";
-                const bizAddr = document.getElementById('bizInput').value.trim();
-                const rid = document.getElementById('receiptInput').value.trim();
-                const name = (document.getElementById('custName').value || "Anon").replace(/[^a-zA-Z0-9 ]/g, "");
-                const comment = (document.getElementById('comment').value || "Review").replace(/[^a-zA-Z0-9 ]/g, "");
-                const rating = parseInt(document.getElementById('rating').value);
+                btn.disabled = true; btn.innerText = "Cifratura...";
+                const rid = document.getElementById('receiptID').value.trim();
                 const hash = ethers.keccak256(ethers.toUtf8Bytes(rid));
+                const name = (document.getElementById('nameIn').value || "Anon").replace(/[^a-zA-Z0-9 ]/g, "");
+                const comment = (document.getElementById('commentIn').value || "Ottimo").replace(/[^a-zA-Z0-9 ]/g, "");
 
-                logV3("Sending transaction...");
-                const tx = await contract.postReview(bizAddr, name, rating, comment, hash, { gasLimit: 500000, type: 0 });
-                
-                logV3("Wait for confirmation...", "warn");
+                log("Inviando con Gas Manuale (500k)...");
+                const tx = await contract.postReview(
+                    document.getElementById('bizAddr').value.trim(),
+                    name,
+                    parseInt(document.getElementById('rateIn').value),
+                    comment,
+                    hash,
+                    { gasLimit: 500000, type: 0 }
+                );
+                log("Firma ottenuta! In attesa del blocco...");
                 await tx.wait();
-                logV3("SUCCESS!", "ok");
-                window.location.href = `store.html?id=${bizAddr}`;
-            } catch (e) {
-                logV3(e.message, "err");
-                btn.disabled = false; btn.innerText = "Publish to Blockchain";
-            }
+                log("SUCCESSO! Reindirizzamento...");
+                window.location.href = "store.html?id=" + document.getElementById('bizAddr').value.trim();
+            } catch(e) { log("FALLITO: " + e.message.slice(0,50)); btn.disabled = false; btn.innerText = "PUBBLICA SU BLOCKCHAIN"; }
         }
     </script>
 </body>
