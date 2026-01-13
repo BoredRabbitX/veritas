@@ -1,129 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Submit Review | Veritas</title>
+    <meta charset="UTF-8"><title>Review | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
+<body>
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <div class="flex items-center gap-8">
-                <a href="index.html" class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">V</div>
-                    <span class="text-2xl font-bold">Veritas</span>
-                </a>
-                <div class="hidden md:flex gap-6 text-sm font-medium opacity-70">
-                    <a href="dashboard.html" class="hover:text-blue-600">Merchant Dashboard</a>
-                    <a href="review.html" class="text-blue-600 font-bold">Customer Portal</a>
-                </div>
-            </div>
-            <button id="darkModeToggle" class="p-2">🌓</button>
+            <a href="index.html" class="flex items-center gap-2"><div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">V</div><span class="text-2xl font-bold">Veritas</span></a>
+            <button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect</button>
         </nav>
     </div>
-
-    <main class="main-content flex items-center justify-center px-6 py-12">
-        <div id="denied" class="hidden card-veritas max-w-md w-full text-center border-red-500">
-            <h2 class="text-2xl font-bold text-red-600 mb-4">Action Required</h2>
-            <p id="reason" class="opacity-70 mb-6"></p>
-            <button onclick="location.reload()" class="btn-outline w-full">Retry</button>
-        </div>
-
-        <div id="reviewForm" class="hidden card-veritas max-w-md w-full">
-            <h2 class="text-2xl font-bold mb-6">Verified Feedback</h2>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold uppercase mb-1 opacity-50">Your Name</label>
-                    <input id="custName" type="text" placeholder="Enter your name">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase mb-1 opacity-50">Rating</label>
-                    <select id="rating">
-                        <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-                        <option value="4">⭐⭐⭐⭐ Great</option>
-                        <option value="3">⭐⭐⭐ Good</option>
-                        <option value="2">⭐⭐ Poor</option>
-                        <option value="1">⭐ Terrible</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase mb-1 opacity-50">Comment</label>
-                    <textarea id="comment" placeholder="How was your experience?" rows="4"></textarea>
-                </div>
-                <button id="submitBtn" onclick="sendReview()" class="btn-primary w-full py-4">Publish on Blockchain</button>
+    <main class="main-content max-w-2xl mx-auto px-6 py-12">
+        <div class="card-veritas">
+            <h2 class="text-3xl font-bold mb-6">Write a Review</h2>
+            <div id="setupData" class="space-y-4 mb-8">
+                <input id="bizInput" type="text" placeholder="Merchant Address (0x...)">
+                <input id="receiptInput" type="text" placeholder="Receipt ID">
+                <button onclick="processValidation()" class="btn-outline w-full">Verify & Continue</button>
+            </div>
+            <div id="denied" class="hidden p-4 mb-6 bg-red-100 text-red-700 rounded-lg"></div>
+            <div id="form" class="hidden space-y-4">
+                <p class="text-blue-600 font-bold" id="storeName"></p>
+                <input id="custName" type="text" placeholder="Your Name">
+                <select id="r"><option value="5">⭐⭐⭐⭐⭐ Excellent</option><option value="4">⭐⭐⭐⭐ Great</option><option value="1">⭐ Poor</option></select>
+                <textarea id="msg" placeholder="Your feedback..." rows="4"></textarea>
+                <button id="submitBtn" onclick="send()" class="btn-primary w-full py-4">Post to Blockchain</button>
             </div>
         </div>
-
-        <div id="connectPrompt" class="card-veritas max-w-md w-full text-center">
-            <h2 class="text-xl font-bold mb-4">Wallet Required</h2>
-            <p class="mb-6 opacity-60">Connect your wallet to verify your identity and post.</p>
-            <button onclick="handleConnect()" class="btn-primary w-full">Connect Wallet</button>
-        </div>
     </main>
-
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase tracking-widest font-bold opacity-50">
-            <div>The White Rabbit bored creation</div>
-            <div>Powered by Polkadot paseo testnet</div>
-        </div>
-    </footer>
-
     <script src="app.js"></script>
     <script>
         const p = new URLSearchParams(window.location.search);
-        const bA = p.get('business');
-        const rid = p.get('receipt');
-
-        async function handleConnect() {
-            if(await connectWallet()) checkAccess();
-        }
-
-        window.onload = () => { if(localStorage.getItem('veritas_connected')) checkAccess(); };
-
-        async function checkAccess() {
-            if(!bA || !rid) return showError("Invalid Link: Missing business or receipt data.");
-            
+        window.onload = () => {
+            if(p.get('business')) document.getElementById('bizInput').value = p.get('business');
+            if(p.get('receipt')) document.getElementById('receiptInput').value = p.get('receipt');
+        };
+        async function processValidation() {
+            const bA = document.getElementById('bizInput').value.trim();
+            const rI = document.getElementById('receiptInput').value.trim();
+            if(!contract) await connectWallet();
             try {
-                if(!contract) await connectWallet(true);
-                const userAddr = (await signer.getAddress()).toLowerCase();
-                const biz = await contract.businesses(bA);
-                const used = await contract.usedReceipts(ethers.id(rid));
-
-                if(!biz.isActive) return showError("Store not registered on Veritas.");
-                if(userAddr === bA.toLowerCase()) return showError("Merchants cannot review themselves.");
-                if(used) return showError("This receipt has already been used.");
-
-                document.getElementById('connectPrompt').classList.add('hidden');
-                document.getElementById('reviewForm').classList.remove('hidden');
-            } catch (e) { showError("Connection Error: " + e.message); }
+                const b = await contract.businesses(bA);
+                if(!b.isActive) throw new Error("Store not registered.");
+                document.getElementById('setupData').classList.add('hidden');
+                document.getElementById('form').classList.remove('hidden');
+                document.getElementById('storeName').innerText = "Reviewing: " + b.name;
+            } catch (e) { alert(e.message); }
         }
-
-        function showError(msg) {
-            document.getElementById('connectPrompt').classList.add('hidden');
-            document.getElementById('reviewForm').classList.add('hidden');
-            document.getElementById('denied').classList.remove('hidden');
-            document.getElementById('reason').innerText = msg;
-        }
-
-        async function sendReview() {
+        async function send() {
             const btn = document.getElementById('submitBtn');
-            const name = document.getElementById('custName').value || "Anonymous";
-            const msg = document.getElementById('comment').value;
-            const fullContent = `[${name}] ${msg}`;
-
             try {
-                btn.innerText = "Processing...";
-                btn.disabled = true;
-                const tx = await contract.postReview(bA, document.getElementById('rating').value, fullContent, ethers.id(rid), "0x");
-                await tx.wait();
-                window.location.href = `store.html?id=${bA}`;
-            } catch (e) {
-                btn.innerText = "Publish on Blockchain";
-                btn.disabled = false;
-                alert("Error: " + (e.reason || "Transaction rejected. Check your balance or if the receipt is valid."));
-            }
+                btn.disabled = true; btn.innerText = "Processing...";
+                const tx = await contract.postReview(document.getElementById('bizInput').value, document.getElementById('custName').value || "Anon", document.getElementById('r').value, document.getElementById('msg').value, ethers.id(document.getElementById('receiptInput').value));
+                await tx.wait(); window.location.href = `store.html?id=${document.getElementById('bizInput').value}`;
+            } catch (e) { alert(e.message); btn.disabled = false; btn.innerText = "Post to Blockchain"; }
         }
     </script>
 </body>
