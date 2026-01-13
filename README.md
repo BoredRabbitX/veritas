@@ -63,12 +63,9 @@ The protocol runs on a single "Hub" Smart Contract that manages multiple busines
 * **Chain ID**: `424`
 * **Currency Symbol**: `PAS`
 
-### 3. Local Installation
-```bash
-# Clone the repository
-git clone [https://github.com/your-username/veritas-protocol.git](https://github.com/your-username/veritas-protocol.git)
+---
 
-# Enter the directory
-cd veritas
+📜 License
+Distributed under the MIT License. See LICENSE for more information.
 
-# Open index.html with a local server (e.g., VS Code Live Server)
+Developed for the Polkadot Web3 Ecosystem.
