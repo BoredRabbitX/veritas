@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Business - Veritas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-xl">
+        <h2 class="text-2xl font-bold mb-6">Genera QR Cliente</h2>
+        <input id="receiptId" type="text" placeholder="ID Scontrino (es. 1024)" class="w-full p-3 border rounded-xl mb-4">
+        <button onclick="generateQR()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Genera QR per Recensione</button>
+        
+        <div id="qrcode" class="mt-8 flex justify-center"></div>
+        <p id="qrHelp" class="mt-4 text-center text-sm text-gray-400 hidden">Mostra questo QR al cliente</p>
+    </div>
+
+    <script>
+        function generateQR() {
+            const id = document.getElementById('receiptId').value;
+            if(!id) return alert("Inserisci un ID");
+            
+            document.getElementById('qrcode').innerHTML = "";
+            const businessAddr = "0xTUO_INDIRIZZO"; // Da recuperare dal wallet connesso
+            const url = `https://tuosito.github.io/veritas/review.html?business=${businessAddr}&receipt=${id}`;
+            
+            new QRCode(document.getElementById("qrcode"), url);
+            document.getElementById('qrHelp').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
