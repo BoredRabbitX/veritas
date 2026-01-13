@@ -8,65 +8,57 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-50">
-    <nav class="p-4 flex justify-between items-center bg-white border-b border-gray-200">
+<body>
+    <nav class="p-4 border-b border-gray-200 flex justify-between items-center bg-[var(--nav-bg)]">
         <div class="flex items-center gap-2">
             <a href="index.html" class="text-xl font-medium text-blue-600">Veritas</a>
             <span class="text-gray-400">|</span>
-            <span class="text-sm font-medium text-gray-600">Merchant Console</span>
+            <span class="text-sm font-medium">Merchant Console</span>
         </div>
-        <button id="connectBtn" class="btn-google">Connect Wallet</button>
+        <div class="flex items-center gap-4">
+            <button id="darkModeToggle" class="p-2 rounded-full border border-gray-300">🌓</button>
+            <button id="connectBtn" class="btn-google">Connect Wallet</button>
+        </div>
     </nav>
 
     <main class="max-w-4xl mx-auto mt-12 px-6 grid md:grid-cols-2 gap-8">
         <div class="card-google">
-            <h2 class="text-xl font-medium mb-2">Business Setup</h2>
-            <p class="text-sm text-gray-500 mb-6">Activate your business on Paseo Asset Hub.</p>
-            <div class="space-y-4">
-                <input id="bizName" type="text" placeholder="Store Name" class="w-full">
-                <input id="bizCat" type="text" placeholder="Category (e.g. Cafe)" class="w-full">
-                <button id="regBtn" onclick="registerBusiness()" class="btn-google w-full uppercase text-xs tracking-widest">Register Now</button>
-            </div>
-            <p id="regSuccess" class="mt-4 text-xs text-green-600 hidden text-center font-medium">✓ Registered successfully!</p>
+            <h2 class="text-xl font-medium mb-4">1. Register Store</h2>
+            <input id="bizName" type="text" placeholder="Store Name" class="w-full mb-4">
+            <input id="bizCat" type="text" placeholder="Category" class="w-full mb-4">
+            <button id="regBtn" onclick="registerBusiness()" class="btn-google w-full">Activate on Paseo</button>
+            <p id="regSuccess" class="mt-4 text-xs text-green-500 hidden text-center font-bold">✓ Store Activated!</p>
         </div>
 
         <div class="card-google">
-            <h2 class="text-xl font-medium mb-2">Generate QR</h2>
-            <p class="text-sm text-gray-500 mb-6">Create a unique code for your customer.</p>
-            <div class="space-y-4">
-                <input id="receiptId" type="text" placeholder="Receipt Number" class="w-full">
-                <button onclick="generateQR()" class="btn-google-outline w-full uppercase text-xs tracking-widest">Generate QR Code</button>
-            </div>
-            <div id="qrcode" class="mt-6 flex justify-center"></div>
+            <h2 class="text-xl font-medium mb-4">2. Create QR Receipt</h2>
+            <input id="receiptId" type="text" placeholder="Receipt/Order ID" class="w-full mb-4">
+            <button onclick="generateQR()" class="btn-google-outline w-full">Generate QR</button>
+            <div id="qrcode" class="mt-6 flex justify-center p-4 bg-white rounded-lg"></div>
         </div>
     </main>
 
     <script src="app.js"></script>
     <script>
         async function registerBusiness() {
-            const name = document.getElementById('bizName').value;
-            const category = document.getElementById('bizCat').value;
-            if (!name || !category) return alert("Fields missing");
             try {
                 const btn = document.getElementById('regBtn');
                 btn.innerText = "Registering...";
                 await connectWallet();
-                const tx = await contract.registerBusiness(name, category);
+                const tx = await contract.registerBusiness(document.getElementById('bizName').value, document.getElementById('bizCat').value);
                 await tx.wait();
                 document.getElementById('regSuccess').classList.remove('hidden');
-                btn.innerText = "Register Now";
-            } catch (e) { alert(e.reason || e.message); }
+                btn.innerText = "Activate on Paseo";
+            } catch (e) { alert(e.reason || e.message); btn.innerText = "Activate on Paseo"; }
         }
 
         async function generateQR() {
-            const id = document.getElementById('receiptId').value;
-            if(!id) return alert("Enter ID");
             await connectWallet();
             const addr = await signer.getAddress();
-            const container = document.getElementById('qrcode');
-            container.innerHTML = "";
+            const id = document.getElementById('receiptId').value;
             const url = `${window.location.origin}/veritas/review.html?business=${addr}&receipt=${encodeURIComponent(id)}`;
-            new QRCode(container, { text: url, width: 160, height: 160, colorDark : "#1a73e8" });
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById('qrcode'), { text: url, width: 160, height: 160, colorDark: "#1a73e8" });
         }
     </script>
 </body>
