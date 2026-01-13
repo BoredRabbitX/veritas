@@ -1,53 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-    <meta charset="UTF-8"><title>Submit Review | Veritas</title>
+    <meta charset="UTF-8"><title>Lascia Recensione</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body class="flex items-center justify-center min-h-screen">
-    <div class="max-w-md w-full p-6 bg-white card-google">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-normal tracking-tight">Post Review</h2>
-            <button id="darkModeToggle" class="text-sm">🌓</button>
-        </div>
-        <div id="infoBox" class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded text-[10px] text-blue-800 dark:text-blue-300 break-all mb-4 italic">
-            Fetching transaction details...
-        </div>
-        <select id="rating" class="w-full mb-4">
-            <option value="5">5 Stars (Excellent)</option>
-            <option value="4">4 Stars (Good)</option>
-            <option value="3">3 Stars (Average)</option>
-            <option value="2">2 Stars (Poor)</option>
-            <option value="1">1 Star (Very Poor)</option>
-        </select>
-        <textarea id="comment" placeholder="Describe your experience..." rows="4" class="w-full mb-4"></textarea>
-        <button id="subBtn" onclick="submitReview()" class="btn-google w-full uppercase text-sm font-medium">Submit to Blockchain</button>
+    <div id="container" class="card-google max-w-md w-full mx-4">
+        <h2 class="text-xl font-bold mb-4">Verifica la tua esperienza</h2>
+        <div id="storeInfo" class="mb-4 text-sm text-blue-600 italic">Verifica negozio in corso...</div>
+        <select id="r" class="mb-4"><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
+        <textarea id="msg" placeholder="Com'è stata la tua esperienza?" class="mb-4"></textarea>
+        <button id="btn" onclick="send()" class="btn-google w-full">Pubblica on-chain</button>
     </div>
-
     <script src="app.js"></script>
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const biz = params.get('business');
-        const receipt = params.get('receipt');
+        const p = new URLSearchParams(window.location.search);
+        const bAddr = p.get('business');
+        const rid = p.get('receipt');
 
-        if(biz && receipt) {
-            document.getElementById('infoBox').innerText = `Business: ${biz}\nReceipt ID: ${receipt}`;
-        }
+        window.onload = async () => {
+            await connectWallet();
+            const b = await contract.businesses(bAddr);
+            if(!b.isActive) {
+                document.getElementById('container').innerHTML = "<h1 class='text-red-500'>Store non valido</h1>";
+            } else {
+                document.getElementById('storeInfo').innerText = `Recensione per: ${b.name}`;
+            }
+        };
 
-        async function submitReview() {
-            try {
-                const btn = document.getElementById('subBtn');
-                btn.innerText = "Processing...";
-                await connectWallet();
-                const receiptHash = ethers.id(receipt);
-                // Il contratto 0x4cb4f... non usa la firma on-chain, passiamo 0x
-                const tx = await contract.postReview(biz, document.getElementById('rating').value, document.getElementById('comment').value, receiptHash, "0x");
-                await tx.wait();
-                alert("Review Published Successfully!");
-                window.location.href = `store.html?id=${biz}`;
-            } catch (e) { alert(e.reason || e.message); btn.innerText = "Submit to Blockchain"; }
+        async function send() {
+            const hash = ethers.id(rid);
+            const tx = await contract.postReview(bAddr, document.getElementById('r').value, document.getElementById('msg').value, hash, "0x");
+            await tx.wait();
+            alert("Fatto!"); window.location.href = `store.html?id=${bAddr}`;
         }
     </script>
 </body>
