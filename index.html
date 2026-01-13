@@ -2,17 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Veritas | Decentralized Reputation</title>
+    <title>Veritas | On-Chain Reputation</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body>
+<body class="flex flex-col min-h-screen">
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">V</div>
-                <span class="text-2xl font-bold tracking-tight">Veritas</span>
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">V</div>
+                    <span class="text-2xl font-bold tracking-tight">Veritas</span>
+                </a>
+                <div class="hidden md:flex gap-6 text-sm font-medium opacity-70">
+                    <a href="dashboard.html" class="hover:text-blue-600 transition">Merchant Dashboard</a>
+                    <a href="review.html" class="hover:text-blue-600 transition">Customer Portal</a>
+                </div>
             </div>
             <div class="flex items-center gap-4">
                 <button id="darkModeToggle" class="text-xl p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition">🌓</button>
@@ -21,54 +27,42 @@
         </nav>
     </div>
 
-    <header class="max-w-7xl mx-auto pt-24 pb-16 px-6 text-center">
-        <h1 class="text-6xl font-extrabold mb-6">
-            Trust is now <br><span class="hero-gradient">Mathematically Proven.</span>
-        </h1>
-        <p class="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10">
-            Veritas eliminates fake reviews using Polkadot Asset Hub. We bridge the gap between real-world purchases and digital reputation.
+    <main class="max-w-7xl mx-auto pt-24 pb-16 px-6 text-center flex-grow">
+        <h1 class="text-6xl font-extrabold mb-6">Trust is now <br><span class="hero-gradient">Mathematically Proven.</span></h1>
+        <p class="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-12">
+            Veritas eliminates fake reviews using Polkadot Asset Hub. Every piece of feedback is verified through unique receipt-based on-chain signatures.
         </p>
         
-        <div class="flex flex-col md:flex-row gap-4 justify-center mb-20">
-            <div class="relative w-full max-w-md">
-                <input id="searchAddr" type="text" placeholder="Search store address (0x...)" class="w-full px-6 py-4 rounded-full border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 bg-transparent">
-                <button onclick="window.location.href='store.html?id='+document.getElementById('searchAddr').value" class="absolute right-2 top-2 bg-blue-600 text-white p-2 px-4 rounded-full">Explore</button>
-            </div>
+        <div class="max-w-xl mx-auto mb-24 relative">
+            <input id="searchAddr" type="text" placeholder="Enter store wallet address (0x...)" class="w-full px-6 py-4 rounded-full border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 bg-transparent">
+            <button onclick="window.location.href='store.html?id='+document.getElementById('searchAddr').value" class="absolute right-2 top-2 bg-blue-600 text-white p-2 px-6 rounded-full font-bold">Search</button>
         </div>
 
         <div class="grid md:grid-cols-3 gap-10 text-left border-t border-gray-100 dark:border-gray-800 pt-20">
             <div>
-                <div class="text-blue-600 font-bold mb-2">01. Register</div>
-                <h3 class="text-xl font-bold mb-3">Businesses Sign Up</h3>
-                <p class="text-sm text-muted">Merchants register their brand on-chain to start collecting immutable feedback.</p>
+                <div class="text-blue-600 font-bold mb-2">01. ONBOARD</div>
+                <h3 class="text-xl font-bold mb-3">Register Business</h3>
+                <p class="text-sm opacity-60">Merchants activate their store on the Paseo network to start building a verified reputation.</p>
             </div>
             <div>
-                <div class="text-blue-600 font-bold mb-2">02. Verify</div>
-                <h3 class="text-xl font-bold mb-3">Customers Scan</h3>
-                <p class="text-sm text-muted">A unique QR code on the receipt proves the customer actually visited the store.</p>
+                <div class="text-blue-600 font-bold mb-2">02. VALIDATE</div>
+                <h3 class="text-xl font-bold mb-3">Generate Proof</h3>
+                <p class="text-sm opacity-60">Every purchase creates a unique receipt ID that serves as a cryptographic key for a review.</p>
             </div>
             <div>
-                <div class="text-blue-600 font-bold mb-2">03. Publish</div>
-                <h3 class="text-xl font-bold mb-3">Reviews go Live</h3>
-                <p class="text-sm text-muted">Once submitted, the review is permanent, transparent, and impossible to delete.</p>
+                <div class="text-blue-600 font-bold mb-2">03. PUBLISH</div>
+                <h3 class="text-xl font-bold mb-3">Immutable Feedback</h3>
+                <p class="text-sm opacity-60">Once submitted, reviews are permanent and cannot be deleted by any central authority.</p>
             </div>
         </div>
-    </header>
+    </main>
 
-    <section class="max-w-7xl mx-auto px-6 pb-32">
-        <div class="grid md:grid-cols-2 gap-8">
-            <div class="card-veritas">
-                <h3 class="text-2xl font-bold mb-4">Merchant Dashboard</h3>
-                <p class="text-gray-500 mb-8">Claim your business profile, manage your reputation, and generate unique verification codes.</p>
-                <a href="dashboard.html" class="btn-outline inline-block">Enterprise Access →</a>
-            </div>
-            <div class="card-veritas">
-                <h3 class="text-2xl font-bold mb-4">Customer Portal</h3>
-                <p class="text-gray-500 mb-8">Have a receipt? Share your honest experience and contribute to a fairer web.</p>
-                <a href="review.html" class="btn-primary inline-block">Write Review →</a>
-            </div>
+    <footer class="border-t border-[var(--border)] py-8 mt-20 bg-[var(--surface)]">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase tracking-widest font-bold opacity-50">
+            <div>The White Rabbit bored creation</div>
+            <div>Powered by Polkadot paseo testnet</div>
         </div>
-    </section>
+    </footer>
 
     <script src="app.js"></script>
 </body>
