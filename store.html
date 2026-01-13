@@ -1,134 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Store Details | Veritas V3.5</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"><title>Store Details | Veritas</title>
+    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
-
     <div class="nav-container">
         <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="font-black text-2xl tracking-tighter italic">VERITAS</a>
+            <a href="index.html" class="font-black text-2xl italic">VERITAS</a>
             <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
-                <a href="explore.html" class="opacity-60 hover:opacity-100 transition">Explore</a>
-                <a href="review.html" class="opacity-60 hover:opacity-100 transition">Submit Review</a>
-                <a href="dashboard.html" class="opacity-60 hover:opacity-100 transition">Merchant Hub</a>
+                <a href="explore.html">Explore</a>
+                <a href="review.html">Submit Review</a>
+                <a href="dashboard.html">Merchant Hub</a>
             </div>
-            <button id="connectBtn" class="btn-primary text-xs" onclick="connectWallet()">Connect</button>
+            <button id="connectBtn" class="btn-primary" onclick="connectWallet()">Connect</button>
         </nav>
     </div>
 
     <main class="flex-grow max-w-5xl mx-auto px-6 py-12 w-full">
-        <div class="card-veritas mb-12 border-b-4 border-blue-600">
+        <div class="card-veritas mb-8 border-b-4 border-blue-600">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <span id="storeCat" class="text-blue-600 font-bold text-[10px] uppercase tracking-[0.3em]">Category</span>
-                    <h1 id="storeName" class="text-6xl font-black italic tracking-tighter uppercase mt-2">Loading...</h1>
-                    <p id="storeAddr" class="font-mono text-[10px] opacity-30 mt-2 break-all"></p>
+                    <span id="storeCat" class="text-blue-600 font-bold text-[10px] uppercase tracking-widest">Category</span>
+                    <h1 id="storeName" class="text-5xl font-black italic tracking-tighter uppercase mt-2 text-white">Loading...</h1>
+                    <p id="storeAddr" class="font-mono text-[10px] opacity-40 mt-2 break-all"></p>
                 </div>
                 <div class="flex gap-4">
-                    <div class="bg-zinc-900 p-6 rounded-2xl text-center min-w-[120px] border border-white/5">
-                        <div id="avgRate" class="text-4xl font-black text-blue-600">0.0</div>
-                        <div class="text-[8px] uppercase font-bold opacity-40 mt-1">Average Score</div>
+                    <div class="bg-zinc-900 p-4 rounded-2xl text-center min-w-[100px] border border-white/5">
+                        <div id="avgRate" class="text-3xl font-black text-blue-600">0.0</div>
+                        <div class="text-[8px] uppercase font-bold opacity-40">Rating</div>
                     </div>
-                    <div class="bg-zinc-900 p-6 rounded-2xl text-center min-w-[120px] border border-white/5">
-                        <div id="totalRev" class="text-4xl font-black text-white">0</div>
-                        <div class="text-[8px] uppercase font-bold opacity-40 mt-1">Verified Reviews</div>
+                    <div class="bg-zinc-900 p-4 rounded-2xl text-center min-w-[100px] border border-white/5">
+                        <div id="totalRev" class="text-3xl font-black text-white">0</div>
+                        <div class="text-[8px] uppercase font-bold opacity-40">Reviews</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-12">
+        <div class="grid md:grid-cols-3 gap-8">
             <div class="md:col-span-2">
-                <h2 class="text-xl font-bold mb-8 uppercase tracking-widest opacity-40 italic border-b border-white/10 pb-2">Verified Feedback Stream</h2>
-                <div id="reviewsList" class="space-y-6">
-                    <div class="opacity-20 italic">Scanning blockchain for review events...</div>
+                <h2 class="text-sm font-bold mb-6 uppercase opacity-40 tracking-widest">Verified Feed</h2>
+                <div id="reviewsList" class="space-y-4">
+                    <div class="opacity-30 italic">Scanning blockchain...</div>
                 </div>
             </div>
-            
-            <div class="hidden md:block">
-                <div class="sticky top-24 space-y-6">
-                    <div class="card-veritas bg-blue-600/5 border-blue-600/20">
-                        <h4 class="text-[10px] font-black uppercase mb-4">Integrity Proof</h4>
-                        <p class="text-xs opacity-60 leading-relaxed">Every review here is cryptographically unique. The merchant has no power to delete or alter this feedback.</p>
-                    </div>
-                    <a href="review.html" class="btn-primary w-full py-4 text-center block text-sm">Write a Review</a>
+            <div class="space-y-4">
+                <a href="review.html" class="btn-primary w-full text-center block">Write a Review</a>
+                <div class="card-veritas text-xs opacity-60 leading-relaxed">
+                    This business is verified on the Veritas Protocol. All reviews are permanent and mathematically proven.
                 </div>
             </div>
         </div>
     </main>
 
     <footer>
-        <div class="max-w-7xl mx-auto px-6 py-10 flex justify-between items-center border-t border-white/5">
-            <div class="text-[10px] uppercase font-bold opacity-30 tracking-widest">The White Rabbit bored creation</div>
-            <div class="text-[10px] font-black text-blue-600 uppercase">Veritas Protocol V3.5</div>
+        <div class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center opacity-30 text-[10px] font-bold">
+            <div>THE WHITE RABBIT BORED CREATION</div>
+            <div>VERITAS V3.5</div>
         </div>
     </footer>
 
     <script src="app.js"></script>
     <script>
         window.onload = async () => {
-            const bizAddr = new URLSearchParams(window.location.search).get('id');
-            if(!bizAddr) { window.location.href = 'explore.html'; return; }
-            
-            document.getElementById('storeAddr').innerText = bizAddr;
-            await connectWallet(true);
+            const id = new URLSearchParams(window.location.search).get('id');
+            if(!id) return;
+            document.getElementById('storeAddr').innerText = id;
+            if(!await connectWallet(true)) return;
 
             try {
-                // 1. Fetch Store Basic Info
-                const biz = await contract.businesses(bizAddr);
+                const biz = await contract.businesses(id);
                 document.getElementById('storeName').innerText = biz.name;
                 document.getElementById('storeCat').innerText = biz.category;
 
-                // 2. Fetch All Review Events for this store
-                const filter = contract.filters.ReviewAdded(bizAddr);
-                const events = await contract.queryFilter(filter, 0);
-                
+                const filter = contract.filters.ReviewAdded(id);
+                let events = [];
+                try {
+                    events = await contract.queryFilter(filter, 0);
+                } catch(e) {
+                    events = await contract.queryFilter(filter, -10000);
+                }
+
                 const list = document.getElementById('reviewsList');
                 if(events.length === 0) {
-                    list.innerHTML = "<div class='py-20 opacity-20 text-center italic'>No on-chain reviews found for this store yet.</div>";
+                    list.innerHTML = "<div class='opacity-30 italic'>No reviews found.</div>";
                     return;
                 }
 
-                // 3. Process Events (Sort by most recent)
                 list.innerHTML = "";
-                let totalScore = 0;
-                
-                events.slice().reverse().forEach(ev => {
+                let sum = 0;
+                events.reverse().forEach(ev => {
                     const { author, rating, content } = ev.args;
-                    totalScore += Number(rating);
-                    
-                    // Split content if it follows "Name: Comment" format
-                    const displayContent = content.includes(":") ? content.split(":")[1].trim() : content;
-                    const displayName = content.includes(":") ? content.split(":")[0].trim() : "Verified Customer";
-
+                    sum += Number(rating);
                     list.innerHTML += `
-                        <div class="card-veritas group hover:border-blue-500/50 transition-all">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <div class="text-blue-600 font-bold text-xs">${displayName}</div>
-                                    <div class="text-[8px] font-mono opacity-20 uppercase tracking-tighter mt-1">${author}</div>
-                                </div>
-                                <div class="text-yellow-500 font-bold tracking-widest">${"★".repeat(rating)}</div>
+                        <div class="card-veritas bg-zinc-900/50">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-[9px] font-mono opacity-40">${author.slice(0,15)}...</span>
+                                <span class="text-yellow-500 font-bold">${"★".repeat(rating)}</span>
                             </div>
-                            <p class="text-xl opacity-90 italic leading-relaxed">"${displayContent}"</p>
-                            <div class="mt-6 flex items-center gap-2 opacity-20 group-hover:opacity-40 transition-opacity">
-                                <div class="h-[1px] flex-grow bg-white"></div>
-                                <div class="text-[8px] font-bold uppercase">Transaction Verified</div>
-                            </div>
+                            <p class="text-white italic leading-relaxed">"${content}"</p>
                         </div>`;
                 });
-
-                // 4. Update Header Stats
-                document.getElementById('avgRate').innerText = (totalScore / events.length).toFixed(1);
+                document.getElementById('avgRate').innerText = (sum / events.length).toFixed(1);
                 document.getElementById('totalRev').innerText = events.length;
-
             } catch(e) { 
                 console.error(e);
-                document.getElementById('reviewsList').innerHTML = "<div class='text-red-500'>Error loading logs. Check network connection.</div>";
+                document.getElementById('reviewsList').innerHTML = "Error loading blockchain logs.";
             }
         };
     </script>
