@@ -1,38 +1,75 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Veritas | Homepage</title>
+    <meta charset="UTF-8">
+    <title>Veritas | Decentralized Reputation</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body>
-    <nav class="p-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--nav-bg)]">
-        <span class="text-xl font-bold text-blue-600">VERITAS</span>
-        <div class="flex gap-4">
-            <button id="darkModeToggle">🌓</button>
-            <button id="connectBtn" class="btn-google" onclick="connectWallet()">Connect</button>
-        </div>
-    </nav>
-    <main class="max-w-4xl mx-auto mt-20 px-6 text-center">
-        <h1 class="text-5xl font-bold mb-6">Recensioni Verificate on-chain.</h1>
-        <div class="relative max-w-xl mx-auto mb-16">
-            <input id="searchAddr" type="text" placeholder="Incolla Wallet Address dello Store (0x...)">
-            <button onclick="window.location.href='store.html?id='+document.getElementById('searchAddr').value" class="absolute right-2 top-2">🔍</button>
-        </div>
-        <div class="grid md:grid-cols-2 gap-8 text-left">
-            <div class="card-google">
-                <h3 class="text-blue-500 font-bold mb-2">Business</h3>
-                <p class="text-sm mb-4">Registra il tuo negozio e genera QR Code.</p>
-                <a href="dashboard.html" class="btn-google-outline block text-center">Dashboard</a>
+    <div class="nav-container">
+        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">V</div>
+                <span class="text-2xl font-bold tracking-tight">Veritas</span>
             </div>
-            <div class="card-google">
-                <h3 class="text-green-500 font-bold mb-2">Clienti</h3>
-                <p class="text-sm mb-4">Scansiona una ricevuta e lascia un feedback reale.</p>
-                <a href="review.html" class="btn-google block text-center">Scrivi Recensione</a>
+            <div class="flex items-center gap-4">
+                <button id="darkModeToggle" class="text-xl p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition">🌓</button>
+                <button id="connectBtn" class="btn-primary text-sm" onclick="connectWallet()">Connect Wallet</button>
+            </div>
+        </nav>
+    </div>
+
+    <header class="max-w-7xl mx-auto pt-24 pb-16 px-6 text-center">
+        <h1 class="text-6xl font-extrabold mb-6">
+            Trust is now <br><span class="hero-gradient">Mathematically Proven.</span>
+        </h1>
+        <p class="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10">
+            Veritas eliminates fake reviews using Polkadot Asset Hub. We bridge the gap between real-world purchases and digital reputation.
+        </p>
+        
+        <div class="flex flex-col md:flex-row gap-4 justify-center mb-20">
+            <div class="relative w-full max-w-md">
+                <input id="searchAddr" type="text" placeholder="Search store address (0x...)" class="w-full px-6 py-4 rounded-full border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 bg-transparent">
+                <button onclick="window.location.href='store.html?id='+document.getElementById('searchAddr').value" class="absolute right-2 top-2 bg-blue-600 text-white p-2 px-4 rounded-full">Explore</button>
             </div>
         </div>
-    </main>
+
+        <div class="grid md:grid-cols-3 gap-10 text-left border-t border-gray-100 dark:border-gray-800 pt-20">
+            <div>
+                <div class="text-blue-600 font-bold mb-2">01. Register</div>
+                <h3 class="text-xl font-bold mb-3">Businesses Sign Up</h3>
+                <p class="text-sm text-muted">Merchants register their brand on-chain to start collecting immutable feedback.</p>
+            </div>
+            <div>
+                <div class="text-blue-600 font-bold mb-2">02. Verify</div>
+                <h3 class="text-xl font-bold mb-3">Customers Scan</h3>
+                <p class="text-sm text-muted">A unique QR code on the receipt proves the customer actually visited the store.</p>
+            </div>
+            <div>
+                <div class="text-blue-600 font-bold mb-2">03. Publish</div>
+                <h3 class="text-xl font-bold mb-3">Reviews go Live</h3>
+                <p class="text-sm text-muted">Once submitted, the review is permanent, transparent, and impossible to delete.</p>
+            </div>
+        </div>
+    </header>
+
+    <section class="max-w-7xl mx-auto px-6 pb-32">
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="card-veritas">
+                <h3 class="text-2xl font-bold mb-4">Merchant Dashboard</h3>
+                <p class="text-gray-500 mb-8">Claim your business profile, manage your reputation, and generate unique verification codes.</p>
+                <a href="dashboard.html" class="btn-outline inline-block">Enterprise Access →</a>
+            </div>
+            <div class="card-veritas">
+                <h3 class="text-2xl font-bold mb-4">Customer Portal</h3>
+                <p class="text-gray-500 mb-8">Have a receipt? Share your honest experience and contribute to a fairer web.</p>
+                <a href="review.html" class="btn-primary inline-block">Write Review →</a>
+            </div>
+        </div>
+    </section>
+
     <script src="app.js"></script>
 </body>
 </html>
