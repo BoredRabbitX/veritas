@@ -1,38 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-    <meta charset="UTF-8"><title>Store Profile V3</title>
+    <meta charset="UTF-8"><title>Store Profile | Veritas V3.5</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body>
-    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="index.html" class="font-bold text-blue-600">← Home</a><div id="ar" class="text-3xl font-black text-blue-600">0.0</div></nav></div>
+<body class="flex flex-col min-h-screen">
+    <div class="nav-container"><nav class="max-w-7xl mx-auto p-4 flex justify-between items-center"><a href="explore.html" class="font-bold text-blue-600">← Torna all'elenco</a><div id="avgRate" class="text-3xl font-black text-blue-600">0.0</div></nav></div>
 
     <main class="main-content max-w-4xl mx-auto px-6 py-12">
-        <h1 id="sn" class="text-6xl font-black mb-12 italic tracking-tighter">...</h1>
-        <div id="rc" class="space-y-6">Loading verified logs...</div>
+        <div class="mb-12">
+            <h1 id="storeName" class="text-6xl font-black italic tracking-tighter">Caricamento...</h1>
+            <p id="storeAddr" class="font-mono text-xs opacity-30 mt-2"></p>
+        </div>
+
+        <h2 class="text-xl font-bold mb-6 border-b pb-2 uppercase tracking-widest opacity-50">Verified Feedback</h2>
+        <div id="reviewsList" class="space-y-4">
+            </div>
     </main>
-    <footer><div class="max-w-7xl mx-auto px-6 flex justify-between items-center text-[10px] uppercase font-bold opacity-30"><div>The White Rabbit</div><div>VERITAS PROTOCOL V3</div></div></footer>
+
     <script src="app.js"></script>
     <script>
         window.onload = async () => {
-            const id = new URLSearchParams(window.location.search).get('id');
+            const bizAddr = new URLSearchParams(window.location.search).get('id');
+            if(!bizAddr) return;
+            document.getElementById('storeAddr').innerText = bizAddr;
+
             await connectWallet(true);
-            const b = await contract.businesses(id);
-            document.getElementById('sn').innerText = b.name;
-            
-            const filter = contract.filters.ReviewAdded(id);
-            const events = await contract.queryFilter(filter, -10000);
-            const container = document.getElementById('rc');
-            container.innerHTML = events.length ? "" : "No verified reviews found.";
-            
-            let sum = 0;
-            events.reverse().forEach(ev => {
-                sum += Number(ev.args.rating);
-                container.innerHTML += `<div class="card-veritas"><div class="flex justify-between mb-4"><span class="font-bold text-blue-600">Verified User</span><span class="text-yellow-500">${"★".repeat(ev.args.rating)}</span></div><p class="text-lg opacity-80">"${ev.args.content}"</p></div>`;
-            });
-            if(events.length) document.getElementById('ar').innerText = (sum/events.length).toFixed(1);
+            const biz = await contract.businesses(bizAddr);
+            document.getElementById('storeName').innerText = biz.name;
+
+            try {
+                // Filtriamo gli eventi ReviewAdded specifici per questo negozio
+                const filter = contract.filters.ReviewAdded(bizAddr);
+                const events = await contract.queryFilter(filter, 0);
+                const list = document.getElementById('reviewsList');
+                
+                if(events.length === 0) {
+                    list.innerHTML = "<div class='py-10 opacity-30 italic'>Ancora nessuna recensione verificata per questo negozio.</div>";
+                    return;
+                }
+
+                list.innerHTML = "";
+                let totalScore = 0;
+
+                events.reverse().forEach(ev => {
+                    const { author, rating, content } = ev.args;
+                    totalScore += Number(rating);
+                    
+                    list.innerHTML += `
+                        <div class="card-veritas border-l-4 border-blue-600">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-[10px] font-bold opacity-40 font-mono">${author}</span>
+                                <span class="text-yellow-500 font-bold">${"★".repeat(rating)}</span>
+                            </div>
+                            <p class="text-lg opacity-80 italic">"${content}"</p>
+                        </div>`;
+                });
+
+                document.getElementById('avgRate').innerText = (totalScore / events.length).toFixed(1);
+
+            } catch(e) { console.error(e); }
         };
     </script>
 </body>
