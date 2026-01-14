@@ -35,7 +35,7 @@ const footerContent = `
             <div class="flex items-center gap-4 opacity-50">
                 <div class="w-10 h-10 bg-white/[0.02] border border-white/5 rounded-full flex items-center justify-center text-xl grayscale">🐰</div>
                 <div>
-                    <p class="text-[9px] font-black uppercase tracking-widest text-blue-600">Veritas Ledger Protocol</p>
+                    <p class="text-[9px] font-black uppercase tracking-widest text-blue-600">The White Rabbit Bored</p>
                     <p class="text-[8px] font-bold opacity-40 uppercase tracking-tighter">Powered by Paseo AssetHub • 2026</p>
                 </div>
             </div>
