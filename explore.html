@@ -25,27 +25,42 @@
     <script src="components.js"></script>
     <script>
         async function initPage() {
-            const grid = document.getElementById('grid');
-            const loader = document.getElementById('loader');
-            
-            try {
-                // FORCE REFRESH: Get events from the last 50,000 blocks
-                // This is safer on Paseo AssetHub
-                const filter = regContract.filters.BusinessRegistered();
-                const events = await regContract.queryFilter(filter, -50000); 
+    const grid = document.getElementById('grid');
+    try {
+        // Se non ci sono eventi, usiamo un fallback: 
+        // Cerchiamo le transazioni recenti verso il Registry
+        const filter = regContract.filters.BusinessRegistered();
+        const events = await regContract.queryFilter(filter, -100000); 
 
-                console.log("Registry Events Found:", events.length);
+        // Se ancora non trova nulla, l'evento non esiste nel contratto.
+        if (events.length === 0) {
+            grid.innerHTML = `
+                <div class="col-span-full py-10 opacity-50">
+                    <p class="mb-4 uppercase text-xs font-bold tracking-widest">No Events Detected</p>
+                    <p class="text-sm italic">Assicurati che il contratto Registry emetta l'evento BusinessRegistered.</p>
+                </div>`;
+            return;
+        }
 
-                // Extract unique owners from event arguments
-                const storeOwners = [...new Set(events.map(e => e.args.owner))];
+        const owners = [...new Set(events.map(e => e.args.owner))];
+        grid.innerHTML = "";
 
-                if (storeOwners.length === 0) {
-                    loader.innerHTML = `
-                        <p class="opacity-30 italic uppercase text-[10px] mb-4">No stores found in recent blocks</p>
-                        <button onclick="location.reload()" class="btn-primary text-[10px] px-4 py-2">Refresh Node</button>
-                    `;
-                    return;
-                }
+        for (let addr of owners) {
+            const b = await regContract.businesses(addr);
+            if (b.isActive) {
+                const category = ethers.decodeBytes32String(b.category);
+                grid.innerHTML += `
+                    <a href="store.html?id=${addr}" class="bg-zinc-900 border border-white/5 p-8 rounded-3xl block hover:border-blue-600 transition">
+                        <span class="text-blue-600 text-[10px] font-bold uppercase">${category}</span>
+                        <h3 class="text-3xl font-black italic uppercase mt-2">${b.name}</h3>
+                        <p class="text-[9px] opacity-30 mt-4">${addr}</p>
+                    </a>`;
+            }
+        }
+    } catch (e) {
+        grid.innerHTML = "Error syncing with Registry.";
+    }
+}
 
                 loader.remove(); // Remove loader if stores exist
                 grid.innerHTML = ""; // Clear grid
