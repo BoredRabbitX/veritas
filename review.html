@@ -5,38 +5,37 @@
     <title>Submit Review | Veritas</title>
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <style>
-        .merchant-reveal { animation: slideDown 0.4s ease-out forwards; display: block !important; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        #merchantBadge { border: 2px solid #2563eb; background: rgba(37, 99, 235, 0.1); }
-    </style>
 </head>
-<body class="bg-[var(--bg-main)]">
+<body class="bg-[var(--bg-main)] text-[var(--text-main)]">
     <div id="header-root"></div>
+
     <main class="max-w-2xl mx-auto px-6 py-20">
-        <div class="card-veritas p-12">
+        <div class="card-veritas p-12 shadow-2xl">
             <h1 class="text-5xl font-black italic uppercase mb-10 leading-none tracking-tighter">Verified <span class="text-blue-600">Review</span></h1>
-            
+
             <div class="space-y-8">
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt ID / Hash</label>
-                    <input id="rId" type="text" oninput="detectMerchant(this.value.trim())" class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 uppercase" placeholder="ENTER CODE...">
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt Code</label>
+                    <input id="rId" type="text" 
+                           oninput="detectMerchant(this.value.trim().toUpperCase())"
+                           class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 uppercase" 
+                           placeholder="VER-XXXX-XXXX">
                 </div>
 
-                <div id="merchantBadge" class="hidden p-6 rounded-2xl">
-                    <p class="text-[8px] font-black text-blue-600 uppercase mb-2 tracking-widest">Target Merchant Identified:</p>
-                    <h3 id="detectedName" class="text-3xl font-black uppercase italic leading-none">---</h3>
+                <div id="merchantBadge" class="hidden p-6 rounded-2xl bg-blue-600/5 border border-blue-600/20 animate-pulse">
+                    <p class="text-[8px] font-black text-blue-600 uppercase mb-2 tracking-widest">Store identified:</p>
+                    <h3 id="detectedName" class="text-3xl font-black uppercase italic leading-none text-blue-600">---</h3>
                     <input type="hidden" id="mAddr">
                 </div>
 
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Your Name</label>
-                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm" placeholder="Reviewer name...">
+                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm outline-none focus:border-blue-600" placeholder="Display name...">
                 </div>
 
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Rating Score</label>
-                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold">
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Rating</label>
+                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold text-sm outline-none">
                         <option value="5">★★★★★ - Excellent</option>
                         <option value="4">★★★★☆ - Good</option>
                         <option value="3">★★★☆☆ - Average</option>
@@ -46,80 +45,91 @@
                 </div>
 
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Detailed Experience</label>
-                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)]" placeholder="Tell the truth..."></textarea>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Experience</label>
+                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm outline-none focus:border-blue-600 resize-none" placeholder="Write your review..."></textarea>
                 </div>
 
-                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-widest">Broadcast Review</button>
+                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl">Broadcast Review</button>
             </div>
         </div>
     </main>
 
     <div id="footer-root"></div>
-    <script src="app.js"></script><script src="components.js"></script>
+
+    <script src="app.js"></script>
+    <script src="components.js"></script>
     <script>
         async function detectMerchant(rid) {
             const badge = document.getElementById('merchantBadge');
             const nameDisplay = document.getElementById('detectedName');
             const addrInput = document.getElementById('mAddr');
 
-            if (!window.engContract || rid.length < 10) {
+            if (!window.engContract || rid.length < 5) {
                 badge.classList.add('hidden');
                 return;
             }
 
             try {
-                // Interroghiamo la blockchain con l'hash ricevuto
-                const issuer = await engContract.receiptIssuers(rid);
+                // Trasformiamo il codice umano in Bytes32 perché il contratto lo salva così
+                const codeBytes = ethers.encodeBytes32String(rid);
+                const issuer = await engContract.receiptIssuers(codeBytes);
+                
                 if (issuer && issuer !== "0x0000000000000000000000000000000000000000") {
                     const b = await regContract.businesses(issuer);
-                    nameDisplay.innerText = sanitize(b.name);
+                    nameDisplay.innerText = b.name;
                     addrInput.value = issuer;
                     badge.classList.remove('hidden');
-                    badge.classList.add('merchant-reveal');
+                    badge.style.display = "block"; // Forza la visibilità
                 } else {
                     badge.classList.add('hidden');
                 }
-            } catch(e) { badge.classList.add('hidden'); }
+            } catch(e) {
+                // Se fallisce l'encoding (stringa troppo lunga), nascondi
+                badge.classList.add('hidden');
+            }
         }
 
         async function submitReview() {
-            if (!window.signer) return alert("Connect Wallet!");
+            if (!window.signer) return alert("Wallet not connected!");
+            
             const btn = document.getElementById('submitBtn');
             const mAddr = document.getElementById('mAddr').value;
-            const rId = document.getElementById('rId').value.trim();
+            const rid = document.getElementById('rId').value.trim().toUpperCase();
             const reviewer = document.getElementById('reviewerName').value;
             const stars = document.getElementById('stars').value;
             const comment = document.getElementById('comment').value;
 
-            if (!mAddr) return alert("Merchant not found. Check Receipt ID.");
-            if (!reviewer || !comment) return alert("Fields missing.");
+            if (!mAddr) return alert("Merchant not found!");
+            if (!reviewer || !comment) return alert("All fields are required.");
 
-            btn.disabled = true; btn.innerText = "Broadcasting...";
+            btn.disabled = true; btn.innerText = "Processing...";
 
             try {
+                const ridBytes = ethers.encodeBytes32String(rid);
                 const finalContent = `[${reviewer}] ${comment}`;
-                const tx = await revContract.submitReview(mAddr, stars, finalContent, rId);
+                const tx = await revContract.submitReview(mAddr, stars, finalContent, ridBytes);
                 await tx.wait();
-                alert("Success!"); window.location.href="explore.html";
-            } catch(e) { 
-                alert("Error."); btn.disabled = false; btn.innerText = "Broadcast Review";
+                alert("Review Published!");
+                window.location.href = "explore.html";
+            } catch(e) {
+                console.error(e);
+                alert("Failed.");
+                btn.disabled = false; btn.innerText = "Broadcast Review";
             }
         }
 
-        // AUTO-DETECT DAL QR CODE
+        // Se arriva dal QR: ?rid=VER-XXXX
         window.addEventListener('load', () => {
             const urlRid = new URLSearchParams(window.location.search).get('rid');
             if (urlRid) {
                 document.getElementById('rId').value = urlRid;
-                // Diamo tempo ai contratti di caricarsi
-                setTimeout(() => detectMerchant(urlRid), 1500);
+                setTimeout(() => detectMerchant(urlRid.toUpperCase()), 1200);
             }
         });
-
+        
         window.addEventListener('contractsReady', () => {
             const val = document.getElementById('rId').value;
-            if (val) detectMerchant(val);
+            if (val) detectMerchant(val.toUpperCase());
         });
     </script>
 </body>
