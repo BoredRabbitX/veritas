@@ -9,12 +9,28 @@
 
     <main class="main-content flex-grow px-6 py-20">
         <div class="max-w-4xl mx-auto">
-            <div id="storeHeader" class="mb-20 text-center md:text-left">
+            <div id="storeHeader" class="mb-12 text-center md:text-left">
                 <p id="storeCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-4"></p>
                 <h1 id="storeName" class="text-7xl md:text-8xl font-black italic uppercase mb-6 tracking-tighter leading-none">Loading...</h1>
                 <div class="flex justify-center md:justify-start gap-8 text-[10px] font-bold uppercase opacity-30 tracking-widest">
                     <span>TX Volume: <span id="storeVol" class="text-white">0</span></span>
                     <span>Status: <span class="text-blue-500">Verified</span></span>
+                </div>
+            </div>
+
+            <div id="ratingSummary" class="mb-20 grid grid-cols-1 md:grid-cols-2 gap-10 items-center bg-zinc-900/30 p-10 rounded-[2.5rem] border border-white/5">
+                <div class="text-center md:text-left">
+                    <div class="text-sm font-black uppercase tracking-[0.2em] opacity-40 mb-2 italic">Average Rating</div>
+                    <div class="flex items-center justify-center md:justify-start gap-4">
+                        <span id="avgStars" class="text-6xl font-black italic">0.0</span>
+                        <div class="text-blue-600 text-2xl">★★★★★</div>
+                    </div>
+                    <div class="text-[10px] uppercase font-bold opacity-30 mt-2 tracking-widest">Based on <span id="totalRev" class="text-white">0</span> verified reviews</div>
+                </div>
+                
+                <div class="space-y-2">
+                    <div id="barsContainer" class="text-[9px] font-bold uppercase tracking-widest">
+                        </div>
                 </div>
             </div>
 
@@ -41,6 +57,11 @@
                 const filter = revContract.filters.ReviewSubmitted(id);
                 const events = await revContract.queryFilter(filter, -50000);
                 const list = document.getElementById('reviewsList');
+                
+                // Variabili per statistiche
+                let totalRating = 0;
+                let starCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
+
                 list.innerHTML = events.length ? "" : "No feedback logs found.";
 
                 for(let i = events.length-1; i >= 0; i--) {
@@ -49,6 +70,11 @@
                     const rating = Number(ev.args.rating || ev.args[2]);
                     const content = ev.args.content || ev.args[3];
                     const receiptId = ev.args.receiptId || ev.args[4];
+                    
+                    // Accumulo statistiche
+                    totalRating += rating;
+                    starCounts[rating]++;
+
                     const reply = await engContract.merchantReplies(receiptId);
 
                     list.innerHTML += `
@@ -66,6 +92,30 @@
                             ` : ''}
                         </div>`;
                 }
+
+                // Rendering statistiche finali
+                if(events.length > 0) {
+                    const avg = (totalRating / events.length).toFixed(1);
+                    document.getElementById('avgStars').innerText = avg;
+                    document.getElementById('totalRev').innerText = events.length;
+
+                    // Rendering barre
+                    const barsContainer = document.getElementById('barsContainer');
+                    barsContainer.innerHTML = "";
+                    for(let s=5; s>=1; s--) {
+                        const percentage = (starCounts[s] / events.length * 100).toFixed(0);
+                        barsContainer.innerHTML += `
+                            <div class="flex items-center gap-4 mb-2">
+                                <span class="w-12 opacity-40">${s} Stars</span>
+                                <div class="flex-grow bg-white/5 h-1.5 rounded-full overflow-hidden">
+                                    <div class="bg-blue-600 h-full" style="width: ${percentage}%"></div>
+                                </div>
+                                <span class="w-8 opacity-40 text-right">${starCounts[s]}</span>
+                            </div>
+                        `;
+                    }
+                }
+
             } catch(e) { console.error(e); }
         }
     </script>
