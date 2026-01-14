@@ -1,5 +1,5 @@
-/** * VERITAS CORE - Stable 1.0
- * Logic: Hybrid RPC (Reading) + MetaMask (Writing)
+/** * VERITAS CORE - Stable 1.1 (English Edition)
+ * Hybrid Engine: RPC (Reading) + MetaMask (Writing)
  **/
 
 const registryAddress = "0xea45643b2b4bf3a5bb12588d7e9b8a147b040964";
@@ -26,45 +26,36 @@ const abiReviewer = [
     "event ReviewSubmitted(address indexed business, address indexed author, uint8 rating, string content, bytes32 indexed receiptId)"
 ];
 
-// Utility: Sicurezza testi
 window.sanitize = (str) => {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
 };
 
-// Utility: Configurazione contratti
 function setupContracts(target) {
     regContract = new ethers.Contract(registryAddress, abiRegistry, target);
     engContract = new ethers.Contract(engineAddress, abiEngine, target);
     revContract = new ethers.Contract(reviewerAddress, abiReviewer, target);
 }
 
-// Funzione globale per connettere il wallet (chiamata dal tasto nell'header)
 window.connectWallet = async function() {
     if (!window.ethereum) return alert("Please install MetaMask!");
     try {
         provider = new ethers.BrowserProvider(window.ethereum);
-        const accounts = await provider.send("eth_requestAccounts", []);
+        await provider.send("eth_requestAccounts", []);
         signer = await provider.getSigner();
         setupContracts(signer);
         
-        // Aggiorna il tasto nell'header (ID definito in components.js)
         const btn = document.getElementById('connectBtn');
         if (btn) btn.innerText = (await signer.getAddress()).slice(0,6) + "...";
         
         localStorage.setItem('veritas_autoconnect', 'true');
         window.isVeritasReady = true;
         window.dispatchEvent(new Event('contractsReady'));
-        
-        // Se la pagina ha una funzione initPage, la eseguiamo
         if (typeof initPage === "function") initPage();
-    } catch (e) {
-        console.error("Connection failed", e);
-    }
+    } catch (e) { console.error("Connection failed", e); }
 };
 
-// Toggle Tema (chiamata da components.js)
 window.toggleTheme = function() {
     const isLight = document.documentElement.classList.toggle('light');
     localStorage.setItem('veritas-theme', isLight ? 'light' : 'dark');
@@ -72,26 +63,36 @@ window.toggleTheme = function() {
     if (icon) icon.innerText = isLight ? '☀️' : '🌙';
 };
 
-// BOOTSTRAP: Caricamento iniziale
-window.addEventListener('load', async () => {
-    // 1. Tema
-    if (localStorage.getItem('veritas-theme') === 'light') document.documentElement.classList.add('light');
+window.addPaseoNetwork = async function() {
+    if(!window.ethereum) return;
+    const params = [{ 
+        chainId: '0x190f9636', 
+        chainName: 'Paseo AssetHub', 
+        nativeCurrency: { name: 'Paseo', symbol: 'PAS', decimals: 18 }, 
+        rpcUrls: [PASEO_RPC], 
+        blockExplorerUrls: ['https://paseo.subscan.io'] 
+    }];
+    await window.ethereum.request({ method: 'wallet_addEthereumChain', params });
+};
 
-    // 2. Connessione RPC (Sola lettura) per far vedere subito i dati
+window.copyAddressAndGoToFaucet = async function() {
+    if (!signer) return alert("Connect wallet first!");
+    const addr = await signer.getAddress();
+    await navigator.clipboard.writeText(addr);
+    alert("Address copied! Opening Faucet..."); 
+    window.open("https://faucet.polkadot.io/", "_blank");
+};
+
+window.addEventListener('load', async () => {
+    if (localStorage.getItem('veritas-theme') === 'light') document.documentElement.classList.add('light');
     try {
         const pubProvider = new ethers.JsonRpcProvider(PASEO_RPC);
         setupContracts(pubProvider);
         window.isVeritasReady = true;
-        console.log("Veritas: Network Connected (Read-Only)");
-        
-        // Avvisa la pagina che può caricare i dati
         window.dispatchEvent(new Event('contractsReady'));
         if (typeof initPage === "function") initPage();
-    } catch (e) {
-        console.error("RPC Connection failed", e);
-    }
+    } catch (e) { console.error("RPC Error", e); }
 
-    // 3. Auto-connect wallet se l'utente era già loggato
     if (localStorage.getItem('veritas_autoconnect') === 'true' && window.ethereum) {
         provider = new ethers.BrowserProvider(window.ethereum);
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
