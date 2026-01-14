@@ -12,20 +12,8 @@
             border: 2px solid #22c55e !important;
             background: rgba(34, 197, 94, 0.05) !important;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .verified-badge {
-            background: #22c55e;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 8px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        @keyframes slideIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .verified-badge { background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 8px; font-weight: 900; text-transform: uppercase; }
     </style>
 </head>
 <body class="bg-[var(--bg-main)] text-[var(--text-main)]">
@@ -33,17 +21,15 @@
 
     <main class="max-w-2xl mx-auto px-6 py-20">
         <div class="card-veritas p-12 shadow-2xl">
-            <h1 class="text-5xl font-black italic uppercase mb-10 leading-none tracking-tighter">
+            <h1 class="text-5xl font-black italic uppercase mb-10 tracking-tighter leading-none">
                 Verified <span class="text-blue-600">Review</span>
             </h1>
 
             <div class="space-y-8">
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt Code</label>
-                    <input id="rId" type="text" 
-                           class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 uppercase transition-all" 
-                           placeholder="VER-XXXX-XXXX">
-                    <p id="searchStatus" class="text-[8px] uppercase mt-2 opacity-30 font-bold hidden">Searching on-chain...</p>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt Code / Hash</label>
+                    <input id="rId" type="text" class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 uppercase transition-all" placeholder="VER-XXXX-XXXX">
+                    <p id="searchStatus" class="text-[8px] uppercase mt-2 opacity-30 font-bold hidden">Status: Idle</p>
                 </div>
 
                 <div id="merchantBadge" class="hidden p-8 rounded-[2rem] border border-[var(--border)] transition-all">
@@ -51,13 +37,13 @@
                         <span class="verified-badge">On-Chain Verified</span>
                         <span class="text-[8px] font-mono opacity-40 uppercase" id="mAddrLabel">0x...</span>
                     </div>
-                    <h3 id="detectedName" class="text-4xl font-black uppercase italic leading-none text-[var(--text-main)]">---</h3>
+                    <h3 id="detectedName" class="text-4xl font-black uppercase italic leading-none">---</h3>
                     <input type="hidden" id="mAddr">
                 </div>
 
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Reviewer Name</label>
-                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm outline-none focus:border-blue-600" placeholder="John Doe">
+                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm" placeholder="e.g. John Doe">
                 </div>
 
                 <div>
@@ -72,13 +58,11 @@
                 </div>
 
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Experience Details</label>
-                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm outline-none focus:border-blue-600 resize-none" placeholder="Describe your service experience..."></textarea>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Details</label>
+                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm resize-none" placeholder="Describe your experience..."></textarea>
                 </div>
 
-                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl">
-                    Broadcast Review
-                </button>
+                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl">Broadcast Review</button>
             </div>
         </div>
     </main>
@@ -99,82 +83,80 @@
                 detectMerchant(val);
             } else {
                 statusText.classList.add('hidden');
-                resetBadge();
+                resetUI();
             }
         });
 
-        function resetBadge() {
+        function resetUI() {
             const badge = document.getElementById('merchantBadge');
             badge.classList.add('hidden');
             badge.classList.remove('merchant-found');
         }
 
         async function detectMerchant(rid) {
-            const badge = document.getElementById('merchantBadge');
-            const nameDisplay = document.getElementById('detectedName');
-            const addrDisplay = document.getElementById('mAddrLabel');
-            const addrInput = document.getElementById('mAddr');
-
-            if (!window.engContract) return;
+            if (typeof engContract === "undefined") {
+                statusText.innerText = "Waiting for blockchain...";
+                return;
+            }
 
             try {
-                const ridBytes = ethers.encodeBytes32String(rid);
-                const issuer = await engContract.receiptIssuers(ridBytes);
+                let bytesId;
+                // Se l'input è già un hash 0x... lungo 66 caratteri
+                if (rid.startsWith('0X') && rid.length === 66) {
+                    bytesId = rid;
+                } else {
+                    // Altrimenti è un codice umano VER-XXXX
+                    bytesId = ethers.encodeBytes32String(rid);
+                }
+
+                console.log("Looking up ID:", rid, "Bytes:", bytesId);
+                const issuer = await engContract.receiptIssuers(bytesId);
+                console.log("Result issuer:", issuer);
                 
                 if (issuer && issuer !== "0x0000000000000000000000000000000000000000") {
                     const b = await regContract.businesses(issuer);
-                    nameDisplay.innerText = sanitize(b.name);
-                    addrDisplay.innerText = issuer.slice(0,6) + "..." + issuer.slice(-4);
-                    addrInput.value = issuer;
+                    document.getElementById('detectedName').innerText = b.name;
+                    document.getElementById('mAddrLabel').innerText = issuer.slice(0,6) + "..." + issuer.slice(-4);
+                    document.getElementById('mAddr').value = issuer;
                     
                     statusText.classList.add('hidden');
+                    const badge = document.getElementById('merchantBadge');
                     badge.classList.remove('hidden');
                     badge.classList.add('merchant-found');
                 } else {
-                    statusText.innerText = "Code not recognized on ledger";
-                    resetBadge();
+                    statusText.innerText = "Error: Receipt ID not found";
+                    resetUI();
                 }
             } catch(e) {
-                statusText.innerText = "Invalid code format";
-                resetBadge();
+                console.error(e);
+                statusText.innerText = "Error: Invalid ID format";
+                resetUI();
             }
         }
 
         async function submitReview() {
-            if (!window.signer) return alert("Connect Wallet first!");
+            if (!window.signer) return alert("Connect Wallet via header!");
             const btn = document.getElementById('submitBtn');
             const mAddr = document.getElementById('mAddr').value;
             const rid = rIdInput.value.trim().toUpperCase();
-            const reviewer = document.getElementById('reviewerName').value;
-            const stars = document.getElementById('stars').value;
-            const comment = document.getElementById('comment').value;
-
-            if (!mAddr) return alert("Merchant not identified. Enter a valid receipt code.");
-            if (!reviewer || !comment) return alert("All fields are required.");
-
-            btn.disabled = true; btn.innerText = "Publishing...";
+            
+            if (!mAddr) return alert("Merchant identity not verified.");
+            
+            btn.disabled = true; btn.innerText = "Confirming...";
 
             try {
-                const ridBytes = ethers.encodeBytes32String(rid);
-                const finalContent = `[${reviewer}] ${comment}`;
-                const tx = await revContract.submitReview(mAddr, stars, finalContent, ridBytes);
+                const ridBytes = rid.startsWith('0X') ? rid : ethers.encodeBytes32String(rid);
+                const content = `[${document.getElementById('reviewerName').value}] ${document.getElementById('comment').value}`;
+                
+                const tx = await revContract.submitReview(mAddr, document.getElementById('stars').value, content, ridBytes);
                 await tx.wait();
-                alert("Success! Review is now immutable.");
+                alert("Review Published!");
                 window.location.href = "explore.html";
             } catch(e) {
-                console.error(e);
-                alert("Blockchain transaction failed.");
+                alert("Transaction failed.");
                 btn.disabled = false; btn.innerText = "Broadcast Review";
             }
         }
-
-        window.addEventListener('load', () => {
-            const urlRid = new URLSearchParams(window.location.search).get('rid');
-            if (urlRid) {
-                rIdInput.value = urlRid.toUpperCase();
-                setTimeout(() => detectMerchant(urlRid.toUpperCase()), 1200);
-            }
-        });
 
         window.addEventListener('contractsReady', () => {
             if (rIdInput.value) detectMerchant(rIdInput.value.toUpperCase());
