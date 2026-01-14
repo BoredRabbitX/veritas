@@ -17,23 +17,36 @@
     <div id="footer-root"> </div> <script src="app.js"> </script>
     <script src="app.js"></script><script src="components.js"></script>
     <script>
-        async function initPage() {
-            const grid = document.getElementById('grid');
-            const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), -50000);
-            const owners = [...new Set(events.map(e => e.args.owner))];
-            grid.innerHTML = "";
-            for(let addr of owners.reverse()) {
-                const b = await regContract.businesses(addr);
-                if(!b.isActive) continue;
-                const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
-                grid.innerHTML += `
-                    <a href="store.html?id=${addr}" class="p-8 rounded-[2rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition block text-left">
-                        <p class="text-blue-600 text-[9px] font-bold uppercase mb-4">${cleanCat}</p>
-                        <h3 class="text-3xl font-black italic uppercase italic leading-none mb-4">${b.name}</h3>
-                        <div class="opacity-30 text-[9px] font-bold uppercase">Volume: ${b.volume} TX</div>
-                    </a>`;
-            }
+      async function initPage() {
+    try {
+        const grid = document.getElementById('grid');
+        if (!grid) return;
+        
+        grid.innerHTML = "<p class='opacity-50 uppercase text-[10px] animate-pulse'>Accessing Polkadot Ledger...</p>";
+
+        // regContract qui è già pronto grazie all'RPC in app.js
+        const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), -50000);
+        const owners = [...new Set(events.map(e => e.args.owner))];
+        
+        grid.innerHTML = ""; // Puliamo il loader
+        
+        for(let addr of owners.reverse()) {
+            const b = await regContract.businesses(addr);
+            if(!b.isActive) continue;
+            
+            const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
+            grid.innerHTML += `
+                <a href="store.html?id=${addr}" class="p-8 rounded-[2rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition block text-left">
+                    <p class="text-blue-600 text-[9px] font-bold uppercase mb-4">${cleanCat}</p>
+                    <h3 class="text-3xl font-black italic uppercase italic leading-none mb-4">${b.name}</h3>
+                    <div class="opacity-30 text-[9px] font-bold uppercase">Volume: ${b.volume} TX</div>
+                </a>`;
         }
+    } catch (e) {
+        console.error("Explore initialization error:", e);
+        document.getElementById('grid').innerHTML = "<p class='text-red-500'>Error accessing Paseo Hub. Check your connection.</p>";
+    }
+}
     </script>
 </body>
 </html>
