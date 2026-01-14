@@ -1,71 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explore | Veritas</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"><title>Explore | Veritas</title>
+    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
-    <div class="nav-container">
-        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <div class="flex items-center gap-8">
-                <a href="index.html" class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/20">V</div>
-                    <span class="text-2xl font-black tracking-tighter uppercase italic">Veritas</span>
-                </a>
-                <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
-                    <a href="explore.html" class="text-blue-600 transition">Explore</a>
-                    <a href="review.html" class="opacity-60 hover:opacity-100 transition">Submit Review</a>
-                    <a href="dashboard.html" class="opacity-60 hover:opacity-100 transition">Merchant Hub</a>
-                </div>
-            </div>
-            <button id="connectBtn" class="btn-primary text-xs py-2 px-6" onclick="connectWallet()">Connect Wallet</button>
-        </nav>
-    </div>
-
     <main class="main-content flex-grow px-6 py-12">
         <div class="max-w-7xl mx-auto">
-            <h1 class="text-7xl font-black italic uppercase tracking-tighter mb-12">Verified Stores</h1>
+            <h1 class="text-7xl font-black italic tracking-tighter uppercase mb-12">Verified Stores</h1>
             <div id="grid" class="grid md:grid-cols-3 gap-8">
-                <div class="col-span-full text-center opacity-30 py-20 animate-pulse italic uppercase text-[10px] font-bold">Scanning Paseo AssetHub...</div>
+                <div class="col-span-full text-center opacity-30 py-20 animate-pulse italic uppercase text-[10px] font-bold tracking-widest">Scanning Blockchain Events...</div>
             </div>
         </div>
     </main>
-
     <script src="app.js"></script>
+    <script src="components.js"></script>
     <script>
         async function initPage() {
             const grid = document.getElementById('grid');
             try {
-                const filter = regContract.filters.BusinessRegistered();
-                const events = await regContract.queryFilter(filter, 0);
+                const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), 0);
                 const stores = [...new Set(events.map(e => e.args.owner))];
-                grid.innerHTML = stores.length ? "" : '<div class="col-span-full opacity-30 italic uppercase text-[10px] text-center">No stores found.</div>';
+                grid.innerHTML = stores.length ? "" : '<p class="col-span-full opacity-30 text-center uppercase text-[10px] font-bold">No stores found.</p>';
 
                 for(let addr of stores.reverse()) {
                     const b = await regContract.businesses(addr);
                     if(!b.isActive) continue;
                     const r = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), 0);
                     const avg = r.length ? (r.reduce((s,e)=>s+Number(e.args.rating),0)/r.length).toFixed(1) : "0.0";
-                    const category = ethers.decodeBytes32String(b.category);
-
                     grid.innerHTML += `
-                        <a href="store.html?id=${addr}" class="bg-white/5 border border-white/5 p-8 rounded-3xl block hover:border-blue-600/50 transition duration-300">
+                        <a href="store.html?id=${addr}" class="bg-white/5 border border-white/5 p-8 rounded-3xl block hover:border-blue-600 transition">
                             <div class="flex justify-between items-start mb-6">
-                                <span class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">${category}</span>
-                                <div class="flex items-center gap-1 font-black italic text-sm"><span class="text-yellow-500">★</span> ${avg}</div>
+                                <span class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">${ethers.decodeBytes32String(b.category)}</span>
+                                <span class="font-black italic text-sm text-white">★ ${avg}</span>
                             </div>
                             <h3 class="text-3xl font-black italic uppercase tracking-tighter mb-4 text-white">${b.name}</h3>
                             <p class="text-[9px] font-mono opacity-30 truncate uppercase tracking-widest">Merchant: ${addr}</p>
                         </a>`;
                 }
-            } catch(e) { 
-                console.error(e);
-                grid.innerHTML = '<div class="col-span-full text-center opacity-30 py-20 italic">Error connecting to Registry.</div>'; 
-            }
+            } catch(e) { grid.innerHTML = '<p class="col-span-full opacity-30 text-center uppercase text-[10px] font-bold">Error connecting to Registry.</p>'; }
         }
     </script>
 </body>
