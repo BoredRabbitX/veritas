@@ -5,10 +5,10 @@
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen bg-black text-white">
+<body class="flex flex-col min-h-screen bg-black text-white font-sans">
     <main class="main-content flex-grow px-6 py-12">
         <div class="max-w-7xl mx-auto">
-            <h1 class="text-7xl font-black italic tracking-tighter uppercase mb-12">Verified Stores</h1>
+            <h1 class="text-7xl font-black italic tracking-tighter uppercase mb-12">Verified <span class="text-blue-600 block sm:inline italic">Stores</span></h1>
             <div id="grid" class="grid md:grid-cols-3 gap-8">
                 <div id="loader" class="col-span-full text-center py-20 opacity-30 animate-pulse text-[10px] font-bold uppercase tracking-[0.5em]">Scanning Paseo Chain...</div>
             </div>
@@ -19,7 +19,6 @@
         async function initPage() {
             const grid = document.getElementById('grid');
             try {
-                // Filtra gli eventi di registrazione dal Registry
                 const filter = regContract.filters.BusinessRegistered();
                 const events = await regContract.queryFilter(filter, -50000); 
                 const owners = [...new Set(events.map(e => e.args.owner))];
@@ -34,19 +33,24 @@
                     const b = await regContract.businesses(addr);
                     if(!b.isActive) continue;
 
-                    // Recupera media recensioni dal Reviewer
                     const revFilter = revContract.filters.ReviewSubmitted(addr);
                     const revEvents = await revContract.queryFilter(revFilter, -50000);
                     const avg = revEvents.length ? (revEvents.reduce((s,e)=>s+Number(e.args.rating),0)/revEvents.length).toFixed(1) : "0.0";
+                    
+                    // Format category name (e.g. FOOD_DRINK -> FOOD DRINK)
+                    const cleanCat = ethers.decodeBytes32String(b.category).replace('_', ' ');
 
                     grid.innerHTML += `
-                        <a href="store.html?id=${addr}" class="bg-zinc-900 border border-white/5 p-8 rounded-[2rem] block hover:border-blue-600 transition group">
+                        <a href="store.html?id=${addr}" class="bg-zinc-900 border border-white/5 p-8 rounded-[2rem] block hover:border-blue-600 transition group relative overflow-hidden">
                             <div class="flex justify-between items-start mb-6">
-                                <span class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">${ethers.decodeBytes32String(b.category)}</span>
+                                <span class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">${cleanCat}</span>
                                 <span class="font-black italic text-sm text-white opacity-40 group-hover:opacity-100 transition">★ ${avg}</span>
                             </div>
-                            <h3 class="text-3xl font-black italic uppercase tracking-tighter mb-4">${b.name}</h3>
-                            <p class="text-[9px] font-mono opacity-20 truncate">Merchant: ${addr}</p>
+                            <h3 class="text-3xl font-black italic uppercase tracking-tighter mb-4 leading-none">${b.name}</h3>
+                            <div class="flex items-center gap-2 mt-6">
+                                <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                <p class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Verified Log</p>
+                            </div>
                         </a>`;
                 }
             } catch(e) { console.error(e); }
