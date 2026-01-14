@@ -1,52 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Explore | Veritas</title>
+    <meta charset="UTF-8"><title>Explore | Veritas Beta 1.0</title>
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen bg-black text-white">
+
     <main class="main-content flex-grow px-6 py-12">
         <div class="max-w-7xl mx-auto text-center">
-            <h1 class="text-7xl font-black italic uppercase mb-12 italic">Verified Stores</h1>
+            <h1 class="text-7xl font-black italic uppercase mb-12 tracking-tighter">Verified Stores</h1>
+            
             <div id="grid" class="grid md:grid-cols-3 gap-8">
-                <div class="col-span-full opacity-30 animate-pulse uppercase text-xs font-bold">Scanning Paseo Chain...</div>
+                <div id="loader" class="col-span-full py-20">
+                    <div class="animate-pulse text-blue-600 font-bold uppercase text-[10px] tracking-[0.5em]">
+                        Scanning Polkadot Paseo Chain...
+                    </div>
+                </div>
             </div>
         </div>
     </main>
-    <script src="app.js"></script><script src="components.js"></script>
+
+    <script src="app.js"></script>
+    <script src="components.js"></script>
     <script>
         async function initPage() {
             const grid = document.getElementById('grid');
+            const loader = document.getElementById('loader');
+            
             try {
-                console.log("Fetching events from:", registryAddress);
+                // FORCE REFRESH: Get events from the last 50,000 blocks
+                // This is safer on Paseo AssetHub
                 const filter = regContract.filters.BusinessRegistered();
-                const events = await regContract.queryFilter(filter, -10000); // Cerca negli ultimi 10k blocchi
-                
-                console.log("Events found:", events.length);
-                const owners = [...new Set(events.map(e => e.args.owner))];
-                
-                if(owners.length === 0) {
-                    grid.innerHTML = "No stores found in recent blocks.";
+                const events = await regContract.queryFilter(filter, -50000); 
+
+                console.log("Registry Events Found:", events.length);
+
+                // Extract unique owners from event arguments
+                const storeOwners = [...new Set(events.map(e => e.args.owner))];
+
+                if (storeOwners.length === 0) {
+                    loader.innerHTML = `
+                        <p class="opacity-30 italic uppercase text-[10px] mb-4">No stores found in recent blocks</p>
+                        <button onclick="location.reload()" class="btn-primary text-[10px] px-4 py-2">Refresh Node</button>
+                    `;
                     return;
                 }
 
-                grid.innerHTML = "";
-                for(let addr of owners) {
+                loader.remove(); // Remove loader if stores exist
+                grid.innerHTML = ""; // Clear grid
+
+                for (let addr of storeOwners.reverse()) {
                     const b = await regContract.businesses(addr);
-                    if(!b.isActive) continue;
                     
-                    const cat = ethers.decodeBytes32String(b.category);
-                    grid.innerHTML += `
-                        <a href="store.html?id=${addr}" class="bg-zinc-900 border border-white/5 p-8 rounded-3xl block hover:border-blue-600 transition">
-                            <span class="text-blue-600 text-[10px] font-bold uppercase">${cat}</span>
-                            <h3 class="text-3xl font-black italic uppercase mt-2">${b.name}</h3>
-                            <p class="text-[9px] opacity-30 mt-4">${addr}</p>
-                        </a>`;
+                    // Only show if the business is marked as Active in the Registry
+                    if (b.isActive) {
+                        const category = ethers.decodeBytes32String(b.category);
+                        
+                        // Get reviews count for this merchant
+                        const revFilter = revContract.filters.ReviewSubmitted(addr);
+                        const revEvents = await revContract.queryFilter(revFilter, -50000);
+                        const avg = revEvents.length ? (revEvents.reduce((s,e)=>s+Number(e.args.rating),0)/revEvents.length).toFixed(1) : "0.0";
+
+                        grid.innerHTML += `
+                            <a href="store.html?id=${addr}" class="bg-zinc-900 border border-white/5 p-8 rounded-[2rem] block hover:border-blue-600 transition text-left group">
+                                <div class="flex justify-between items-start mb-6">
+                                    <span class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">${category}</span>
+                                    <span class="text-white font-black italic text-sm opacity-50 group-hover:opacity-100">★ ${avg}</span>
+                                </div>
+                                <h3 class="text-3xl font-black italic uppercase tracking-tighter mb-4">${b.name}</h3>
+                                <div class="opacity-20 text-[9px] font-mono truncate uppercase">Merchant: ${addr}</div>
+                            </a>`;
+                    }
                 }
-            } catch(e) { 
-                console.error(e);
-                grid.innerHTML = "Error: Check Console (F12)"; 
+            } catch (e) {
+                console.error("Explore Sync Error:", e);
+                loader.innerHTML = `<p class="text-red-500 uppercase text-[10px] font-bold">Sync Error: Check MetaMask Connection</p>`;
             }
         }
     </script>
