@@ -13,7 +13,6 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Style for the detected box */
         #merchantBadge { border: 2px solid #2563eb; background: rgba(37, 99, 235, 0.05); }
     </style>
 </head>
@@ -28,16 +27,16 @@
 
             <div class="space-y-8">
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt ID</label>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt ID / Code</label>
                     <input id="rId" type="text" 
                            class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 transition-colors uppercase" 
-                           placeholder="PASTE VER-XXXX CODE OR HASH...">
+                           placeholder="PASTE YOUR CODE OR HASH...">
                 </div>
 
                 <div id="merchantBadge" class="hidden merchant-reveal p-6 rounded-2xl">
                     <div class="flex items-center gap-3 mb-2">
                         <span class="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
-                        <p class="text-[8px] font-black text-blue-600 uppercase tracking-widest">Target Merchant Identified</p>
+                        <p class="text-[8px] font-black text-blue-600 uppercase tracking-widest leading-none">Detected Merchant Identity</p>
                     </div>
                     <h3 id="detectedName" class="text-3xl font-black uppercase italic leading-none text-blue-600">---</h3>
                     <input type="hidden" id="mAddr">
@@ -47,7 +46,7 @@
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Your Name / Alias</label>
                     <input id="reviewerName" type="text" 
                            class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm focus:border-blue-600 outline-none transition" 
-                           placeholder="Enter your name...">
+                           placeholder="How should we display you?">
                 </div>
 
                 <div>
@@ -65,11 +64,11 @@
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Detailed Experience</label>
                     <textarea id="comment" 
                               class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm outline-none focus:border-blue-600 transition resize-none" 
-                              placeholder="Describe your experience..."></textarea>
+                              placeholder="Describe your service experience..."></textarea>
                 </div>
 
                 <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl">
-                    Publish on Blockchain
+                    Broadcast Review
                 </button>
             </div>
         </div>
@@ -80,7 +79,7 @@
     <script src="app.js"></script>
     <script src="components.js"></script>
     <script>
-        // Funzione per intercettare il codice
+        // Automatic Listener for Receipt ID input
         document.getElementById('rId').addEventListener('input', function(e) {
             detectMerchant(e.target.value.trim());
         });
@@ -90,34 +89,32 @@
             const nameDisplay = document.getElementById('detectedName');
             const addrInput = document.getElementById('mAddr');
 
-            // Aspetta che i contratti siano pronti
+            // Wait for contracts to load in case of direct link
             if (!window.engContract || rid.length < 10) {
                 badge.classList.add('hidden');
                 return;
             }
 
             try {
-                // Se il codice è nel formato VER-XXXX-XXXX, dobbiamo usare l'hash originale.
-                // Se invece l'utente incolla direttamente l'hash (come dal QR), lo usiamo tal quale.
-                // Per ora assumiamo che rid sia l'hash 0x... (quello che lo smart contract riconosce)
-                
+                // Query who issued this specific receipt ID
                 const issuer = await engContract.receiptIssuers(rid);
                 
                 if (issuer && issuer !== "0x0000000000000000000000000000000000000000") {
                     const b = await regContract.businesses(issuer);
-                    nameDisplay.innerText = b.name;
+                    nameDisplay.innerText = b.name; // THE MERCHANT NAME APPEARS HERE
                     addrInput.value = issuer;
-                    badge.classList.remove('hidden');
+                    badge.classList.remove('hidden'); // SHOW THE BOX
                 } else {
                     badge.classList.add('hidden');
                 }
             } catch(e) {
+                console.warn("Detection in progress...");
                 badge.classList.add('hidden');
             }
         }
 
         async function submitReview() {
-            if (!window.signer) return alert("Connect Wallet first!");
+            if (!window.signer) return alert("Connect Wallet via Header button!");
             
             const btn = document.getElementById('submitBtn');
             const mAddr = document.getElementById('mAddr').value;
@@ -126,36 +123,42 @@
             const stars = document.getElementById('stars').value;
             const comment = document.getElementById('comment').value;
 
-            if (!mAddr) return alert("Valid Receipt ID required! We couldn't find a merchant for this code.");
-            if (!reviewer || !comment) return alert("All fields are required.");
+            if (!mAddr) return alert("Error: Merchant not detected. Ensure your Receipt ID is correct.");
+            if (!reviewer || !comment) return alert("Please fill in your name and comment.");
 
             btn.disabled = true;
-            btn.innerText = "Broadcasting...";
+            btn.innerText = "Mining on Paseo...";
 
             try {
+                // Permanently include the reviewer's name in the content
                 const finalContent = `[${reviewer}] ${comment}`;
+                
+                // Blockchain Interaction
                 const tx = await revContract.submitReview(mAddr, stars, finalContent, rId);
                 await tx.wait();
-                alert("Success! Review Published.");
+                
+                alert("Verified Review Successfully Published!");
                 window.location.href = "explore.html";
             } catch(e) {
                 console.error(e);
-                alert("Failed to publish.");
+                alert("Blockchain error: verify your Receipt and PAS balance.");
                 btn.disabled = false;
-                btn.innerText = "Publish on Blockchain";
+                btn.innerText = "Broadcast Review";
             }
         }
 
-        // Se arrivi da un QR code con ?rid=...
+        // Logic for incoming QR links (?rid=0x...)
         window.addEventListener('load', () => {
-            const urlRid = new URLSearchParams(window.location.search).get('rid');
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlRid = urlParams.get('rid');
             if (urlRid) {
                 document.getElementById('rId').value = urlRid;
-                setTimeout(() => detectMerchant(urlRid), 1000); // Delay per dare tempo ai contratti di caricare
+                // Wait 1.2s for RPC connection to stabilize before auto-detecting
+                setTimeout(() => detectMerchant(urlRid), 1200);
             }
         });
 
-        // Sync con l'header
+        // Re-detect if contracts ready late
         window.addEventListener('contractsReady', () => {
             const currentRid = document.getElementById('rId').value;
             if (currentRid) detectMerchant(currentRid);
