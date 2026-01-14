@@ -1,5 +1,6 @@
-/** * VERITAS CORE - Stable 1.1 (English Edition)
+/** * VERITAS CORE - Stable 1.2 (English Edition)
  * Hybrid Engine: RPC (Reading) + MetaMask (Writing)
+ * Optimized for Global Exposure
  **/
 
 const registryAddress = "0xea45643b2b4bf3a5bb12588d7e9b8a147b040964";
@@ -7,7 +8,11 @@ const engineAddress = "0xf85ba77ea82080bb4f32d6d77bc8e65b1c81ac81";
 const reviewerAddress = "0x5c65e66016c36de0ec94fe87e3c035ead54aa9da";
 const PASEO_RPC = "https://testnet-passet-hub-eth-rpc.polkadot.io";
 
-let provider, signer, regContract, engContract, revContract;
+// Esponiamo i contratti globalmente su window
+window.regContract = null;
+window.engContract = null;
+window.revContract = null;
+window.signer = null;
 window.isVeritasReady = false;
 
 const abiRegistry = [
@@ -32,26 +37,33 @@ window.sanitize = (str) => {
     return div.innerHTML;
 };
 
+// Funzione di setup che assegna tutto a window
 function setupContracts(target) {
-    regContract = new ethers.Contract(registryAddress, abiRegistry, target);
-    engContract = new ethers.Contract(engineAddress, abiEngine, target);
-    revContract = new ethers.Contract(reviewerAddress, abiReviewer, target);
+    window.regContract = new ethers.Contract(registryAddress, abiRegistry, target);
+    window.engContract = new ethers.Contract(engineAddress, abiEngine, target);
+    window.revContract = new ethers.Contract(reviewerAddress, abiReviewer, target);
+    console.log("Contracts linked to:", target.constructor.name);
 }
 
 window.connectWallet = async function() {
     if (!window.ethereum) return alert("Please install MetaMask!");
     try {
-        provider = new ethers.BrowserProvider(window.ethereum);
+        const provider = new ethers.BrowserProvider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
-        setupContracts(signer);
+        window.signer = await provider.getSigner();
         
+        setupContracts(window.signer);
+        
+        const addr = await window.signer.getAddress();
         const btn = document.getElementById('connectBtn');
-        if (btn) btn.innerText = (await signer.getAddress()).slice(0,6) + "...";
+        if (btn) btn.innerText = addr.slice(0,6) + "...";
         
         localStorage.setItem('veritas_autoconnect', 'true');
         window.isVeritasReady = true;
+        
+        // Lanciamo l'evento che sblocca Dashboard e Review
         window.dispatchEvent(new Event('contractsReady'));
+        
         if (typeof initPage === "function") initPage();
     } catch (e) { console.error("Connection failed", e); }
 };
@@ -72,36 +84,48 @@ window.addPaseoNetwork = async function() {
         rpcUrls: [PASEO_RPC], 
         blockExplorerUrls: ['https://paseo.subscan.io'] 
     }];
-    await window.ethereum.request({ method: 'wallet_addEthereumChain', params });
+    try {
+        await window.ethereum.request({ method: 'wallet_addEthereumChain', params });
+    } catch (e) { console.error("Failed to add network", e); }
 };
 
 window.copyAddressAndGoToFaucet = async function() {
-    if (!signer) return alert("Connect wallet first!");
-    const addr = await signer.getAddress();
+    if (!window.signer) return alert("Connect wallet first!");
+    const addr = await window.signer.getAddress();
     await navigator.clipboard.writeText(addr);
     alert("Address copied! Opening Faucet..."); 
     window.open("https://faucet.polkadot.io/", "_blank");
 };
 
+// --- LOGICA DI CARICAMENTO AUTOMATICO ---
 window.addEventListener('load', async () => {
+    // 1. Tema
     if (localStorage.getItem('veritas-theme') === 'light') document.documentElement.classList.add('light');
+
+    // 2. Inizializzazione Pubblica (Sola Lettura via RPC)
     try {
         const pubProvider = new ethers.JsonRpcProvider(PASEO_RPC);
         setupContracts(pubProvider);
         window.isVeritasReady = true;
         window.dispatchEvent(new Event('contractsReady'));
-        if (typeof initPage === "function") initPage();
     } catch (e) { console.error("RPC Error", e); }
 
+    // 3. Auto-Connessione MetaMask (Scrittura)
     if (localStorage.getItem('veritas_autoconnect') === 'true' && window.ethereum) {
-        provider = new ethers.BrowserProvider(window.ethereum);
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-            signer = await provider.getSigner();
-            setupContracts(signer);
-            const btn = document.getElementById('connectBtn');
-            if (btn) btn.innerText = (await signer.getAddress()).slice(0,6) + "...";
-            window.dispatchEvent(new Event('contractsReady'));
-        }
+        try {
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0) {
+                window.signer = await browserProvider.getSigner();
+                setupContracts(window.signer);
+                
+                const addr = await window.signer.getAddress();
+                const btn = document.getElementById('connectBtn');
+                if (btn) btn.innerText = addr.slice(0,6) + "...";
+                
+                window.dispatchEvent(new Event('contractsReady'));
+                if (typeof initPage === "function") initPage();
+            }
+        } catch (e) { console.error("Autoconnect failed", e); }
     }
 });
