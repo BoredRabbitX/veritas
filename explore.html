@@ -1,73 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explore | Veritas</title>
-    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen bg-[var(--bg-main)]">
+
     <div id="header-root"></div>
+
     <main class="flex-grow p-6 py-20">
         <div class="max-w-7xl mx-auto text-center">
-            <h1 class="text-7xl font-black italic uppercase mb-12">Verified <span class="text-blue-600">Stores</span></h1>
-            <div id="grid" class="grid md:grid-cols-3 gap-8"></div>
+            <h1 class="text-7xl font-black italic uppercase mb-12 tracking-tighter">
+                Verified <span class="text-blue-600">Stores</span>
+            </h1>
+            <div id="grid" class="grid md:grid-cols-3 gap-8">
+                <div class="col-span-full py-20 opacity-20">
+                    <p class="text-[10px] font-black uppercase tracking-widest animate-pulse">
+                        Connecting to Polkadot Network...
+                    </p>
+                </div>
+            </div>
         </div>
     </main>
-    <div id="footer-root"> </div> <script src="app.js"> </script>
-    <script src="app.js"></script><script src="components.js"></script>
+
+    <div id="footer-root"></div>
+
+    <script src="app.js"></script>
+    <script src="components.js"></script>
+
     <script>
-    async function initPage() {
-    try {
-        const grid = document.getElementById('grid');
-        if (!grid) return;
-        
-        grid.innerHTML = "<p class='opacity-50 uppercase text-[10px] animate-pulse'>Accessing Polkadot Ledger...</p>";
+    async function initPage(retryCount = 0) {
+        try {
+            const grid = document.getElementById('grid');
+            if (!grid) return;
 
-        // 1. Recupera tutti gli eventi di registrazione
-        const filter = regContract.filters.BusinessRegistered();
-        const events = await regContract.queryFilter(filter, -100000); // ultimi 100k blocchi
-        
-        // 2. FILTRO DUPLICATI: Creiamo un Set di indirizzi unici
-        // Usiamo un Set per assicurarci che ogni indirizzo compaia UNA sola volta
-        const uniqueAddresses = [...new Set(events.map(e => e.args.owner || e.args[0]))];
-        
-        grid.innerHTML = ""; // Puliamo il loader
-        
-        if (uniqueAddresses.length === 0) {
-            grid.innerHTML = "<p class='opacity-30 uppercase text-[10px]'>No merchants registered yet.</p>";
-            return;
-        }
+            // Protezione: aspetta che i contratti siano inizializzati in app.js
+            if (!window.regContract) {
+                if (retryCount < 10) {
+                    console.log("Explore: Waiting for contracts...");
+                    setTimeout(() => initPage(retryCount + 1), 500);
+                    return;
+                }
+                grid.innerHTML = "<p class='text-red-500 uppercase text-[10px]'>Connection Timeout. Please check MetaMask or RPC.</p>";
+                return;
+            }
+            
+            grid.innerHTML = "<div class='col-span-full py-20 opacity-50 uppercase text-[10px] animate-pulse italic'>Reading Ledger Events...</div>";
 
-        // 3. Ciclo sugli indirizzi UNICI (in ordine inverso per vedere i più recenti)
-        for(let addr of uniqueAddresses.reverse()) {
-            const b = await regContract.businesses(addr);
+            // 1. Recupera tutti gli eventi di registrazione
+            const filter = regContract.filters.BusinessRegistered();
+            const events = await regContract.queryFilter(filter, -100000); 
             
-            // Saltiamo i merchant non attivi
-            if(!b.isActive) continue;
+            // 2. FILTRO DUPLICATI: Indirizzi unici
+            const uniqueAddresses = [...new Set(events.map(e => e.args[0] || e.args.owner))];
             
-            const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
+            grid.innerHTML = ""; 
             
-            grid.innerHTML += `
-                <a href="store.html?id=${addr}" class="p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg">
-                    <div class="flex justify-between items-start mb-6">
-                        <p class="text-blue-600 text-[10px] font-black uppercase tracking-[0.2em]">${cleanCat}</p>
-                        <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
-                    </div>
-                    <h3 class="text-4xl font-black italic uppercase leading-none mb-6 tracking-tighter group-hover:text-blue-500 transition-colors">${b.name}</h3>
-                    <div class="flex justify-between items-center opacity-30 text-[9px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
-                        <span>${b.volume} Verified Logs</span>
-                        <span class="font-mono">${addr.slice(0,6)}...${addr.slice(-4)}</span>
-                    </div>
-                </a>`;
-        }
-    } catch (e) {
-        console.error("Explore error:", e);
-        if(document.getElementById('grid')) {
-            document.getElementById('grid').innerHTML = "<p class='text-red-500 text-[10px] font-bold uppercase'>Sync Error. Please Refresh.</p>";
+            if (uniqueAddresses.length === 0) {
+                grid.innerHTML = "<p class='col-span-full opacity-30 uppercase text-[10px] py-20'>No merchants registered yet.</p>";
+                return;
+            }
+
+            // 3. Ciclo sugli indirizzi UNICI (più recenti prima)
+            for(let addr of uniqueAddresses.reverse()) {
+                const b = await regContract.businesses(addr);
+                
+                if(!b.isActive) continue;
+                
+                const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
+                
+                grid.innerHTML += `
+                    <a href="store.html?id=${addr}" class="p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg hover:-translate-y-2">
+                        <div class="flex justify-between items-start mb-6">
+                            <p class="text-blue-600 text-[10px] font-black uppercase tracking-[0.2em]">${cleanCat}</p>
+                            <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+                        </div>
+                        <h3 class="text-4xl font-black italic uppercase leading-none mb-6 tracking-tighter group-hover:text-blue-500 transition-colors">${b.name}</h3>
+                        <div class="flex justify-between items-center opacity-30 text-[9px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
+                            <span>${b.volume} Verified Logs</span>
+                            <span class="font-mono">${addr.slice(0,6)}...${addr.slice(-4)}</span>
+                        </div>
+                    </a>`;
+            }
+        } catch (e) {
+            console.error("Explore error:", e);
+            if(document.getElementById('grid')) {
+                document.getElementById('grid').innerHTML = "<p class='text-red-500 text-[10px] font-bold uppercase'>Sync Error. Please Refresh.</p>";
+            }
         }
     }
-}
+
+    // --- ATTIVAZIONE ---
+    // Ascolta il segnale da app.js
+    window.addEventListener('contractsReady', initPage);
+
+    // Fallback di sicurezza se app.js ha già finito
+    window.addEventListener('load', () => {
+        if (window.regContract) initPage();
+    });
     </script>
 </body>
 </html>
