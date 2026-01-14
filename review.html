@@ -5,6 +5,11 @@
     <title>Submit Review | Veritas</title>
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        .merchant-reveal { display: block !important; animation: slideDown 0.4s ease-out forwards; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        #merchantBadge { border: 2px solid #2563eb; background: rgba(37, 99, 235, 0.1); }
+    </style>
 </head>
 <body class="bg-[var(--bg-main)] text-[var(--text-main)]">
     <div id="header-root"></div>
@@ -17,25 +22,24 @@
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt Code</label>
                     <input id="rId" type="text" 
-                           oninput="detectMerchant(this.value.trim().toUpperCase())"
                            class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 uppercase" 
                            placeholder="VER-XXXX-XXXX">
                 </div>
 
-                <div id="merchantBadge" class="hidden p-6 rounded-2xl bg-blue-600/5 border border-blue-600/20 animate-pulse">
-                    <p class="text-[8px] font-black text-blue-600 uppercase mb-2 tracking-widest">Store identified:</p>
+                <div id="merchantBadge" class="hidden p-6 rounded-2xl">
+                    <p class="text-[8px] font-black text-blue-600 uppercase mb-2 tracking-[0.2em]">Verified Merchant Found:</p>
                     <h3 id="detectedName" class="text-3xl font-black uppercase italic leading-none text-blue-600">---</h3>
                     <input type="hidden" id="mAddr">
                 </div>
 
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Your Name</label>
-                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm outline-none focus:border-blue-600" placeholder="Display name...">
+                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm focus:border-blue-600 outline-none" placeholder="Display name...">
                 </div>
 
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Rating</label>
-                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold text-sm outline-none">
+                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold">
                         <option value="5">★★★★★ - Excellent</option>
                         <option value="4">★★★★☆ - Good</option>
                         <option value="3">★★★☆☆ - Average</option>
@@ -46,7 +50,7 @@
 
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Experience</label>
-                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm outline-none focus:border-blue-600 resize-none" placeholder="Write your review..."></textarea>
+                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm outline-none focus:border-blue-600 resize-none" placeholder="Write your feedback..."></textarea>
                 </div>
 
                 <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl">Broadcast Review</button>
@@ -59,39 +63,50 @@
     <script src="app.js"></script>
     <script src="components.js"></script>
     <script>
+        // Event listener diretto sull'input
+        const rIdInput = document.getElementById('rId');
+        rIdInput.addEventListener('input', () => {
+            const val = rIdInput.value.trim().toUpperCase();
+            if(val.length >= 10) detectMerchant(val);
+            else document.getElementById('merchantBadge').classList.add('hidden');
+        });
+
         async function detectMerchant(rid) {
             const badge = document.getElementById('merchantBadge');
             const nameDisplay = document.getElementById('detectedName');
             const addrInput = document.getElementById('mAddr');
 
-            if (!window.engContract || rid.length < 5) {
-                badge.classList.add('hidden');
+            if (!window.engContract) {
+                console.warn("Contracts not ready yet...");
                 return;
             }
 
             try {
-                // Trasformiamo il codice umano in Bytes32 perché il contratto lo salva così
-                const codeBytes = ethers.encodeBytes32String(rid);
-                const issuer = await engContract.receiptIssuers(codeBytes);
+                // Conversione in bytes32
+                const ridBytes = ethers.encodeBytes32String(rid);
+                console.log("Searching for:", rid, "as", ridBytes);
+
+                // Chiamata al contratto
+                const issuer = await engContract.receiptIssuers(ridBytes);
+                console.log("Issuer found:", issuer);
                 
                 if (issuer && issuer !== "0x0000000000000000000000000000000000000000") {
                     const b = await regContract.businesses(issuer);
                     nameDisplay.innerText = b.name;
                     addrInput.value = issuer;
                     badge.classList.remove('hidden');
-                    badge.style.display = "block"; // Forza la visibilità
+                    badge.classList.add('merchant-reveal');
                 } else {
                     badge.classList.add('hidden');
                 }
             } catch(e) {
-                // Se fallisce l'encoding (stringa troppo lunga), nascondi
+                console.error("Detection error:", e);
                 badge.classList.add('hidden');
             }
         }
 
         async function submitReview() {
-            if (!window.signer) return alert("Wallet not connected!");
-            
+            if (!window.signer) return alert("Connect Wallet!");
             const btn = document.getElementById('submitBtn');
             const mAddr = document.getElementById('mAddr').value;
             const rid = document.getElementById('rId').value.trim().toUpperCase();
@@ -99,10 +114,10 @@
             const stars = document.getElementById('stars').value;
             const comment = document.getElementById('comment').value;
 
-            if (!mAddr) return alert("Merchant not found!");
-            if (!reviewer || !comment) return alert("All fields are required.");
+            if (!mAddr) return alert("Identify Merchant first!");
+            if (!reviewer || !comment) return alert("Fill all fields!");
 
-            btn.disabled = true; btn.innerText = "Processing...";
+            btn.disabled = true; btn.innerText = "Publishing...";
 
             try {
                 const ridBytes = ethers.encodeBytes32String(rid);
@@ -113,23 +128,23 @@
                 window.location.href = "explore.html";
             } catch(e) {
                 console.error(e);
-                alert("Failed.");
+                alert("Failed to publish.");
                 btn.disabled = false; btn.innerText = "Broadcast Review";
             }
         }
 
-        // Se arriva dal QR: ?rid=VER-XXXX
+        // Supporto per QR link
         window.addEventListener('load', () => {
             const urlRid = new URLSearchParams(window.location.search).get('rid');
             if (urlRid) {
-                document.getElementById('rId').value = urlRid;
-                setTimeout(() => detectMerchant(urlRid.toUpperCase()), 1200);
+                rIdInput.value = urlRid.toUpperCase();
+                // Ritardo per caricamento contratti
+                setTimeout(() => detectMerchant(urlRid.toUpperCase()), 1500);
             }
         });
-        
+
         window.addEventListener('contractsReady', () => {
-            const val = document.getElementById('rId').value;
-            if (val) detectMerchant(val.toUpperCase());
+            if (rIdInput.value) detectMerchant(rIdInput.value.toUpperCase());
         });
     </script>
 </body>
