@@ -3,7 +3,7 @@
  * Beta 1.0 - Paseo AssetHub
  */
 
-// --- THEME LOGIC (Light/Dark Mode) ---
+// --- 1. THEME LOGIC (Light/Dark Mode) ---
 window.toggleTheme = function() {
     const html = document.documentElement;
     const isLight = html.classList.toggle('light');
@@ -13,7 +13,7 @@ window.toggleTheme = function() {
     if (icon) icon.innerText = isLight ? '☀️' : '🌙';
 };
 
-// Apply theme immediately before page render
+// Apply theme immediately
 (function() {
     const savedTheme = localStorage.getItem('veritas-theme');
     if (savedTheme === 'light') {
@@ -21,7 +21,24 @@ window.toggleTheme = function() {
     }
 })();
 
-// --- BLOCKCHAIN CONFIGURATION ---
+// --- 2. SMART FAUCET LOGIC ---
+window.copyAddressAndGoToFaucet = async function() {
+    if (!signer) {
+        alert("Please connect your wallet first to copy your address.");
+        return;
+    }
+    try {
+        const addr = await signer.getAddress();
+        await navigator.clipboard.writeText(addr);
+        alert("Wallet address copied to clipboard! \n\nNow paste it into the Faucet on the next page.");
+        window.open("https://faucet.polkadot.io/", "_blank");
+    } catch (err) {
+        console.error("Failed to copy!", err);
+        window.open("https://faucet.polkadot.io/", "_blank");
+    }
+};
+
+// --- 3. BLOCKCHAIN CONFIGURATION ---
 const registryAddress = "0xea45643b2b4bf3a5bb12588d7e9b8a147b040964";
 const engineAddress = "0xf85ba77ea82080bb4f32d6d77bc8e65b1c81ac81";
 const reviewerAddress = "0x5c65e66016c36de0ec94fe87e3c035ead54aa9da";
@@ -97,7 +114,6 @@ async function connectWallet(silent = false) {
 
 window.addEventListener('load', () => {
     if (localStorage.getItem('veritas_autoconnect') === 'true') connectWallet(true);
-    // Sync UI icon with current theme
     const icon = document.getElementById('themeIcon');
     if (icon) icon.innerText = document.documentElement.classList.contains('light') ? '☀️' : '🌙';
 });
