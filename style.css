@@ -1,51 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap');
+/* style.css - Mobile Fixes */
 
-:root {
-    /* DARK THEME */
-    --bg-main: #09090b;
-    --card-bg: #18181b;
-    --input-bg: #18181b;
-    --text-main: #f4f4f5;
-    --text-muted: rgba(244, 244, 245, 0.5);
-    --border: rgba(255, 255, 255, 0.1);
-    --primary: #2563eb;
+/* Evita che il testo rompa il layout */
+* {
+    word-wrap: break-word;
+    box-sizing: border-box;
 }
 
-html.light {
-    /* LIGHT THEME */
-    --bg-main: #f4f4f5;
-    --card-bg: #ffffff;
-    --input-bg: #ffffff;
-    --text-main: #09090b;
-    --text-muted: rgba(9, 9, 11, 0.6);
-    --border: rgba(0, 0, 0, 0.1);
-    --primary: #2563eb;
+/* Navbar mobile optimization */
+.nav-container {
+    width: 100%;
+    left: 0;
 }
 
-body {
-    background-color: var(--bg-main);
-    color: var(--text-main);
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    transition: background-color 0.3s ease, color 0.3s ease;
+/* Custom scrollbar per l'inbox del merchant su mobile */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
 }
 
-/* Classi Utility per il Tema Totale */
-.dynamic-card { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-main); }
-.dynamic-text { color: var(--text-main); }
-.dynamic-muted { color: var(--text-muted); }
-
-input, select, textarea {
-    background: var(--input-bg) !important;
-    color: var(--text-main) !important;
-    border: 1px solid var(--border) !important;
+/* Media query per testi molto grandi su mobile */
+@media (max-width: 640px) {
+    h1 { font-size: 3rem !important; }
+    .text-7xl, .text-8xl, .text-9xl { font-size: 3.5rem !important; line-height: 1 !important; }
 }
-
-.btn-primary {
-    background: var(--primary);
-    color: white !important;
-    font-weight: 900;
-    transition: transform 0.2s;
-}
-
-.btn-primary:hover { transform: scale(1.02); }
