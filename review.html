@@ -30,12 +30,13 @@
 
                         <div class="grid md:grid-cols-2 gap-4">
                             <div class="space-y-2">
-                                <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Merchant Address</label>
-                                <input id="bizAddr" type="text" placeholder="0x..." class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono outline-none focus:border-blue-600 transition text-zinc-400">
+                                <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Receipt ID</label>
+                                <input id="receiptId" type="text" oninput="autoLookupMerchant()" placeholder="V3-XXXXXX" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase outline-none focus:border-blue-600 transition font-bold">
                             </div>
                             <div class="space-y-2">
-                                <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Receipt ID</label>
-                                <input id="receiptId" type="text" placeholder="V3-XXXXXX" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase outline-none focus:border-blue-600 transition font-bold">
+                                <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Merchant Address</label>
+                                <input id="bizAddr" type="text" placeholder="Auto-detecting..." readonly class="bg-black/50 border border-white/5 w-full p-4 rounded-xl text-[10px] font-mono text-zinc-500 outline-none italic cursor-not-allowed">
+                                <p id="lookupStatus" class="text-[8px] uppercase tracking-tighter opacity-40 ml-1 mt-1"></p>
                             </div>
                         </div>
                         
@@ -81,6 +82,38 @@
             }
         });
 
+        // FUNZIONE AUTO-LOOKUP: Riconosce il merchant dall'ID ricevuta
+        async function autoLookupMerchant() {
+            const ridRaw = document.getElementById('receiptId').value.trim().toUpperCase();
+            const bizInput = document.getElementById('bizAddr');
+            const statusText = document.getElementById('lookupStatus');
+            
+            // Inizia la ricerca solo se l'ID sembra completo (es. V3 + 6 caratteri)
+            if (ridRaw.length >= 8) {
+                statusText.innerText = "Verifying receipt...";
+                try {
+                    const ridHash = ethers.keccak256(ethers.toUtf8Bytes(ridRaw));
+                    // Interroghiamo l'Engine per sapere chi ha emesso questa ricevuta
+                    const merchantAddr = await engContract.receiptIssuers(ridHash);
+                    
+                    if (merchantAddr !== ethers.ZeroAddress) {
+                        bizInput.value = merchantAddr;
+                        statusText.innerText = "Verified Merchant Detected ✓";
+                        statusText.classList.replace('opacity-40', 'text-green-500');
+                    } else {
+                        bizInput.value = "";
+                        statusText.innerText = "Invalid or Unissued Receipt ✗";
+                        statusText.classList.replace('text-green-500', 'text-red-500');
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            } else {
+                bizInput.value = "";
+                statusText.innerText = "";
+            }
+        }
+
         async function initPage() {
             document.getElementById('authGuard').classList.add('hidden');
             document.getElementById('reviewForm').classList.remove('hidden');
@@ -89,8 +122,11 @@
             const biz = params.get('biz');
             const id = params.get('id');
             
+            if(id) {
+                document.getElementById('receiptId').value = id;
+                autoLookupMerchant(); // Esegui subito il lookup se l'ID è nel link
+            }
             if(biz) document.getElementById('bizAddr').value = biz;
-            if(id) document.getElementById('receiptId').value = id;
         }
 
         async function submit() {
@@ -100,7 +136,7 @@
             const ridRaw = document.getElementById('receiptId').value.trim().toUpperCase();
             const msg = document.getElementById('content').value;
 
-            if(!name || !msg || !ridRaw || !biz) return alert("All fields are required.");
+            if(!name || !msg || !ridRaw || !biz) return alert("Please provide a valid Receipt ID.");
 
             btn.innerText = "SIGNING...";
             btn.disabled = true;
@@ -109,7 +145,6 @@
                 const ridHash = ethers.keccak256(ethers.toUtf8Bytes(ridRaw));
                 const fullContent = `${name}: ${msg}`;
                 
-                // Nota: La funzione submitReview ora ha 4 parametri (senza ipfsHash)
                 const tx = await revContract.submitReview(biz, currentRating, fullContent, ridHash);
                 await tx.wait();
                 
