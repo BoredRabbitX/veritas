@@ -6,7 +6,7 @@ const registryAddress = "0xea45643b2b4bf3a5bb12588d7e9b8a147b040964";
 const engineAddress = "0xf85ba77ea82080bb4f32d6d77bc8e65b1c81ac81";
 const reviewerAddress = "0x5c65e66016c36de0ec94fe87e3c035ead54aa9da";
 const EXPECTED_CHAIN_ID = 420420422;
-const PASEO_RPC = "https://pas-rpc.stakeworld.io";
+const PASEO_RPC = "https://testnet-passet-hub-eth-rpc.polkadot.io";
 
 let provider, signer, regContract, engContract, revContract;
 
