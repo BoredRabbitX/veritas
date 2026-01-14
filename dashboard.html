@@ -19,24 +19,25 @@
     <main class="max-w-6xl mx-auto px-6 py-20">
         <h1 class="text-7xl font-black italic uppercase mb-12 tracking-tighter">Merchant <span class="text-blue-600">Hub</span></h1>
         
+        <div id="loadingOverlay" class="py-20 text-center">
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse opacity-30">Authenticating Session...</p>
+        </div>
+
         <div id="authPrompt" class="hidden py-20 text-center border border-dashed border-[var(--border)] rounded-[3rem]">
-            <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mb-6">Identity Required</p>
-            <button onclick="connectWallet()" class="btn-primary px-12 py-4 font-black uppercase italic tracking-widest">Connect Wallet to Manage Hub</button>
+            <p class="text-blue-600 text-[10px] font-black uppercase tracking-widest mb-4">Identity Required</p>
+            <p class="text-sm opacity-50 italic">Please connect your wallet using the button in the header.</p>
         </div>
 
         <div id="hubContent" class="hidden">
             <div class="grid lg:grid-cols-12 gap-12">
                 <div class="lg:col-span-5 space-y-8">
                     <div id="bizDetails" class="card-veritas p-10">
-                        <p class="text-[8px] font-black uppercase opacity-30 mb-4 tracking-[0.2em]">Live Registry Data</p>
-                        <div id="profileLoading" class="animate-pulse">Loading profile...</div>
-                    </div>
+                        </div>
 
                     <div class="card-veritas p-10 border-blue-600/20">
                         <h3 class="text-2xl font-black uppercase italic mb-6">Generate <span class="text-blue-600">Receipt</span></h3>
-                        <p class="text-xs opacity-50 mb-8 italic">Issue a unique cryptographic ID to your customer to allow them to leave a verified review.</p>
-                        
-                        <button onclick="generateReceipt()" class="btn-primary w-full py-5 font-black uppercase italic tracking-widest mb-8">Generate New Code</button>
+                        <p class="text-xs opacity-50 mb-8 italic">Issue a unique ID for a verified customer review.</p>
+                        <button onclick="generateReceipt()" class="btn-primary w-full py-5 font-black uppercase italic tracking-widest mb-8">Generate Code</button>
                         
                         <div id="receiptResult" class="hidden fade-in text-center space-y-6 pt-6 border-t border-[var(--border)]">
                             <div>
@@ -44,7 +45,6 @@
                                 <code id="receiptCode" class="text-blue-600 font-mono text-sm break-all bg-blue-600/5 p-3 rounded-lg block">---</code>
                             </div>
                             <div id="qrcode" class="py-4"></div>
-                            <p class="text-[9px] font-bold opacity-30 uppercase tracking-widest italic">Customer can scan this to write a review</p>
                         </div>
                     </div>
                 </div>
@@ -52,8 +52,7 @@
                 <div class="lg:col-span-7">
                     <h2 class="text-3xl font-black italic uppercase mb-8">Review <span class="text-blue-600">Management</span></h2>
                     <div id="reviewsGrid" class="space-y-6">
-                        <p class="opacity-30 italic">Syncing reviews...</p>
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
@@ -63,22 +62,42 @@
 
     <script src="app.js"></script><script src="components.js"></script>
     <script>
-        // --- AUTO-CONNECT LOGIC ---
-        function checkAuth() {
-            if (window.isVeritasReady && window.signer) {
-                document.getElementById('authPrompt').classList.add('hidden');
-                document.getElementById('hubContent').classList.remove('hidden');
+        // --- LOGICA DI ACCESSO AUTOMATICO ---
+        async function syncState() {
+            const loading = document.getElementById('loadingOverlay');
+            const auth = document.getElementById('authPrompt');
+            const hub = document.getElementById('hubContent');
+
+            // 1. Aspetta che ethers e il provider siano pronti
+            if (!window.isVeritasReady) return;
+
+            // 2. Controllo se c'è già un signer (connesso dall'header)
+            if (window.signer) {
+                loading.classList.add('hidden');
+                auth.classList.add('hidden');
+                hub.classList.remove('hidden');
                 initPage();
             } else {
-                document.getElementById('authPrompt').classList.remove('hidden');
-                document.getElementById('hubContent').classList.add('hidden');
+                // Se non c'è signer, diamo un attimo per l'auto-connect di app.js
+                setTimeout(async () => {
+                    if (window.signer) {
+                        loading.classList.add('hidden');
+                        auth.classList.add('hidden');
+                        hub.classList.remove('hidden');
+                        initPage();
+                    } else {
+                        loading.classList.add('hidden');
+                        auth.classList.remove('hidden');
+                    }
+                }, 1000);
             }
         }
-        window.addEventListener('contractsReady', checkAuth);
-        window.addEventListener('load', () => { setTimeout(checkAuth, 500); });
+
+        // Ascolta quando i contratti sono pronti o quando l'utente clicca connect nell'header
+        window.addEventListener('contractsReady', syncState);
+        window.addEventListener('load', syncState);
 
         async function initPage() {
-            if (!signer) return;
             const addr = await signer.getAddress();
             const b = await regContract.businesses(addr);
             const bizBox = document.getElementById('bizDetails');
@@ -89,27 +108,27 @@
                     <h2 class="text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">${sanitize(b.name)}</h2>
                     <div class="flex justify-between pt-6 border-t border-[var(--border)]">
                         <div><p class="text-[8px] font-bold opacity-30 uppercase">Volume</p><p class="font-black">${b.volume} Reviews</p></div>
-                        <div class="text-right"><p class="text-[8px] font-bold opacity-30 uppercase">Network</p><p class="font-black text-green-500">Paseo Active</p></div>
+                        <div class="text-right"><p class="text-[8px] font-bold opacity-30 uppercase">Status</p><p class="font-black text-green-500">Live</p></div>
                     </div>`;
                 loadReviews(addr);
             } else {
                 bizBox.innerHTML = `
-                    <h3 class="text-2xl font-black uppercase mb-6 italic">Register Business</h3>
-                    <input id="regName" class="w-full mb-4" placeholder="Business Name">
-                    <select id="regCat" class="w-full mb-6 bg-[var(--card-bg)] border border-[var(--border)] p-4 rounded-xl outline-none focus:border-blue-600 transition">
-                        <option value="Food_Drink">Food & Drink</option>
-                        <option value="Retail">Retail Store</option>
-                        <option value="Technology">Technology</option>
-                        <option value="Professional_Services">Services</option>
-                    </select>
-                    <button onclick="register()" class="btn-primary w-full py-5 font-black uppercase italic">Broadcast to Ledger</button>`;
+                    <h3 class="text-2xl font-black uppercase mb-6 italic text-blue-600">Register Merchant</h3>
+                    <div class="space-y-4">
+                        <input id="regName" class="w-full" placeholder="Business Name">
+                        <select id="regCat" class="w-full bg-[var(--card-bg)] border border-[var(--border)] p-4 rounded-xl outline-none">
+                            <option value="Food_Drink">Food & Drink</option>
+                            <option value="Retail">Retail Store</option>
+                            <option value="Technology">Technology</option>
+                        </select>
+                        <button onclick="register()" class="btn-primary w-full py-5 font-black uppercase italic">Broadcast Registration</button>
+                    </div>`;
             }
         }
 
         async function register() {
             const name = document.getElementById('regName').value;
             const cat = ethers.encodeBytes32String(document.getElementById('regCat').value);
-            if(!name) return;
             try {
                 const tx = await regContract.registerBusiness(name, cat);
                 await tx.wait(); location.reload();
@@ -120,7 +139,6 @@
             const randomId = ethers.hexlify(ethers.randomBytes(32));
             document.getElementById('receiptResult').classList.remove('hidden');
             document.getElementById('receiptCode').innerText = randomId;
-            
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = "";
             new QRCode(qrContainer, {
@@ -132,12 +150,10 @@
 
         async function loadReviews(addr) {
             const grid = document.getElementById('reviewsGrid');
-            const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), -50000);
-            if(events.length === 0) {
-                grid.innerHTML = `<div class="p-12 border border-dashed border-[var(--border)] rounded-[2rem] text-center opacity-30 text-[10px] font-black uppercase tracking-widest">No customer reviews yet</div>`;
-                return;
-            }
-            grid.innerHTML = "";
+            const filter = revContract.filters.ReviewSubmitted(addr);
+            const events = await revContract.queryFilter(filter, -50000);
+            grid.innerHTML = events.length === 0 ? `<div class="p-12 border border-dashed border-[var(--border)] rounded-[2rem] text-center opacity-30 uppercase text-[10px] font-black tracking-widest">No reviews found</div>` : "";
+            
             for(let ev of events.reverse()) {
                 const { rating, content, receiptId } = ev.args;
                 const reply = await engContract.merchantReplies(receiptId);
@@ -145,18 +161,13 @@
                     <div class="p-8 border border-[var(--border)] bg-[var(--card-bg)] rounded-[2.5rem] fade-in shadow-lg">
                         <div class="flex justify-between mb-4 items-start">
                             <span class="text-blue-600 font-bold">${"★".repeat(rating)}${"☆".repeat(5-rating)}</span>
-                            <span class="text-[8px] font-mono opacity-20 uppercase">ID: ${receiptId.slice(0,16)}...</span>
+                            <span class="text-[8px] font-mono opacity-20 uppercase">#${receiptId.slice(0,16)}...</span>
                         </div>
                         <p class="text-2xl font-medium italic mb-8 leading-tight">"${sanitize(content)}"</p>
-                        ${reply ? `
-                            <div class="p-6 bg-[var(--bg-main)] rounded-2xl border-l-4 border-blue-600 italic text-sm">
-                                <p class="text-[8px] font-black uppercase text-blue-600 mb-1 not-italic">Official Response</p>
-                                ${sanitize(reply)}
-                            </div>` : `
-                            <div class="flex gap-2">
-                                <input id="rep-${receiptId}" class="flex-grow text-xs" placeholder="Type professional reply...">
-                                <button onclick="sendReply('${receiptId}')" class="btn-primary px-8 text-[10px] font-black uppercase">Reply</button>
-                            </div>`}
+                        <div id="reply-box-${receiptId}">
+                            ${reply ? `<div class="p-6 bg-[var(--bg-main)] rounded-2xl border-l-4 border-blue-600 text-sm italic">${sanitize(reply)}</div>` : 
+                            `<div class="flex gap-2"><input id="rep-${receiptId}" class="flex-grow text-xs" placeholder="Reply..."><button onclick="sendReply('${receiptId}')" class="btn-primary px-8 text-[10px] font-black uppercase">Post</button></div>`}
+                        </div>
                     </div>`;
             }
         }
