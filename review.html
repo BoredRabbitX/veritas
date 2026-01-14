@@ -8,78 +8,97 @@
     <style>
         .merchant-found { 
             display: block !important; 
-            animation: slideIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-            border: 2px solid #22c55e !important;
-            background: rgba(34, 197, 94, 0.05) !important;
+            animation: slideIn 0.4s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+            border: 1px solid #22c55e !important;
+            background: rgba(34, 197, 94, 0.02) !important;
         }
-        @keyframes slideIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .verified-badge { background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 8px; font-weight: 900; text-transform: uppercase; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .verified-tag { 
+            font-size: 7px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
+            background: #22c55e; color: white; padding: 2px 8px; border-radius: 2px;
+        }
+
+        input, textarea, select {
+            background: rgba(255,255,255,0.02) !important;
+            border: 1px solid rgba(255,255,255,0.05) !important;
+            transition: all 0.2s;
+        }
+        input:focus, textarea:focus { border-color: #2563eb !important; outline: none; background: rgba(255,255,255,0.04) !important; }
+        
         .waiting-pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 0.3; } }
     </style>
 </head>
-<body class="bg-[var(--bg-main)] text-[var(--text-main)]">
+<body class="bg-[var(--bg-main)] text-[var(--text-main)] antialiased">
     <div id="header-root"></div>
 
-    <main class="max-w-2xl mx-auto px-6 py-20">
-        <div class="card-veritas p-12 shadow-2xl">
-            <div id="authNotice" class="mb-10 p-4 border border-blue-600/20 bg-blue-600/5 rounded-2xl text-center waiting-pulse">
-                <p class="text-[10px] font-black uppercase tracking-widest text-blue-600">Syncing with Blockchain...</p>
+    <main class="max-w-xl mx-auto px-6 py-20">
+        <div class="card-veritas p-10 border-white/5 shadow-none bg-white/[0.01]">
+            
+            <div id="authNotice" class="mb-10 py-3 border border-blue-600/20 bg-blue-600/5 rounded-xl text-center waiting-pulse">
+                <p class="text-[9px] font-bold uppercase tracking-[0.3em] text-blue-500">Initializing Protocol...</p>
             </div>
 
-            <div class="space-y-8">
+            <h1 class="text-4xl font-black italic uppercase tracking-tighter mb-10 leading-none">
+                Submit <span class="text-blue-600">Review</span>
+            </h1>
+
+            <div class="space-y-6">
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt Code</label>
+                    <label class="text-[8px] font-bold uppercase opacity-30 mb-2 block tracking-widest">Receipt Identity</label>
                     <input id="rId" type="text" 
-                           class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 uppercase" 
+                           class="w-full text-sm font-mono p-4 rounded-xl uppercase tracking-tighter" 
                            placeholder="VER-XXXX-XXXX">
-                    <p id="searchStatus" class="text-[8px] uppercase mt-2 opacity-30 font-bold hidden"></p>
+                    <p id="searchStatus" class="text-[7px] uppercase mt-2 font-bold text-blue-500 tracking-widest hidden"></p>
                 </div>
 
-                <div id="merchantBadge" class="hidden p-8 rounded-[2rem] border transition-all">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="verified-badge">On-Chain Verified</span>
-                        <span class="text-[8px] font-mono opacity-40 uppercase" id="mAddrLabel">0x...</span>
+                <div id="merchantBadge" class="hidden p-6 rounded-2xl border border-white/5 transition-all">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="verified-tag">On-Chain Verified</span>
+                        <span class="text-[8px] font-mono opacity-20 uppercase" id="mAddrLabel">---</span>
                     </div>
-                    <h3 id="detectedName" class="text-4xl font-black uppercase italic leading-none">---</h3>
+                    <h3 id="detectedName" class="text-2xl font-black uppercase italic tracking-tighter leading-none text-green-500">---</h3>
                     <input type="hidden" id="mAddr">
                 </div>
 
-                <div class="grid grid-cols-1 gap-8">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Reviewer Name</label>
-                        <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm" placeholder="John Doe">
+                        <label class="text-[8px] font-bold uppercase opacity-30 mb-2 block tracking-widest">Your Alias</label>
+                        <input id="reviewerName" type="text" class="w-full p-4 rounded-xl text-xs" placeholder="e.g. John D.">
                     </div>
                     <div>
-                        <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Rating</label>
-                        <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold">
-                            <option value="5">★★★★★ - Excellent</option>
-                            <option value="4">★★★★☆ - Good</option>
-                            <option value="3">★★★☆☆ - Average</option>
-                            <option value="2">★★☆☆☆ - Poor</option>
-                            <option value="1">★☆☆☆☆ - Terrible</option>
+                        <label class="text-[8px] font-bold uppercase opacity-30 mb-2 block tracking-widest">Rating Score</label>
+                        <select id="stars" class="w-full p-4 rounded-xl text-xs font-bold">
+                            <option value="5">5 ★ EXCELLENT</option>
+                            <option value="4">4 ★ GOOD</option>
+                            <option value="3">3 ★ AVERAGE</option>
+                            <option value="2">2 ★ POOR</option>
+                            <option value="1">1 ★ TERRIBLE</option>
                         </select>
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Details</label>
-                        <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm resize-none" placeholder="How was the service?"></textarea>
                     </div>
                 </div>
 
-                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-widest opacity-50 cursor-not-allowed" disabled>
-                    Waiting for System...
+                <div>
+                    <label class="text-[8px] font-bold uppercase opacity-30 mb-2 block tracking-widest">Review Content</label>
+                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl text-xs resize-none" placeholder="Share your experience..."></textarea>
+                </div>
+
+                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-5 text-[10px] font-black uppercase tracking-[0.3em] opacity-30 cursor-not-allowed" disabled>
+                    Waiting for Wallet...
                 </button>
             </div>
         </div>
     </main>
 
+    <div id="footer-root"></div>
+
     <script src="app.js"></script>
     <script src="components.js"></script>
     <script>
-        // FORZA IL CONTROLLO OGNI 500ms
+        // Sincronizzazione con app.js
         const syncInterval = setInterval(() => {
             if (window.signer && window.engContract) {
-                console.log("SYSTEM READY: Signer and Contracts found.");
                 initPage();
                 clearInterval(syncInterval);
             }
@@ -89,10 +108,9 @@
             document.getElementById('authNotice').classList.add('hidden');
             const btn = document.getElementById('submitBtn');
             btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            btn.innerText = "Broadcast Review";
+            btn.classList.remove('opacity-30', 'cursor-not-allowed');
+            btn.innerText = "Publish to Ledger";
             
-            // Se c'è un rid nell'URL, lo cerca subito
             const urlRid = new URLSearchParams(window.location.search).get('rid');
             if (urlRid) {
                 document.getElementById('rId').value = urlRid.toUpperCase();
@@ -107,7 +125,7 @@
             const val = e.target.value.trim().toUpperCase();
             if (val.length >= 8) {
                 statusText.classList.remove('hidden');
-                statusText.innerText = "Searching on-chain...";
+                statusText.innerText = "Querying Blockchain...";
                 detectMerchant(val);
             } else {
                 statusText.classList.add('hidden');
@@ -119,12 +137,12 @@
             if (!window.engContract) return;
             try {
                 const ridBytes = rid.startsWith('0X') ? rid : ethers.encodeBytes32String(rid);
-                const issuer = await engContract.receiptIssuers(ridBytes);
+                const issuer = await window.engContract.receiptIssuers(ridBytes);
                 
                 if (issuer && issuer !== "0x0000000000000000000000000000000000000000") {
-                    const b = await regContract.businesses(issuer);
+                    const b = await window.regContract.businesses(issuer);
                     document.getElementById('detectedName').innerText = b.name;
-                    document.getElementById('mAddrLabel').innerText = issuer;
+                    document.getElementById('mAddrLabel').innerText = issuer.slice(0,6) + "..." + issuer.slice(-4);
                     document.getElementById('mAddr').value = issuer;
                     
                     statusText.classList.add('hidden');
@@ -132,11 +150,11 @@
                     badge.classList.remove('hidden');
                     badge.classList.add('merchant-found');
                 } else {
-                    statusText.innerText = "Merchant not found for this code";
+                    statusText.innerText = "Code not recognized";
                     resetUI();
                 }
             } catch(e) {
-                statusText.innerText = "Format Error";
+                statusText.innerText = "Invalid ID Format";
                 resetUI();
             }
         }
@@ -149,23 +167,24 @@
 
         async function submitReview() {
             const mAddr = document.getElementById('mAddr').value;
-            if (!mAddr) return alert("Verify Merchant First!");
+            if (!mAddr) return;
             
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.innerText = "Confirming...";
+            btn.disabled = true; btn.innerText = "Broadcasting...";
 
             try {
                 const rid = rIdInput.value.trim().toUpperCase();
                 const ridBytes = rid.startsWith('0X') ? rid : ethers.encodeBytes32String(rid);
-                const content = `[${document.getElementById('reviewerName').value}] ${document.getElementById('comment').value}`;
+                const reviewer = document.getElementById('reviewerName').value || "Anonymous";
+                const content = `[${reviewer}] ${document.getElementById('comment').value}`;
                 
-                const tx = await revContract.submitReview(mAddr, document.getElementById('stars').value, content, ridBytes);
+                const tx = await window.revContract.submitReview(mAddr, document.getElementById('stars').value, content, ridBytes);
                 await tx.wait();
-                alert("Success!");
+                alert("Immutable Review Published!");
                 window.location.href = "explore.html";
             } catch(e) {
-                alert("Error during broadcast.");
-                btn.disabled = false; btn.innerText = "Broadcast Review";
+                alert("Protocol Error.");
+                btn.disabled = false; btn.innerText = "Publish to Ledger";
             }
         }
     </script>
