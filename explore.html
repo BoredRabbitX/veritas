@@ -10,7 +10,7 @@
     <style>
         .store-card { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
         .store-card.visible { opacity: 1; transform: translateY(0); }
-        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23666'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
+        .category-section { margin-bottom: 5rem; }
     </style>
 </head>
 <body class="bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen">
@@ -18,38 +18,17 @@
     <div id="header-root"></div>
 
     <main class="max-w-7xl mx-auto px-6 py-20">
-        <div class="mb-16 text-center">
-            <h1 class="text-7xl md:text-8xl font-black italic uppercase tracking-tighter mb-8">
+        <div class="mb-20">
+            <h1 class="text-7xl md:text-8xl font-black italic uppercase tracking-tighter mb-4">
                 Verified <span class="text-blue-600">Stores</span>
             </h1>
-            
-            <div class="flex flex-wrap justify-center gap-4 bg-[var(--card-bg)] p-6 rounded-[2rem] border border-[var(--border)] shadow-xl inline-flex mx-auto">
-                <div class="flex flex-col items-start px-4">
-                    <label class="text-[8px] font-black uppercase opacity-40 mb-2 tracking-widest">Industry</label>
-                    <select id="filterCat" onchange="applyFilters()" class="bg-transparent font-bold text-xs outline-none pr-8">
-                        <option value="all">All Categories</option>
-                        <option value="Food_Drink">Food & Drink</option>
-                        <option value="Retail_Shop">Retail Shop</option>
-                        <option value="Technology">Technology</option>
-                        <option value="Professional_Services">Services</option>
-                    </select>
-                </div>
-                <div class="w-[1px] h-10 bg-[var(--border)] hidden md:block"></div>
-                <div class="flex flex-col items-start px-4">
-                    <label class="text-[8px] font-black uppercase opacity-40 mb-2 tracking-widest">Sort By</label>
-                    <select id="filterSort" onchange="applyFilters()" class="bg-transparent font-bold text-xs outline-none pr-8">
-                        <option value="newest">Newest First</option>
-                        <option value="rating">Highest Rated</option>
-                        <option value="volume">Most Reviewed</option>
-                    </select>
-                </div>
-            </div>
+            <p class="opacity-40 text-[10px] font-bold uppercase tracking-[0.3em] italic">Browsing the Polkadot Paseo Ecosystem</p>
         </div>
 
-        <div id="grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div class="col-span-full py-20 text-center">
+        <div id="categories-container">
+            <div id="loader" class="py-20 text-center">
                 <p class="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse opacity-30">
-                    Broadcasting to Polkadot Paseo Hub...
+                    Accessing Ledger Records...
                 </p>
             </div>
         </div>
@@ -64,21 +43,22 @@
         let allStores = [];
 
         async function initPage() {
-            const grid = document.getElementById('grid');
-            if (!window.regContract || !grid) return;
+            console.log("Explore: Initializing...");
+            const container = document.getElementById('categories-container');
+            if (!window.regContract || !container) return;
 
             try {
-                // 1. Fetch Events
+                // 1. Fetch Merchant Events
                 const filter = regContract.filters.BusinessRegistered();
                 const events = await regContract.queryFilter(filter, -100000);
                 const uniqueAddresses = [...new Set(events.map(e => e.args[0] || e.args.owner))];
 
-                // 2. Load Detailed Data with Analytics
+                // 2. Fetch Details & Analytics for each store
                 const storePromises = uniqueAddresses.map(async (addr) => {
                     const b = await getCachedData(`biz_${addr}`, () => regContract.businesses(addr));
                     if (!b.isActive) return null;
 
-                    // Fetch individual ratings for sorting
+                    // Fetch individual ratings for display
                     const revFilter = revContract.filters.ReviewSubmitted(addr);
                     const revEvents = await revContract.queryFilter(revFilter, -50000);
                     
@@ -93,75 +73,95 @@
                         name: b.name,
                         category: ethers.decodeBytes32String(b.category),
                         volume: Number(b.volume),
-                        rating: avgRating,
-                        timestamp: Date.now() // For basic newest sort
+                        rating: avgRating
                     };
                 });
 
                 allStores = (await Promise.all(storePromises)).filter(s => s !== null);
-                applyFilters();
+                renderByCategories();
 
             } catch (e) {
-                console.error(e);
-                grid.innerHTML = "<p class='col-span-full text-red-500 font-black uppercase text-[10px]'>Network Sync Error</p>";
+                console.error("Explore Sync Error:", e);
+                container.innerHTML = "<p class='text-red-500 font-black uppercase text-[10px]'>Network Sync Error. Please Refresh.</p>";
             }
         }
 
-        function applyFilters() {
-            const grid = document.getElementById('grid');
-            const cat = document.getElementById('filterCat').value;
-            const sort = document.getElementById('filterSort').value;
+        function renderByCategories() {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = "";
 
-            // Filter
-            let filtered = allStores.filter(s => cat === 'all' || s.category === cat);
-
-            // Sort
-            if (sort === 'rating') filtered.sort((a, b) => b.rating - a.rating);
-            else if (sort === 'volume') filtered.sort((a, b) => b.volume - a.volume);
-            else filtered.reverse(); // Newest (default reverse of blockchain order)
-
-            renderGrid(filtered);
-        }
-
-        function renderGrid(stores) {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = "";
-
-            if (stores.length === 0) {
-                grid.innerHTML = "<p class='col-span-full opacity-30 uppercase text-[10px] font-black py-20'>No merchants match your criteria.</p>";
+            if (allStores.length === 0) {
+                container.innerHTML = "<p class='opacity-30 uppercase text-[10px] font-black py-20'>No merchants found on-chain.</p>";
                 return;
             }
 
-            stores.forEach((s, index) => {
-                const cleanCat = s.category.replace(/_/g, ' ');
-                const card = `
-                    <a href="store.html?id=${s.address}" class="store-card p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg hover:-translate-y-2">
-                        <div class="flex justify-between items-start mb-6">
-                            <p class="text-blue-600 text-[9px] font-black uppercase tracking-[0.2em] italic">${cleanCat}</p>
-                            <div class="flex items-center gap-1 text-blue-600 font-bold text-xs">
-                                <span>★</span><span>${s.rating > 0 ? s.rating.toFixed(1) : 'N/A'}</span>
-                            </div>
-                        </div>
-                        <h3 class="text-4xl font-black italic uppercase leading-none mb-8 tracking-tighter group-hover:text-blue-600 transition-colors">${sanitize(s.name)}</h3>
-                        <div class="flex justify-between items-center opacity-30 text-[8px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
-                            <span>${s.volume} Logs</span>
-                            <span class="font-mono opacity-50">${s.address.slice(0,6)}...${s.address.slice(-4)}</span>
-                        </div>
-                    </a>`;
-                grid.innerHTML += card;
+            // Group stores by category
+            const grouped = allStores.reduce((acc, store) => {
+                const cat = store.category || "General";
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(store);
+                return acc;
+            }, {});
+
+            // Render each category section
+            Object.keys(grouped).forEach(catName => {
+                const stores = grouped[catName];
+                const cleanCatName = catName.replace(/_/g, ' ');
+
+                const section = document.createElement('section');
+                section.className = "category-section";
+                section.innerHTML = `
+                    <div class="flex items-center gap-6 mb-10">
+                        <h2 class="text-2xl font-black italic uppercase tracking-tighter text-blue-600">${cleanCatName}</h2>
+                        <div class="h-[1px] flex-grow bg-[var(--border)] opacity-30"></div>
+                        <span class="text-[9px] font-bold opacity-30 uppercase tracking-widest">${stores.length} Stores</span>
+                    </div>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        ${stores.map(s => renderStoreCard(s)).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
             });
 
-            // Trigger stagger animation
+            // Trigger stagger animation for all cards
             setTimeout(() => {
                 document.querySelectorAll('.store-card').forEach((el, i) => {
-                    setTimeout(() => el.classList.add('visible'), i * 100);
+                    setTimeout(() => el.classList.add('visible'), i * 50);
                 });
-            }, 50);
+            }, 100);
         }
 
-        // Synchronization logic
-        if (window.isVeritasReady) { initPage(); }
-        window.addEventListener('contractsReady', initPage);
+        function renderStoreCard(s) {
+            return `
+                <a href="store.html?id=${s.address}" class="store-card p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg hover:-translate-y-2">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="flex items-center gap-2">
+                             <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                             <p class="text-[8px] font-black uppercase opacity-40 tracking-widest group-hover:text-blue-600 transition-colors">Verified Log</p>
+                        </div>
+                        <div class="flex items-center gap-1 text-blue-600 font-bold text-xs italic">
+                            <span>★</span><span>${s.rating > 0 ? s.rating.toFixed(1) : 'N/A'}</span>
+                        </div>
+                    </div>
+                    <h3 class="text-4xl font-black italic uppercase leading-none mb-8 tracking-tighter group-hover:text-blue-600 transition-colors">${sanitize(s.name)}</h3>
+                    <div class="flex justify-between items-center opacity-30 text-[8px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
+                        <span>${s.volume} Logs</span>
+                        <span class="font-mono opacity-50">${s.address.slice(0,6)}...${s.address.slice(-4)}</span>
+                    </div>
+                </a>`;
+        }
+
+        // --- RELIABLE CONNECTION LOGIC ---
+        function startExplore() {
+            if (window.isVeritasReady) {
+                initPage();
+            } else {
+                window.addEventListener('contractsReady', initPage);
+            }
+        }
+
+        // Run when window loads
+        window.addEventListener('load', startExplore);
     </script>
 </body>
 </html>
