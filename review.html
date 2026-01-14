@@ -2,201 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Submit Review | Veritas V3.5.2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Review | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="bg-[#09090b] text-[#f4f4f5] min-h-screen">
+    <main class="max-w-xl mx-auto p-6 py-20">
+        <h1 class="text-4xl font-black italic uppercase mb-2">Post Review</h1>
+        <p class="opacity-40 text-xs font-bold uppercase mb-10 tracking-widest">Verified On-Chain Feedback</p>
 
-    <div class="nav-container">
-        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="font-black text-2xl italic tracking-tighter">VERITAS</a>
-            <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
-                <a href="explore.html" class="opacity-60 hover:opacity-100 transition">Explore</a>
-                <a href="review.html" class="text-blue-600">Submit Review</a>
-                <a href="dashboard.html" class="opacity-60 hover:opacity-100 transition">Merchant Hub</a>
+        <div class="space-y-6">
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold opacity-30 uppercase">Merchant Address</label>
+                <input id="bizAddr" type="text" readonly class="bg-zinc-900 border border-white/5 w-full p-4 rounded-xl opacity-50">
             </div>
-            <button id="connectBtn" class="btn-primary text-xs" onclick="connectWallet()">Connect</button>
-        </nav>
-    </div>
-
-    <main class="flex-grow flex flex-col items-center justify-center py-12 px-6">
-        
-        <div id="stepVerify" class="card-veritas max-w-lg w-full shadow-2xl transition-all duration-500">
-            <h2 class="text-3xl font-black italic uppercase mb-2">Verify Receipt</h2>
-            <p class="text-sm opacity-50 mb-8">Enter the details provided by the merchant to unlock the review form on the blockchain.</p>
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold opacity-30 uppercase">Receipt ID</label>
+                <input id="receiptId" type="text" readonly class="bg-zinc-900 border border-white/5 w-full p-4 rounded-xl opacity-50">
+            </div>
             
-            <div class="space-y-6">
+            <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase opacity-40 ml-1">Merchant Address</label>
-                    <input id="bizAddr" type="text" placeholder="0x...">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase opacity-40 ml-1">Receipt ID / Code</label>
-                    <input id="receiptCode" type="text" placeholder="e.g. ORDER-123">
-                </div>
-                <button onclick="verifyReceipt()" id="verifyBtn" class="btn-primary w-full py-5 text-sm tracking-widest">
-                    Verify on Paseo AssetHub
-                </button>
-            </div>
-        </div>
-
-        <div id="stepForm" class="hidden card-veritas max-w-lg w-full shadow-2xl opacity-0 transform translate-y-4 transition-all duration-500">
-            <div class="flex items-center gap-3 mb-8 p-4 bg-blue-600/10 rounded-2xl border border-blue-600/20">
-                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-lg">✅</div>
-                <div>
-                    <p class="text-[8px] font-bold uppercase text-blue-500">Receipt Verified</p>
-                    <p id="targetStore" class="text-sm font-black italic uppercase">Store Name</p>
+                    <label class="text-[10px] font-bold opacity-30 uppercase">Rating (1-5)</label>
+                    <input id="rating" type="number" min="1" max="5" value="5" class="bg-black border border-white/10 w-full p-4 rounded-xl">
                 </div>
             </div>
 
-            <h2 class="text-2xl font-black italic uppercase mb-6">Your Feedback</h2>
-            
-            <div class="space-y-5">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase opacity-40 ml-1">Display Name</label>
-                    <input id="customerName" type="text" placeholder="How should we call you?">
-                </div>
-                
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase opacity-40 ml-1">Rating</label>
-                    <select id="ratingScore">
-                        <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-                        <option value="4">⭐⭐⭐⭐ Great</option>
-                        <option value="3">⭐⭐⭐ Average</option>
-                        <option value="2">⭐⭐ Poor</option>
-                        <option value="1">⭐ Terrible</option>
-                    </select>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] font-bold uppercase opacity-40 ml-1">Review Content</label>
-                    <textarea id="reviewContent" rows="4" placeholder="Describe your experience..."></textarea>
-                </div>
-
-                <button onclick="submitReview()" id="submitBtn" class="btn-primary w-full py-5 text-sm tracking-widest">
-                    Publish On-Chain Review
-                </button>
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold opacity-30 uppercase">Your Experience</label>
+                <textarea id="content" rows="4" class="bg-black border border-white/10 w-full p-4 rounded-xl" placeholder="How was the service?"></textarea>
             </div>
+
+            <button id="subBtn" onclick="submit()" class="w-full bg-blue-600 font-black py-5 rounded-2xl shadow-lg shadow-blue-600/20">SUBMIT TO BLOCKCHAIN</button>
         </div>
     </main>
 
-    <footer>
-        <div class="max-w-7xl mx-auto px-6 py-12 flex justify-between items-center border-t border-white/5 opacity-30 text-[10px] font-bold uppercase tracking-widest">
-            <div>The White Rabbit bored creation</div>
-            <div>Veritas V3.5.2</div>
-        </div>
-    </footer>
-
     <script src="app.js"></script>
     <script>
-        // LOGICA REVIEW
-        window.addEventListener('load', async () => {
-            setTimeout(async () => {
-                await connectWallet(true);
-                checkURLParameters();
-            }, 800);
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            document.getElementById('bizAddr').value = params.get('biz');
+            document.getElementById('receiptId').value = params.get('id');
         });
 
-        // Controlla se ci sono parametri business e receipt nell'URL (dal QR)
-        function checkURLParameters() {
-            const params = new URLSearchParams(window.location.search);
-            const biz = params.get('business');
-            const receipt = params.get('receipt');
+        async function submit() {
+            const btn = document.getElementById('subBtn');
+            const biz = document.getElementById('bizAddr').value;
+            const ridText = document.getElementById('receiptId').value;
+            const rate = document.getElementById('rating').value;
+            const msg = document.getElementById('content').value;
 
-            if (biz) document.getElementById('bizAddr').value = biz;
-            if (receipt) document.getElementById('receiptCode').value = receipt;
-
-            // Se entrambi sono presenti, proviamo la verifica automatica
-            if (biz && receipt) {
-                verifyReceipt();
-            }
-        }
-
-        async function verifyReceipt() {
-            const biz = document.getElementById('bizAddr').value.trim();
-            const raw = document.getElementById('receiptCode').value.trim();
-            const btn = document.getElementById('verifyBtn');
-
-            if (!biz || !raw) return alert("Please provide both Merchant Address and Receipt ID.");
-
-            btn.disabled = true;
-            btn.innerText = "VERIFYING...";
+            if(!msg) return alert("Please write a review");
+            btn.innerText = "SIGNING...";
 
             try {
-                const hash = ethers.keccak256(ethers.toUtf8Bytes(raw));
-                
-                // Chiamata on-chain per verificare validità e se è già stata usata
-                const [isValid, isUsed, bizData] = await Promise.all([
-                    contract.validReceipts(hash),
-                    contract.usedReceipts(hash),
-                    contract.businesses(biz)
-                ]);
-
-                if (!isValid) throw new Error("This receipt was not issued by this merchant.");
-                if (isUsed) throw new Error("This receipt has already been used for a review.");
-                if (!bizData.isActive) throw new Error("The merchant is not active.");
-
-                // Passaggio allo Step 2 con animazione
-                document.getElementById('targetStore').innerText = bizData.name;
-                
-                const s1 = document.getElementById('stepVerify');
-                const s2 = document.getElementById('stepForm');
-
-                s1.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => {
-                    s1.classList.add('hidden');
-                    s2.classList.remove('hidden');
-                    setTimeout(() => {
-                        s2.classList.remove('opacity-0', 'translate-y-4');
-                    }, 50);
-                }, 500);
-
-            } catch (e) {
-                alert("Verification Failed: " + e.message);
-                btn.disabled = false;
-                btn.innerText = "Verify on Paseo AssetHub";
-            }
-        }
-
-        async function submitReview() {
-            const btn = document.getElementById('submitBtn');
-            const biz = document.getElementById('bizAddr').value.trim();
-            const raw = document.getElementById('receiptCode').value.trim();
-            const name = document.getElementById('customerName').value || "Anonymous";
-            const rating = document.getElementById('ratingScore').value;
-            const content = document.getElementById('reviewContent').value;
-
-            if (!content) return alert("Please write a few words about your experience.");
-
-            btn.disabled = true;
-            btn.innerText = "PUBLISHING...";
-
-            try {
-                const hash = ethers.keccak256(ethers.toUtf8Bytes(raw));
-                
-                // Invio transazione al contratto
-                const tx = await contract.postReview(
-                    biz,
-                    name,
-                    parseInt(rating),
-                    content,
-                    hash,
-                    { gasLimit: 500000, type: 0 } // Tipo 0 per compatibilità Paseo AssetHub
-                );
-
-                alert("Review submitted! Waiting for blockchain confirmation...");
+                const ridHash = ethers.keccak256(ethers.toUtf8Bytes(ridText));
+                const tx = await revContract.submitReview(biz, rate, msg, "", ridHash);
                 await tx.wait();
-                
-                // Reindirizza alla pagina dello store per vedere il risultato
-                window.location.href = `store.html?id=${biz}`;
-
-            } catch (e) {
-                console.error(e);
-                alert("Error publishing review: " + e.message);
-                btn.disabled = false;
-                btn.innerText = "Publish On-Chain Review";
+                alert("Review Published!");
+                window.location.href = "index.html";
+            } catch(e) { 
+                alert(e.message); 
+                btn.innerText = "SUBMIT TO BLOCKCHAIN";
             }
         }
     </script>
