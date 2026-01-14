@@ -8,76 +8,71 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        /* Smooth Entrance Animations */
+        /* Refined Entrance Animations */
         @keyframes revealUp {
-            from { opacity: 0; transform: translateY(30px); filter: blur(10px); }
+            from { opacity: 0; transform: translateY(20px); filter: blur(5px); }
             to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
-        .reveal { animation: revealUp 1s cubic-bezier(0.23, 1, 0.32, 1) forwards; opacity: 0; }
-        .delay-1 { animation-delay: 0.2s; }
-        .delay-2 { animation-delay: 0.4s; }
-        .delay-3 { animation-delay: 0.6s; }
+        .reveal { animation: revealUp 0.8s cubic-bezier(0.2, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.15s; }
+        .delay-2 { animation-delay: 0.3s; }
+        .delay-3 { animation-delay: 0.45s; }
 
-        /* Subtle Background Decoration */
         body::before {
             content: "";
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.03) 0%, transparent 70%);
+            background: radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.02) 0%, transparent 80%);
             pointer-events: none;
             z-index: -1;
         }
     </style>
 </head>
-<body class="flex flex-col min-h-screen bg-[var(--bg-main)] text-[var(--text-main)]">
+<body class="flex flex-col min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] antialiased">
 
     <div id="header-root"></div>
 
     <main class="main-content flex-grow flex flex-col items-center justify-center px-6 text-center py-20">
-        <div class="max-w-5xl">
-            <div class="reveal inline-flex items-center gap-2 px-4 py-2 border border-blue-600/30 rounded-full bg-blue-600/5 mb-10">
-                <span class="relative flex h-2 w-2">
+        <div class="max-w-6xl w-full">
+            <div class="reveal inline-flex items-center gap-3 px-3 py-1.5 border border-blue-600/20 rounded-full bg-blue-600/[0.03] mb-12">
+                <span class="relative flex h-1.5 w-1.5">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                    <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
                 </span>
-                <span class="text-blue-500 text-[10px] font-black uppercase tracking-[0.3em]">Paseo AssetHub Live</span>
+                <span class="text-blue-500 text-[9px] font-bold uppercase tracking-[0.4em]">Paseo AssetHub Live</span>
             </div>
             
-            <h1 class="reveal delay-1 text-7xl md:text-8xl lg:text-[10rem] font-black mb-10 tracking-tighter italic leading-[0.85] uppercase">
+            <h1 class="reveal delay-1 text-7xl md:text-8xl lg:text-9xl font-black mb-10 tracking-tighter italic leading-[0.9] uppercase">
                 Trust is <br><span class="text-blue-600">On-Chain.</span>
             </h1>
             
-            <p class="reveal delay-2 text-lg md:text-2xl opacity-50 max-w-3xl mx-auto mb-16 italic leading-relaxed font-light">
+            <p class="reveal delay-2 text-lg md:text-xl opacity-40 max-w-2xl mx-auto mb-16 italic leading-relaxed font-light">
                 The decentralized engine for verified merchant reviews. <br class="hidden md:block">
-                Every feedback is mathematically linked to a cryptographic receipt.
+                Each feedback is mathematically linked to a cryptographic receipt.
             </p>
 
-            <div class="reveal delay-3 flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-                <a href="explore.html" class="btn-primary py-6 px-14 text-lg shadow-2xl shadow-blue-500/30 w-full sm:w-auto uppercase font-black italic tracking-widest text-center hover:scale-105 transition-transform">
+            <div class="reveal delay-3 flex flex-col sm:flex-row gap-4 justify-center items-center mb-24">
+                <a href="explore.html" class="btn-primary py-5 px-12 text-sm shadow-xl shadow-blue-500/10 w-full sm:w-auto uppercase font-bold italic tracking-widest text-center hover:scale-[1.02] transition-transform">
                     Explore Directory
                 </a>
-                <a href="review.html" class="py-6 px-14 text-lg w-full sm:w-auto bg-[var(--card-bg)] border border-[var(--border)] uppercase font-black italic tracking-widest text-[var(--text-main)] hover:border-blue-600 hover:bg-blue-600/5 transition-all text-center rounded-2xl">
+                <a href="review.html" class="py-5 px-12 text-sm w-full sm:w-auto bg-white/[0.02] border border-white/10 uppercase font-bold italic tracking-widest text-[var(--text-main)] hover:border-blue-600/50 hover:bg-blue-600/5 transition-all text-center rounded-xl">
                     Write Review
                 </a>
             </div>
 
-            <p class="reveal delay-3 text-[9px] font-bold uppercase tracking-[0.4em] opacity-20">
-                New to Paseo? Use the <span class="text-blue-500 opacity-100">Setup Network</span> button in the footer.
-            </p>
-        </div>
-
-        <div class="reveal delay-3 mt-24 md:mt-40 grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-20 border-t border-[var(--border)] pt-16 w-full max-w-6xl">
-            <div class="text-center md:text-left group">
-                <div class="text-3xl md:text-4xl font-black italic tracking-tighter uppercase group-hover:text-blue-600 transition-colors">Verified</div>
-                <div class="text-[9px] uppercase font-bold tracking-[0.2em] opacity-30 mt-2">Receipt-Backed Protocol</div>
-            </div>
-            <div class="text-center md:text-left group">
-                <div class="text-3xl md:text-4xl font-black italic tracking-tighter uppercase group-hover:text-blue-600 transition-colors">Immutable</div>
-                <div class="text-[9px] uppercase font-bold tracking-[0.2em] opacity-30 mt-2">Permanent Feedback</div>
-            </div>
-            <div class="hidden md:block text-left border-l border-[var(--border)] pl-20 group">
-                <div class="text-3xl md:text-4xl font-black italic tracking-tighter uppercase text-blue-600">Beta 1.0</div>
-                <div class="text-[9px] uppercase font-bold tracking-[0.2em] opacity-30 mt-2">V3 Modular Architecture</div>
+            <div class="reveal delay-3 grid grid-cols-1 md:grid-cols-3 gap-12 border-t border-white/5 pt-16 text-left">
+                <div class="group">
+                    <div class="text-xl font-bold italic tracking-tight uppercase group-hover:text-blue-600 transition-colors">Verified</div>
+                    <div class="text-[8px] uppercase font-bold tracking-[0.2em] opacity-20 mt-1">Receipt-Backed Protocol</div>
+                </div>
+                <div class="group">
+                    <div class="text-xl font-bold italic tracking-tight uppercase group-hover:text-blue-600 transition-colors">Immutable</div>
+                    <div class="text-[8px] uppercase font-bold tracking-[0.2em] opacity-20 mt-1">Permanent Ledger Entry</div>
+                </div>
+                <div class="group">
+                    <div class="text-xl font-bold italic tracking-tight uppercase text-blue-600">Beta 1.1</div>
+                    <div class="text-[8px] uppercase font-bold tracking-[0.2em] opacity-20 mt-1">Paseo Modular Architecture</div>
+                </div>
             </div>
         </div>
     </main>
@@ -86,10 +81,5 @@
 
     <script src="app.js"></script>
     <script src="components.js"></script>
-
-    <script>
-        // No extra logic needed for index, app.js and components.js handle everything.
-        // The reveal animations are triggered by CSS.
-    </script>
 </body>
 </html>
