@@ -1,32 +1,111 @@
-<div class="space-y-2 text-center">
-    <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Rating</label>
-    <div class="flex justify-center gap-2 py-4 bg-black rounded-xl border border-white/10">
-        <div id="starContainer" class="flex gap-2 text-3xl cursor-pointer">
-            <span class="star opacity-30 hover:text-blue-600 transition" data-v="1">★</span>
-            <span class="star opacity-30 hover:text-blue-600 transition" data-v="2">★</span>
-            <span class="star opacity-30 hover:text-blue-600 transition" data-v="3">★</span>
-            <span class="star opacity-30 hover:text-blue-600 transition" data-v="4">★</span>
-            <span class="star text-blue-600 transition" data-v="5">★</span>
-        </div>
-        <input type="hidden" id="rating" value="5">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Review | Veritas</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+    <div class="nav-container">
+        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/20">V</div>
+                    <span class="text-2xl font-black tracking-tighter uppercase italic">Veritas</span>
+                </a>
+                <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
+                    <a href="explore.html" class="opacity-60 hover:opacity-100 transition">Explore</a>
+                    <a href="review.html" class="text-blue-600 transition">Submit Review</a>
+                    <a href="dashboard.html" class="opacity-60 hover:opacity-100 transition">Merchant Hub</a>
+                </div>
+            </div>
+            <button id="connectBtn" class="btn-primary text-xs py-2 px-6" onclick="connectWallet()">Connect Wallet</button>
+        </nav>
     </div>
-</div>
 
-<script>
-    // Aggiungi questo nel blocco script di review.html
-    let currentRating = 5;
-    document.querySelectorAll('.star').forEach(star => {
-        star.onclick = function() {
-            currentRating = this.getAttribute('data-v');
-            document.getElementById('rating').value = currentRating;
-            updateStars();
-        }
-    });
+    <main class="main-content flex-grow px-6 py-12 flex items-center">
+        <div class="max-w-2xl mx-auto w-full">
+            <div id="authGuard" class="text-center py-20">
+                <h2 class="text-4xl font-black italic uppercase tracking-tighter mb-8">Authentication</h2>
+                <button onclick="connectWallet()" class="btn-primary px-10 py-4">Connect Wallet</button>
+            </div>
 
-    function updateStars() {
-        document.querySelectorAll('.star').forEach(s => {
-            s.classList.toggle('text-blue-600', s.getAttribute('data-v') <= currentRating);
-            s.classList.toggle('opacity-30', s.getAttribute('data-v') > currentRating);
+            <div id="reviewForm" class="hidden">
+                <h1 class="text-6xl font-black italic uppercase tracking-tighter mb-8">Post Review</h1>
+                <div class="space-y-6 p-10 bg-white/5 rounded-3xl border border-white/5">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Merchant</label>
+                            <input id="bizAddr" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono outline-none focus:border-blue-600" placeholder="0x...">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Receipt ID</label>
+                            <input id="receiptId" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase outline-none focus:border-blue-600" placeholder="V3-XXXXXX">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Reviewer Name</label>
+                        <input id="userName" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl outline-none focus:border-blue-600" placeholder="Your name">
+                    </div>
+                    <div class="space-y-2 text-center">
+                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Select Rating</label>
+                        <div class="flex justify-center gap-3 py-4 bg-black rounded-2xl border border-white/10 mt-2">
+                            <div id="starContainer" class="flex gap-2 text-4xl cursor-pointer">
+                                <span class="star text-blue-600 transition" data-v="1">★</span>
+                                <span class="star text-blue-600 transition" data-v="2">★</span>
+                                <span class="star text-blue-600 transition" data-v="3">★</span>
+                                <span class="star text-blue-600 transition" data-v="4">★</span>
+                                <span class="star text-blue-600 transition" data-v="5">★</span>
+                            </div>
+                            <input type="hidden" id="rating" value="5">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Experience</label>
+                        <textarea id="content" rows="4" class="bg-black border border-white/10 w-full p-4 rounded-xl outline-none focus:border-blue-600" placeholder="Describe the service..."></textarea>
+                    </div>
+                    <button id="subBtn" onclick="submit()" class="btn-primary w-full py-5 text-sm uppercase font-black tracking-widest italic">Submit Verified Review</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        let currentRating = 5;
+        document.querySelectorAll('.star').forEach(star => {
+            star.onclick = function() {
+                currentRating = this.getAttribute('data-v');
+                document.getElementById('rating').value = currentRating;
+                document.querySelectorAll('.star').forEach(s => {
+                    s.classList.toggle('text-blue-600', s.getAttribute('data-v') <= currentRating);
+                    s.classList.toggle('opacity-30', s.getAttribute('data-v') > currentRating);
+                });
+            }
         });
-    }
-</script>
+
+        async function initPage() {
+            document.getElementById('authGuard').classList.add('hidden');
+            document.getElementById('reviewForm').classList.remove('hidden');
+            const params = new URLSearchParams(window.location.search);
+            if(params.get('biz')) document.getElementById('bizAddr').value = params.get('biz');
+            if(params.get('id')) document.getElementById('receiptId').value = params.get('id');
+        }
+
+        async function submit() {
+            const btn = document.getElementById('subBtn');
+            const ridHash = ethers.keccak256(ethers.toUtf8Bytes(document.getElementById('receiptId').value.trim().toUpperCase()));
+            const fullMsg = `${document.getElementById('userName').value}: ${document.getElementById('content').value}`;
+            btn.innerText = "SIGNING...";
+            try {
+                const tx = await revContract.submitReview(document.getElementById('bizAddr').value, currentRating, fullMsg, "", ridHash);
+                await tx.wait();
+                window.location.href = "index.html";
+            } catch(e) { alert(e.message); btn.innerText = "Submit Verified Review"; }
+        }
+    </script>
+</body>
+</html>
