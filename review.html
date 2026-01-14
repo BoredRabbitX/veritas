@@ -25,6 +25,10 @@
                 Verified <span class="text-blue-600">Review</span>
             </h1>
 
+            <div id="authNotice" class="mb-8 p-4 border border-blue-600/20 bg-blue-600/5 rounded-xl text-center">
+                <p class="text-[10px] font-black uppercase tracking-widest text-blue-600 animate-pulse">Waiting for Wallet Connection...</p>
+            </div>
+
             <div class="space-y-8">
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt Code / Hash</label>
@@ -43,7 +47,7 @@
 
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Reviewer Name</label>
-                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm" placeholder="e.g. John Doe">
+                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm focus:border-blue-600" placeholder="e.g. John Doe">
                 </div>
 
                 <div>
@@ -62,7 +66,7 @@
                     <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm resize-none" placeholder="Describe your experience..."></textarea>
                 </div>
 
-                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl">Broadcast Review</button>
+                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl opacity-50 cursor-not-allowed" disabled>Connect Wallet to Publish</button>
             </div>
         </div>
     </main>
@@ -74,6 +78,26 @@
     <script>
         const rIdInput = document.getElementById('rId');
         const statusText = document.getElementById('searchStatus');
+        const submitBtn = document.getElementById('submitBtn');
+        const authNotice = document.getElementById('authNotice');
+
+        /**
+         * AUTO-SYNC CON HEADER
+         */
+        async function checkConnection() {
+            if (window.signer && window.isVeritasReady) {
+                authNotice.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.innerText = "Broadcast Review";
+                
+                // Se c'è già un codice (es. dal QR), cercalo subito
+                if (rIdInput.value) detectMerchant(rIdInput.value.trim().toUpperCase());
+            }
+        }
+
+        window.addEventListener('contractsReady', checkConnection);
+        window.addEventListener('load', () => setTimeout(checkConnection, 1000));
 
         rIdInput.addEventListener('input', (e) => {
             const val = e.target.value.trim().toUpperCase();
@@ -94,24 +118,11 @@
         }
 
         async function detectMerchant(rid) {
-            if (typeof engContract === "undefined") {
-                statusText.innerText = "Waiting for blockchain...";
-                return;
-            }
+            if (typeof engContract === "undefined") return;
 
             try {
-                let bytesId;
-                // Se l'input è già un hash 0x... lungo 66 caratteri
-                if (rid.startsWith('0X') && rid.length === 66) {
-                    bytesId = rid;
-                } else {
-                    // Altrimenti è un codice umano VER-XXXX
-                    bytesId = ethers.encodeBytes32String(rid);
-                }
-
-                console.log("Looking up ID:", rid, "Bytes:", bytesId);
+                let bytesId = rid.startsWith('0X') && rid.length === 66 ? rid : ethers.encodeBytes32String(rid);
                 const issuer = await engContract.receiptIssuers(bytesId);
-                console.log("Result issuer:", issuer);
                 
                 if (issuer && issuer !== "0x0000000000000000000000000000000000000000") {
                     const b = await regContract.businesses(issuer);
@@ -128,21 +139,17 @@
                     resetUI();
                 }
             } catch(e) {
-                console.error(e);
                 statusText.innerText = "Error: Invalid ID format";
                 resetUI();
             }
         }
 
         async function submitReview() {
-            if (!window.signer) return alert("Connect Wallet via header!");
-            const btn = document.getElementById('submitBtn');
             const mAddr = document.getElementById('mAddr').value;
             const rid = rIdInput.value.trim().toUpperCase();
-            
-            if (!mAddr) return alert("Merchant identity not verified.");
-            
-            btn.disabled = true; btn.innerText = "Confirming...";
+            if (!mAddr) return alert("Merchant not found. Enter a valid receipt code.");
+
+            submitBtn.disabled = true; submitBtn.innerText = "Publishing...";
 
             try {
                 const ridBytes = rid.startsWith('0X') ? rid : ethers.encodeBytes32String(rid);
@@ -153,14 +160,10 @@
                 alert("Review Published!");
                 window.location.href = "explore.html";
             } catch(e) {
-                alert("Transaction failed.");
-                btn.disabled = false; btn.innerText = "Broadcast Review";
+                alert("Failed to publish.");
+                submitBtn.disabled = false; submitBtn.innerText = "Broadcast Review";
             }
         }
-
-        window.addEventListener('contractsReady', () => {
-            if (rIdInput.value) detectMerchant(rIdInput.value.toUpperCase());
-        });
     </script>
 </body>
 </html>
