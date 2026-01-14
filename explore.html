@@ -6,34 +6,61 @@
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        .store-card { opacity: 0; transform: translateY(20px); transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+        .store-card { 
+            opacity: 0; 
+            transform: translateY(15px); 
+            transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1); 
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
         .store-card.visible { opacity: 1; transform: translateY(0); }
+        .store-card:hover { 
+            background: rgba(255,255,255,0.03); 
+            border-color: rgba(37, 99, 235, 0.3);
+            transform: translateY(-4px);
+        }
     </style>
 </head>
-<body class="bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen">
+<body class="bg-[var(--bg-main)] text-[var(--text-main)] antialiased min-h-screen">
     <div id="header-root"></div>
-    <main class="max-w-7xl mx-auto px-6 py-20">
-        <h1 class="text-7xl md:text-8xl font-black italic uppercase tracking-tighter mb-20 text-center">Verified <span class="text-blue-600">Stores</span></h1>
-        <div id="categories-container">
-            <p class="text-center opacity-30 animate-pulse uppercase text-[10px] font-black tracking-widest">Syncing Ledger...</p>
+
+    <main class="max-w-6xl mx-auto px-6 py-20">
+        <header class="text-center mb-24">
+            <p class="text-[10px] font-bold uppercase tracking-[0.5em] text-blue-600 mb-4">On-Chain Registry</p>
+            <h1 class="text-6xl md:text-7xl font-black italic uppercase tracking-tighter leading-none">
+                Verified <span class="text-blue-600">Stores</span>
+            </h1>
+        </header>
+
+        <div id="categories-container" class="space-y-24">
+            <div class="flex flex-col items-center justify-center py-20">
+                <div class="w-6 h-6 border-2 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                <p class="opacity-30 uppercase text-[9px] font-bold tracking-[0.3em]">Querying Paseo Ledger...</p>
+            </div>
         </div>
     </main>
+
     <div id="footer-root"></div>
-    <script src="app.js"></script><script src="components.js"></script>
+
+    <script src="app.js"></script>
+    <script src="components.js"></script>
     <script>
         async function initPage() {
             const container = document.getElementById('categories-container');
-            if (!regContract || !container) return;
+            // Utilizzo dei contratti globali definiti in app.js
+            if (!window.regContract || !container) return;
+
             try {
-                const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), -100000);
+                // Fetch registration events
+                const events = await window.regContract.queryFilter(window.regContract.filters.BusinessRegistered(), -50000);
                 const addrs = [...new Set(events.map(e => e.args[0]))];
                 const stores = [];
 
                 for(let addr of addrs) {
-                    const b = await regContract.businesses(addr);
+                    const b = await window.regContract.businesses(addr);
                     if(b.isActive) {
-                        // Fetch Reviews for rating calculation
-                        const revEvents = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), -50000);
+                        // Fetch Reviews per calcolo rating e volume
+                        const revEvents = await window.revContract.queryFilter(window.revContract.filters.ReviewSubmitted(addr), -20000);
                         let avg = 0;
                         if(revEvents.length > 0) {
                             const sum = revEvents.reduce((acc, ev) => acc + Number(ev.args[2]), 0);
@@ -43,33 +70,50 @@
                         stores.push({ 
                             addr, 
                             name: b.name, 
-                            category: ethers.decodeBytes32String(b.category), 
+                            category: ethers.decodeBytes32String(b.category).replace(/_/g,' '), 
                             vol: revEvents.length,
                             rating: avg
                         });
                     }
                 }
 
-                const grouped = stores.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc; }, {});
+                // Raggruppamento per categoria
+                const grouped = stores.reduce((acc, s) => { 
+                    (acc[s.category] = acc[s.category] || []).push(s); 
+                    return acc; 
+                }, {});
+
                 container.innerHTML = "";
 
                 Object.keys(grouped).forEach(cat => {
                     const section = document.createElement('section');
-                    section.className = "mb-20";
                     section.innerHTML = `
-                        <h2 class="text-2xl font-black uppercase italic text-blue-600 mb-10 border-b border-[var(--border)] pb-4 tracking-tighter">${cat.replace(/_/g,' ')}</h2>
-                        <div class="grid md:grid-cols-3 gap-8">
+                        <div class="flex items-center gap-4 mb-10">
+                            <h2 class="text-xs font-black uppercase tracking-[0.3em] text-blue-600 whitespace-nowrap">${cat}</h2>
+                            <div class="h-[1px] w-full bg-white/5"></div>
+                        </div>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             ${grouped[cat].map(s => `
-                                <a href="store.html?id=${s.addr}" class="store-card p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg hover:-translate-y-2">
-                                    <div class="flex justify-between items-start mb-6">
-                                        <h3 class="text-3xl font-black uppercase italic leading-none tracking-tighter group-hover:text-blue-600 transition-colors">${sanitize(s.name)}</h3>
-                                        <div class="flex items-center gap-1 text-blue-600 font-bold text-sm bg-blue-600/5 px-3 py-1 rounded-full">
-                                            <span>★</span><span>${s.rating > 0 ? s.rating : 'N/A'}</span>
+                                <a href="store.html?id=${s.addr}" class="store-card p-8 rounded-[1.5rem] transition-all duration-500 block group">
+                                    <div class="flex justify-between items-start mb-8">
+                                        <h3 class="text-xl font-bold uppercase italic tracking-tight leading-none group-hover:text-blue-600 transition-colors">
+                                            ${sanitize(s.name)}
+                                        </h3>
+                                        <div class="flex items-center gap-1.5 text-[10px] font-black bg-blue-600/10 text-blue-600 px-2.5 py-1 rounded-md">
+                                            <span>★</span>
+                                            <span>${s.rating > 0 ? s.rating : '0.0'}</span>
                                         </div>
                                     </div>
-                                    <div class="flex justify-between items-center opacity-30 text-[9px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
-                                        <span>${s.vol} Verified Reviews</span>
-                                        <span class="font-mono text-[8px]">${s.addr.slice(0,6)}...</span>
+                                    
+                                    <div class="flex justify-between items-end">
+                                        <div>
+                                            <p class="text-[8px] font-bold opacity-20 uppercase tracking-widest mb-1">Activity</p>
+                                            <p class="text-[10px] font-bold uppercase tracking-tighter">${s.vol} Reviews</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-[8px] font-mono opacity-20 uppercase mb-1">Node</p>
+                                            <p class="text-[9px] font-mono opacity-40">${s.addr.slice(0,6).toLowerCase()}...</p>
+                                        </div>
                                     </div>
                                 </a>
                             `).join('')}
@@ -77,22 +121,25 @@
                     container.appendChild(section);
                 });
 
-                // Staggered Animation Trigger
+                // Staggered Animation
                 setTimeout(() => {
                     document.querySelectorAll('.store-card').forEach((el, i) => {
-                        setTimeout(() => el.classList.add('visible'), i * 80);
+                        setTimeout(() => el.classList.add('visible'), i * 50);
                     });
                 }, 100);
 
             } catch (e) { 
                 console.error(e);
-                container.innerHTML = "<p class='text-center text-red-500 uppercase text-[10px] font-black'>Sync Error. Please Refresh.</p>"; 
+                container.innerHTML = `
+                    <div class="py-20 text-center">
+                        <p class="text-red-500 uppercase text-[10px] font-black tracking-widest">Protocol Sync Error</p>
+                        <button onclick="location.reload()" class="mt-4 text-[9px] underline opacity-50 uppercase">Retry Connection</button>
+                    </div>`; 
             }
         }
 
-        // Logic to ensure the page starts as soon as contracts are ready
-        if (window.isVeritasReady) { initPage(); }
         window.addEventListener('contractsReady', initPage);
+        window.addEventListener('load', () => { if(window.isVeritasReady) initPage(); });
     </script>
 </body>
 </html>
