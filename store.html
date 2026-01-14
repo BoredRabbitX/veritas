@@ -73,65 +73,72 @@
     <script src="components.js"></script>
 
     <script>
-       async function initPage() {
-    console.log("Store: Initializing Analytics & Reviews...");
+      async function initPage() {
+    console.log("Store: Booting with Anti-Duplicate Logic...");
     const list = document.getElementById('reviewsList');
-    
+    if (!list) return;
+
     try {
         const id = new URLSearchParams(window.location.search).get('id');
-        if(!id) return;
+        if (!id) return;
 
-        // 1. Dati Business
+        // 1. CARICAMENTO DATI BUSINESS
         const b = await regContract.businesses(id);
-        if(!b.isActive) return;
+        if (!b.isActive) {
+            list.innerHTML = "<p class='opacity-30 uppercase text-[10px]'>Store not found.</p>";
+            return;
+        }
 
-        // Update Header
+        // Update UI Header
         document.getElementById('storeName').innerText = b.name;
         const catLabel = document.getElementById('storeCat');
         catLabel.innerText = ethers.decodeBytes32String(b.category).split('_').join(' ');
         catLabel.style.opacity = "1";
         document.getElementById('storeVol').innerText = b.volume;
 
-        // 2. Recupero Recensioni
+        // 2. RECUPERO EVENTI
         const filter = revContract.filters.ReviewSubmitted(id);
         const allEvents = await revContract.queryFilter(filter, -100000);
         
-        // --- FILTRO ANTI-DUPLICATO (Basato su receiptId o Hash) ---
-        // Usiamo una Map per tenere solo la prima occorrenza di ogni receiptId
-        const uniqueEventsMap = new Map();
-        allEvents.forEach(ev => {
+        // --- LOGICA ANTI-DUPLICATO ROBUSTA ---
+        const seenReceipts = new Set();
+        const uniqueEvents = [];
+
+        for (const ev of allEvents) {
             const rid = ev.args.receiptId || ev.args[4];
-            if (!uniqueEventsMap.has(rid)) {
-                uniqueEventsMap.set(rid, ev);
+            if (!seenReceipts.has(rid)) {
+                seenReceipts.add(rid);
+                uniqueEvents.push(ev);
             }
-        });
-        
-        // Convertiamo la mappa di nuovo in un array
-        const events = Array.from(uniqueEventsMap.values());
+        }
 
-        if(!list) return;
-        list.innerHTML = events.length ? "" : "No verified feedback found for this store.";
+        if (uniqueEvents.length === 0) {
+            list.innerHTML = "<p class='opacity-30 uppercase text-[10px]'>No verified logs found.</p>";
+            return;
+        }
 
-        // --- CALCOLO ANALYTICS (Su eventi unici) ---
+        // --- CALCOLO ANALYTICS ---
         let totalRating = 0;
         let starCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
-        const totalReviews = events.length;
 
-        if(totalReviews > 0) {
-            for(let ev of events) {
-                const r = Number(ev.args.rating || ev.args[2]);
-                totalRating += r;
-                starCounts[r]++;
-            }
+        uniqueEvents.forEach(ev => {
+            const r = Number(ev.args.rating || ev.args[2]);
+            totalRating += r;
+            starCounts[r]++;
+        });
 
-            const avg = totalRating / totalReviews;
-            animateValue(document.getElementById('avgStars'), 0, avg, 1000, true);
-            animateValue(document.getElementById('totalRev'), 0, totalReviews, 1000);
+        const avg = totalRating / uniqueEvents.length;
+        const totalReviews = uniqueEvents.length;
 
-            // Render Barre
-            const bars = document.getElementById('barsContainer');
+        // Avvio animazioni Count-Up
+        if (document.getElementById('avgStars')) animateValue(document.getElementById('avgStars'), 0, avg, 1000, true);
+        if (document.getElementById('totalRev')) animateValue(document.getElementById('totalRev'), 0, totalReviews, 1000);
+
+        // Render Barre Dinamiche
+        const bars = document.getElementById('barsContainer');
+        if (bars) {
             bars.innerHTML = "";
-            for(let s=5; s>=1; s--) {
+            for (let s = 5; s >= 1; s--) {
                 const percent = (starCounts[s] / totalReviews) * 100;
                 bars.innerHTML += `
                     <div class="flex items-center gap-4">
@@ -143,39 +150,42 @@
                     </div>`;
                 setTimeout(() => {
                     const el = document.getElementById(`bar-${s}`);
-                    if(el) el.style.width = percent + "%";
-                }, 50);
+                    if (el) el.style.width = percent + "%";
+                }, 100);
             }
         }
 
-        // 3. Render Lista Recensioni (Uniche)
-        for(let i = events.length-1; i >= 0; i--) {
-            const ev = events[i];
+        // 3. RENDER REVIEWS (Reverse per ordine cronologico)
+        list.innerHTML = "";
+        for (let i = uniqueEvents.length - 1; i >= 0; i--) {
+            const ev = uniqueEvents[i];
             const author = ev.args.author || ev.args[1];
             const rating = Number(ev.args.rating || ev.args[2]);
             const content = ev.args.content || ev.args[3];
             const receiptId = ev.args.receiptId || ev.args[4];
             
-            // Recupero risposta del merchant
+            // Recupero risposta del merchant (Funzione asincrona)
             const reply = await engContract.merchantReplies(receiptId);
 
             list.innerHTML += `
                 <div class="p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600/30 transition-all duration-500 mb-8">
                     <div class="flex justify-between items-start mb-8">
                         <div class="text-blue-600 text-xs">${"★".repeat(rating)}${"☆".repeat(5-rating)}</div>
-                        <span class="text-[9px] font-mono opacity-20">#${receiptId.slice(2,10)}...</span>
+                        <span class="text-[9px] font-mono opacity-20">#${receiptId.slice(2, 10)}...</span>
                     </div>
                     <p class="text-3xl font-medium italic tracking-tight mb-8">"${content}"</p>
                     ${reply ? `
-                        <div class="mt-8 p-8 bg-[var(--bg-main)] rounded-3xl border border-[var(--border)] relative">
-                            <div class="absolute -top-3 left-8 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase">Merchant Response</div>
-                            <p class="text-sm opacity-70 italic">${reply}</p>
+                        <div class="mt-8 p-8 bg-[var(--bg-main)] rounded-3xl border border-[var(--border)] relative shadow-inner">
+                            <div class="absolute -top-3 left-8 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase">Official Reply</div>
+                            <p class="text-sm opacity-70 italic leading-relaxed">${reply}</p>
                         </div>
                     ` : ''}
                 </div>`;
         }
-    } catch(e) { 
-        console.error("Store Analytics Error:", e);
+
+    } catch (e) {
+        console.error("Critical Store Error:", e);
+        list.innerHTML = "<p class='text-red-500 uppercase text-[10px] font-bold'>Sync error. Please try again.</p>";
     }
 }
     </script>
