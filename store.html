@@ -21,7 +21,7 @@
 
     <main class="max-w-7xl mx-auto px-6 py-20">
         <div class="mb-20">
-            <p id="storeCat" class="text-blue-600 font-black uppercase tracking-[0.4em] text-[11px] mb-4 italic opacity-0">---</p>
+            <p id="storeCat" class="text-blue-600 font-black uppercase tracking-[0.4em] text-[11px] mb-4 italic opacity-0 transition-opacity duration-700">---</p>
             <h1 id="storeName" class="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-[0.9] mb-8">---</h1>
             <div class="flex gap-8 opacity-40 text-[10px] font-bold uppercase tracking-widest">
                 <span class="flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Verified Merchant</span>
@@ -33,7 +33,6 @@
             <aside class="lg:col-span-4">
                 <div class="card-veritas p-10 sticky top-32 overflow-hidden relative">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16"></div>
-                    
                     <p class="text-[10px] font-black uppercase tracking-widest opacity-30 mb-10 italic">Rating Analysis</p>
                     
                     <div class="mb-12">
@@ -44,15 +43,14 @@
                         </p>
                     </div>
 
-                    <div id="barsContainer" class="space-y-5">
-                        </div>
+                    <div id="barsContainer" class="space-y-5"></div>
                 </div>
             </aside>
 
             <section class="lg:col-span-8">
                 <h3 class="text-2xl font-black italic uppercase mb-10 tracking-tight">Verified <span class="text-blue-600">Feedback</span></h3>
                 <div id="reviewsList" class="space-y-8">
-                    <div class="p-20 text-center border border-dashed border-[var(--border)] rounded-[3rem] opacity-20">
+                    <div id="initialLoader" class="p-20 text-center border border-dashed border-[var(--border)] rounded-[3rem] opacity-20">
                         <p class="text-[10px] font-black uppercase tracking-widest animate-pulse">Scanning Polkadot Ledger...</p>
                     </div>
                 </div>
@@ -66,10 +64,9 @@
     <script src="components.js"></script>
 
     <script>
-        // Count-up animation for numbers
         function animateValue(id, start, end, duration, isFloat = false) {
             const obj = document.getElementById(id);
-            if (!obj) return;
+            if (!obj || isNaN(end)) return;
             let startTimestamp = null;
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
@@ -82,8 +79,12 @@
         }
 
         async function initPage() {
-            if (!regContract || !revContract) return;
-            
+            // Check if contracts are injected
+            if (typeof regContract === "undefined" || typeof revContract === "undefined") {
+                console.warn("Contracts not ready, retrying...");
+                return;
+            }
+
             const urlParams = new URLSearchParams(window.location.search);
             const storeId = urlParams.get('id');
             if (!storeId) return;
@@ -114,13 +115,11 @@
                 let sum = 0;
                 let counts = {5:0, 4:0, 3:0, 2:0, 1:0};
 
-                // Prepare Review Cards
                 for (let ev of events.reverse()) {
                     const { rating, content, receiptId } = ev.args;
                     sum += Number(rating);
                     counts[Number(rating)]++;
 
-                    // Check for merchant reply
                     const reply = await engContract.merchantReplies(receiptId);
 
                     reviewsList.innerHTML += `
@@ -130,7 +129,6 @@
                                 <span class="text-[9px] font-mono opacity-20 group-hover:opacity-100 transition tracking-tighter">RECEIPT: ${receiptId.slice(0,18)}...</span>
                             </div>
                             <p class="text-3xl font-medium italic leading-tight tracking-tight mb-10">"${sanitize(content)}"</p>
-                            
                             ${reply ? `
                                 <div class="mt-8 p-8 bg-[var(--bg-main)] rounded-3xl border border-blue-600/10 relative">
                                     <span class="absolute -top-3 left-6 bg-blue-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full tracking-widest shadow-lg">Official Response</span>
@@ -145,7 +143,6 @@
                 animateValue("avgScore", 0, avg, 1500, true);
                 animateValue("totalLogs", 0, events.length, 1000);
 
-                // Render Progress Bars
                 const barsContainer = document.getElementById('barsContainer');
                 barsContainer.innerHTML = "";
                 [5,4,3,2,1].forEach(num => {
@@ -169,12 +166,17 @@
 
             } catch (e) {
                 console.error("Store init error:", e);
+                document.getElementById('reviewsList').innerHTML = "Blockchain Sync Error. Check Console.";
             }
         }
 
-        // Reliable Launch
-        if (window.isVeritasReady) { initPage(); }
+        // Logic sync: Wait for app.js to signal ready
         window.addEventListener('contractsReady', initPage);
+        
+        // Fallback if event was missed
+        window.addEventListener('load', () => {
+            setTimeout(() => { if(window.isVeritasReady) initPage(); }, 500);
+        });
     </script>
 </body>
 </html>
