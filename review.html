@@ -1,46 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Review | Veritas</title>
+    <meta charset="UTF-8"><title>Submit Review | Veritas</title>
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
-    <main class="main-content flex-grow px-6 py-12 flex justify-center items-center">
-        <div class="max-w-xl w-full text-white bg-white/5 p-10 rounded-3xl border border-white/5">
-            <h1 class="text-5xl font-black italic uppercase tracking-tighter mb-8">Post Review</h1>
-            <input id="userName" type="text" placeholder="Your Name" class="bg-black border border-white/10 w-full p-4 rounded-xl mb-4">
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <input id="bizAddr" type="text" placeholder="Merchant" class="bg-black border border-white/10 p-4 rounded-xl text-xs font-mono">
-                <input id="receiptId" type="text" placeholder="Receipt ID" class="bg-black border border-white/10 p-4 rounded-xl text-xs font-mono text-blue-500 uppercase">
-            </div>
-            <div class="flex justify-center gap-2 py-6 bg-black rounded-2xl border border-white/10 mb-6">
-                <div id="stars" class="flex gap-2 text-4xl cursor-pointer">
-                    <span class="star text-blue-600" data-v="1">★</span><span class="star text-blue-600" data-v="2">★</span>
-                    <span class="star text-blue-600" data-v="3">★</span><span class="star text-blue-600" data-v="4">★</span>
-                    <span class="star text-blue-600" data-v="5">★</span>
-                </div>
-            </div>
-            <textarea id="content" rows="4" class="bg-black border border-white/10 w-full p-4 rounded-xl mb-6" placeholder="Experience..."></textarea>
-            <button onclick="submit()" class="btn-primary w-full py-5 font-black uppercase tracking-widest italic">Publish On-Chain</button>
+<body class="flex flex-col min-h-screen bg-black text-white flex justify-center items-center">
+    <div class="max-w-xl w-full bg-zinc-900 p-10 rounded-[3rem] border border-white/5">
+        <h1 class="text-5xl font-black italic uppercase tracking-tighter mb-8">Post Review</h1>
+        <div class="space-y-4 mb-6">
+            <input id="bizAddr" type="text" placeholder="Merchant Address" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono">
+            <input id="receiptId" type="text" placeholder="Receipt ID" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase tracking-widest">
         </div>
-    </main>
+        <div class="flex justify-center gap-2 py-6 bg-black rounded-2xl border border-white/10 mb-6">
+            <div id="stars" class="flex gap-2 text-4xl cursor-pointer">
+                <span class="star text-blue-600" data-v="1">★</span><span class="star text-blue-600" data-v="2">★</span>
+                <span class="star text-blue-600" data-v="3">★</span><span class="star text-blue-600" data-v="4">★</span>
+                <span class="star text-blue-600" data-v="5">★</span>
+            </div>
+        </div>
+        <textarea id="content" rows="4" class="bg-black border border-white/10 w-full p-4 rounded-xl mb-6 text-sm" placeholder="Tell us about your experience..."></textarea>
+        <button id="subBtn" onclick="submit()" class="btn-primary w-full py-5 font-black uppercase tracking-widest italic">Publish On-Chain</button>
+    </div>
     <script src="app.js"></script><script src="components.js"></script>
     <script>
-        let cur = 5;
+        let rating = 5;
         document.querySelectorAll('.star').forEach(s => s.onclick = function() {
-            cur = this.getAttribute('data-v');
-            document.querySelectorAll('.star').forEach(st => st.classList.toggle('opacity-30', st.getAttribute('data-v') > cur));
+            rating = this.getAttribute('data-v');
+            document.querySelectorAll('.star').forEach(st => st.classList.toggle('opacity-30', st.getAttribute('data-v') > rating));
         });
+
         async function initPage() {
             const p = new URLSearchParams(window.location.search);
             if(p.get('biz')) document.getElementById('bizAddr').value = p.get('biz');
             if(p.get('id')) document.getElementById('receiptId').value = p.get('id');
         }
+
         async function submit() {
-            const rid = ethers.keccak256(ethers.toUtf8Bytes(document.getElementById('receiptId').value.trim().toUpperCase()));
-            const tx = await revContract.submitReview(document.getElementById('bizAddr').value, cur, `${document.getElementById('userName').value}: ${document.getElementById('content').value}`, "", rid);
-            await tx.wait(); window.location.href = "index.html";
+            const btn = document.getElementById('subBtn');
+            const ridRaw = document.getElementById('receiptId').value.trim().toUpperCase();
+            const rid = ethers.keccak256(ethers.toUtf8Bytes(ridRaw));
+            
+            btn.innerText = "VALIDATING...";
+            btn.disabled = true;
+
+            try {
+                // Nuova firma: address _business, uint8 _rating, string _content, bytes32 _receiptId
+                const tx = await revContract.submitReview(
+                    document.getElementById('bizAddr').value, 
+                    rating, 
+                    document.getElementById('content').value, 
+                    rid
+                );
+                await tx.wait();
+                window.location.href = "explore.html";
+            } catch(e) { 
+                alert("Error: " + e.reason || e.message); 
+                btn.innerText = "PUBLISH ON-CHAIN";
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
