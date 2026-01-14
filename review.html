@@ -14,6 +14,8 @@
         }
         @keyframes slideIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .verified-badge { background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 8px; font-weight: 900; text-transform: uppercase; }
+        .waiting-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     </style>
 </head>
 <body class="bg-[var(--bg-main)] text-[var(--text-main)]">
@@ -21,22 +23,20 @@
 
     <main class="max-w-2xl mx-auto px-6 py-20">
         <div class="card-veritas p-12 shadow-2xl">
-            <h1 class="text-5xl font-black italic uppercase mb-10 tracking-tighter leading-none">
-                Verified <span class="text-blue-600">Review</span>
-            </h1>
-
-            <div id="authNotice" class="mb-8 p-4 border border-blue-600/20 bg-blue-600/5 rounded-xl text-center">
-                <p class="text-[10px] font-black uppercase tracking-widest text-blue-600 animate-pulse">Waiting for Wallet Connection...</p>
+            <div id="authNotice" class="mb-10 p-4 border border-blue-600/20 bg-blue-600/5 rounded-2xl text-center waiting-pulse">
+                <p class="text-[10px] font-black uppercase tracking-widest text-blue-600">Syncing with Blockchain...</p>
             </div>
 
             <div class="space-y-8">
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt Code / Hash</label>
-                    <input id="rId" type="text" class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 uppercase transition-all" placeholder="VER-XXXX-XXXX">
-                    <p id="searchStatus" class="text-[8px] uppercase mt-2 opacity-30 font-bold hidden">Status: Idle</p>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt Code</label>
+                    <input id="rId" type="text" 
+                           class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 uppercase" 
+                           placeholder="VER-XXXX-XXXX">
+                    <p id="searchStatus" class="text-[8px] uppercase mt-2 opacity-30 font-bold hidden"></p>
                 </div>
 
-                <div id="merchantBadge" class="hidden p-8 rounded-[2rem] border border-[var(--border)] transition-all">
+                <div id="merchantBadge" class="hidden p-8 rounded-[2rem] border transition-all">
                     <div class="flex justify-between items-center mb-4">
                         <span class="verified-badge">On-Chain Verified</span>
                         <span class="text-[8px] font-mono opacity-40 uppercase" id="mAddrLabel">0x...</span>
@@ -45,59 +45,63 @@
                     <input type="hidden" id="mAddr">
                 </div>
 
-                <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Reviewer Name</label>
-                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm focus:border-blue-600" placeholder="e.g. John Doe">
+                <div class="grid grid-cols-1 gap-8">
+                    <div>
+                        <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Reviewer Name</label>
+                        <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm" placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Rating</label>
+                        <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold">
+                            <option value="5">★★★★★ - Excellent</option>
+                            <option value="4">★★★★☆ - Good</option>
+                            <option value="3">★★★☆☆ - Average</option>
+                            <option value="2">★★☆☆☆ - Poor</option>
+                            <option value="1">★☆☆☆☆ - Terrible</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Details</label>
+                        <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm resize-none" placeholder="How was the service?"></textarea>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Rating Score</label>
-                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold text-sm outline-none">
-                        <option value="5">★★★★★ - Excellent</option>
-                        <option value="4">★★★★☆ - Good</option>
-                        <option value="3">★★★☆☆ - Average</option>
-                        <option value="2">★★☆☆☆ - Poor</option>
-                        <option value="1">★☆☆☆☆ - Terrible</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Details</label>
-                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm resize-none" placeholder="Describe your experience..."></textarea>
-                </div>
-
-                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl opacity-50 cursor-not-allowed" disabled>Connect Wallet to Publish</button>
+                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-widest opacity-50 cursor-not-allowed" disabled>
+                    Waiting for System...
+                </button>
             </div>
         </div>
     </main>
 
-    <div id="footer-root"></div>
-
     <script src="app.js"></script>
     <script src="components.js"></script>
     <script>
-        const rIdInput = document.getElementById('rId');
-        const statusText = document.getElementById('searchStatus');
-        const submitBtn = document.getElementById('submitBtn');
-        const authNotice = document.getElementById('authNotice');
+        // FORZA IL CONTROLLO OGNI 500ms
+        const syncInterval = setInterval(() => {
+            if (window.signer && window.engContract) {
+                console.log("SYSTEM READY: Signer and Contracts found.");
+                initPage();
+                clearInterval(syncInterval);
+            }
+        }, 500);
 
-        /**
-         * AUTO-SYNC CON HEADER
-         */
-        async function checkConnection() {
-            if (window.signer && window.isVeritasReady) {
-                authNotice.classList.add('hidden');
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                submitBtn.innerText = "Broadcast Review";
-                
-                // Se c'è già un codice (es. dal QR), cercalo subito
-                if (rIdInput.value) detectMerchant(rIdInput.value.trim().toUpperCase());
+        function initPage() {
+            document.getElementById('authNotice').classList.add('hidden');
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.innerText = "Broadcast Review";
+            
+            // Se c'è un rid nell'URL, lo cerca subito
+            const urlRid = new URLSearchParams(window.location.search).get('rid');
+            if (urlRid) {
+                document.getElementById('rId').value = urlRid.toUpperCase();
+                detectMerchant(urlRid.toUpperCase());
             }
         }
 
-        window.addEventListener('contractsReady', checkConnection);
-        window.addEventListener('load', () => setTimeout(checkConnection, 1000));
+        const rIdInput = document.getElementById('rId');
+        const statusText = document.getElementById('searchStatus');
 
         rIdInput.addEventListener('input', (e) => {
             const val = e.target.value.trim().toUpperCase();
@@ -111,23 +115,16 @@
             }
         });
 
-        function resetUI() {
-            const badge = document.getElementById('merchantBadge');
-            badge.classList.add('hidden');
-            badge.classList.remove('merchant-found');
-        }
-
         async function detectMerchant(rid) {
-            if (typeof engContract === "undefined") return;
-
+            if (!window.engContract) return;
             try {
-                let bytesId = rid.startsWith('0X') && rid.length === 66 ? rid : ethers.encodeBytes32String(rid);
-                const issuer = await engContract.receiptIssuers(bytesId);
+                const ridBytes = rid.startsWith('0X') ? rid : ethers.encodeBytes32String(rid);
+                const issuer = await engContract.receiptIssuers(ridBytes);
                 
                 if (issuer && issuer !== "0x0000000000000000000000000000000000000000") {
                     const b = await regContract.businesses(issuer);
                     document.getElementById('detectedName').innerText = b.name;
-                    document.getElementById('mAddrLabel').innerText = issuer.slice(0,6) + "..." + issuer.slice(-4);
+                    document.getElementById('mAddrLabel').innerText = issuer;
                     document.getElementById('mAddr').value = issuer;
                     
                     statusText.classList.add('hidden');
@@ -135,33 +132,40 @@
                     badge.classList.remove('hidden');
                     badge.classList.add('merchant-found');
                 } else {
-                    statusText.innerText = "Error: Receipt ID not found";
+                    statusText.innerText = "Merchant not found for this code";
                     resetUI();
                 }
             } catch(e) {
-                statusText.innerText = "Error: Invalid ID format";
+                statusText.innerText = "Format Error";
                 resetUI();
             }
         }
 
+        function resetUI() {
+            const badge = document.getElementById('merchantBadge');
+            badge.classList.add('hidden');
+            badge.classList.remove('merchant-found');
+        }
+
         async function submitReview() {
             const mAddr = document.getElementById('mAddr').value;
-            const rid = rIdInput.value.trim().toUpperCase();
-            if (!mAddr) return alert("Merchant not found. Enter a valid receipt code.");
-
-            submitBtn.disabled = true; submitBtn.innerText = "Publishing...";
+            if (!mAddr) return alert("Verify Merchant First!");
+            
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true; btn.innerText = "Confirming...";
 
             try {
+                const rid = rIdInput.value.trim().toUpperCase();
                 const ridBytes = rid.startsWith('0X') ? rid : ethers.encodeBytes32String(rid);
                 const content = `[${document.getElementById('reviewerName').value}] ${document.getElementById('comment').value}`;
                 
                 const tx = await revContract.submitReview(mAddr, document.getElementById('stars').value, content, ridBytes);
                 await tx.wait();
-                alert("Review Published!");
+                alert("Success!");
                 window.location.href = "explore.html";
             } catch(e) {
-                alert("Failed to publish.");
-                submitBtn.disabled = false; submitBtn.innerText = "Broadcast Review";
+                alert("Error during broadcast.");
+                btn.disabled = false; btn.innerText = "Broadcast Review";
             }
         }
     </script>
