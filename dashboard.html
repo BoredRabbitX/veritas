@@ -13,19 +13,19 @@
     <div id="header-root"></div>
 
     <main class="max-w-4xl mx-auto px-6 py-20">
-        <h1 class="text-6xl font-black italic uppercase mb-12 tracking-tighter">
+        <h1 class="text-6xl font-black italic uppercase mb-12 tracking-tighter leading-none">
             Merchant <span class="text-blue-600">Hub</span>
         </h1>
         
         <div class="card-veritas mb-12" id="profileBox">
-            <p class="text-[10px] font-black uppercase opacity-40 mb-6 italic tracking-widest">Business Status</p>
+            <p class="text-[10px] font-black uppercase opacity-40 mb-6 italic tracking-widest">Business Registry</p>
             <div id="bizDetails">
-                <p class="opacity-50 italic animate-pulse">Syncing with Polkadot Ledger...</p>
+                <p class="opacity-50 italic animate-pulse text-sm">Checking authentication status...</p>
             </div>
         </div>
 
         <div id="pendingReviews" class="hidden">
-            <h2 class="text-2xl font-black italic uppercase mb-8">Customer <span class="text-blue-600">Feedback</span></h2>
+            <h2 class="text-2xl font-black italic uppercase mb-8">Manage <span class="text-blue-600">Customer Logs</span></h2>
             <div id="reviewsGrid" class="space-y-6">
                 </div>
         </div>
@@ -37,26 +37,33 @@
     <script src="components.js"></script>
 
     <script>
+        /**
+         * INITIALIZATION LOGIC
+         */
         async function initPage() {
             const bizContainer = document.getElementById('bizDetails');
+            console.log("Dashboard: Initializing with signer:", !!window.signer);
             
+            // 1. Check if wallet is connected
             if (!window.signer) {
                 bizContainer.innerHTML = `
                     <div class="p-10 border border-dashed border-[var(--border)] rounded-[2rem] text-center">
-                        <p class="opacity-50 uppercase text-[10px] font-black mb-4 tracking-widest text-blue-600">Identity required</p>
-                        <p class="text-sm opacity-70 mb-8 italic text-[var(--text-main)]">Please connect your wallet to manage your business profile.</p>
-                        <button onclick="connectWallet()" class="btn-primary px-10 py-4 text-[10px] uppercase font-black">Connect Wallet</button>
+                        <p class="opacity-50 uppercase text-[10px] font-black mb-4 tracking-widest text-blue-600">Access Denied</p>
+                        <p class="text-sm opacity-70 mb-8 italic text-[var(--text-main)]">You must connect your wallet to manage your on-chain business identity.</p>
+                        <button onclick="connectWallet()" class="btn-primary px-10 py-4 text-[10px] uppercase font-black tracking-widest">Connect Wallet</button>
                     </div>
                 `;
+                document.getElementById('pendingReviews').classList.add('hidden');
                 return;
             }
 
             try {
                 const addr = await signer.getAddress();
-                const b = await regContract.businesses(addr);
+                // We use getCachedData from app.js to speed up the profile check
+                const b = await getCachedData(`biz_${addr}`, () => regContract.businesses(addr));
 
                 if (b.isActive) {
-                    // REGISTERED MERCHANT - DISPLAY DATA
+                    // MERCHANT FOUND
                     const cleanCat = ethers.decodeBytes32String(b.category).replace(/_/g, ' ');
                     
                     bizContainer.innerHTML = `
@@ -66,8 +73,8 @@
                                 <p class="text-blue-600 font-black uppercase text-[10px] tracking-[0.3em] italic">${cleanCat}</p>
                             </div>
                             <div class="flex gap-4">
-                                <div class="px-6 py-4 bg-blue-600/5 border border-blue-600/10 rounded-2xl text-center min-w-[120px]">
-                                    <p class="text-[8px] font-black opacity-40 uppercase tracking-widest mb-1">Total Logs</p>
+                                <div class="px-6 py-4 bg-blue-600/5 border border-blue-600/10 rounded-2xl text-center">
+                                    <p class="text-[8px] font-black opacity-40 uppercase tracking-widest mb-1">On-chain Logs</p>
                                     <p class="font-black text-blue-600 text-2xl leading-none">${b.volume}</p>
                                 </div>
                             </div>
@@ -77,22 +84,22 @@
                     document.getElementById('pendingReviews').classList.remove('hidden');
                     loadReviewsForMerchant(addr);
                 } else {
-                    // NEW MERCHANT - REGISTRATION FORM
+                    // UNREGISTERED MERCHANT
                     bizContainer.innerHTML = `
                         <div class="space-y-10">
                             <div>
-                                <h3 class="text-2xl font-black italic uppercase mb-2">Register Business</h3>
-                                <p class="text-sm opacity-50 italic">Establish your permanent identity on the Paseo Network.</p>
+                                <h3 class="text-2xl font-black italic uppercase mb-2">Create Identity</h3>
+                                <p class="text-sm opacity-50 italic text-[var(--text-main)]">Register your business name and category on the Polkadot Paseo network.</p>
                             </div>
                             
                             <div class="grid gap-8">
                                 <div>
-                                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Business Name</label>
-                                    <input id="regName" type="text" class="w-full text-lg font-medium bg-transparent border-b border-[var(--border)] py-2 focus:border-blue-600 outline-none transition" placeholder="e.g. White Rabbit Bored">
+                                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest font-mono">Business Name</label>
+                                    <input id="regName" type="text" class="w-full text-lg font-medium bg-transparent border-b border-[var(--border)] py-2 focus:border-blue-600 outline-none transition" placeholder="e.g. White Rabbit Boutique">
                                 </div>
                                 <div>
-                                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Industry Category</label>
-                                    <select id="regCat" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:border-blue-600 outline-none appearance-none">
+                                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest font-mono">Industry Category</label>
+                                    <select id="regCat" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm focus:border-blue-600 outline-none">
                                         <option value="Food_Drink">Food & Drink</option>
                                         <option value="Retail_Shop">Retail Shop</option>
                                         <option value="Technology">Technology</option>
@@ -101,46 +108,40 @@
                                         <option value="Art_Design">Art & Design</option>
                                     </select>
                                 </div>
-                                <button onclick="register()" class="btn-primary w-full py-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-xl">
-                                    Broadcast to Blockchain
-                                </button>
+                                <button onclick="register()" class="btn-primary w-full py-6 text-[11px] font-black uppercase tracking-[0.2em]">Register on Blockchain</button>
                             </div>
                         </div>
                     `;
                 }
             } catch (e) {
-                console.error(e);
-                bizContainer.innerHTML = "<p class='text-red-500 text-[10px] font-black uppercase tracking-widest'>Sync error. Please try again.</p>";
+                console.error("Dashboard Sync Error:", e);
+                bizContainer.innerHTML = "<p class='text-red-500 text-[10px] font-black uppercase'>Blockchain Sync Error. Please Refresh.</p>";
             }
         }
 
         async function register() {
             const name = document.getElementById('regName').value;
             const cat = document.getElementById('regCat').value;
-            
-            if(!name || name.length < 3) return alert("Please enter a valid business name.");
-
+            if(!name || name.length < 3) return alert("Business name is required.");
             try {
                 const catBytes = ethers.encodeBytes32String(cat);
                 const tx = await regContract.registerBusiness(name, catBytes);
-                alert("Request sent. Pending block confirmation...");
+                alert("Transaction Broadcasted! Waiting for Paseo Network confirmation...");
                 await tx.wait();
                 location.reload();
-            } catch (e) {
-                alert("Blockchain registration failed. Verify your PAS balance.");
-            }
+            } catch (e) { alert("Registration failed. Check gas/PAS balance."); }
         }
 
         async function loadReviewsForMerchant(addr) {
             const grid = document.getElementById('reviewsGrid');
-            grid.innerHTML = "<p class='opacity-30 italic text-[10px] uppercase font-black tracking-widest animate-pulse'>Fetching verified data...</p>";
+            grid.innerHTML = "<p class='opacity-30 italic text-[10px] uppercase font-black animate-pulse'>Fetching records...</p>";
 
             try {
                 const filter = revContract.filters.ReviewSubmitted(addr);
                 const events = await revContract.queryFilter(filter, -50000);
                 
                 if (events.length === 0) {
-                    grid.innerHTML = "<div class='p-16 border border-dashed border-[var(--border)] rounded-[2rem] text-center opacity-30 uppercase text-[9px] font-black tracking-widest'>No feedback logs found.</div>";
+                    grid.innerHTML = "<div class='p-16 border border-dashed border-[var(--border)] rounded-[2rem] text-center opacity-30 uppercase text-[9px] font-black'>No feedback found yet.</div>";
                     return;
                 }
 
@@ -155,29 +156,25 @@
                         <div class="p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600/30 transition-all duration-500">
                             <div class="flex justify-between items-start mb-8">
                                 <div class="text-blue-600 font-bold text-xl leading-none">${"★".repeat(rating)}${"☆".repeat(5-rating)}</div>
-                                <span class="text-[9px] opacity-20 font-mono uppercase tracking-tighter">Receipt #${rid.slice(2,14)}...</span>
+                                <span class="text-[9px] opacity-20 font-mono tracking-tighter uppercase">Receipt ID: ${rid.slice(0,18)}...</span>
                             </div>
-                            
-                            <p class="text-3xl font-medium italic tracking-tight mb-10 text-[var(--text-main)] leading-tight">"${sanitize(content)}"</p>
-                            
+                            <p class="text-3xl font-medium italic tracking-tight mb-10 text-[var(--text-main)]">"${sanitize(content)}"</p>
                             <div id="reply-box-${rid}">
                                 ${reply ? `
-                                    <div class="p-8 bg-[var(--bg-main)] rounded-3xl border border-blue-600/10 italic relative">
-                                        <span class="absolute -top-3 left-6 bg-blue-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full tracking-widest">Official Response</span>
-                                        <p class="text-base opacity-70">${sanitize(reply)}</p>
+                                    <div class="p-8 bg-[var(--bg-main)] rounded-3xl border border-blue-600/10 italic relative shadow-inner">
+                                        <span class="absolute -top-3 left-6 bg-blue-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full tracking-widest shadow-md">Official Reply</span>
+                                        <p class="text-base opacity-70 leading-relaxed">${sanitize(reply)}</p>
                                     </div>
                                 ` : `
                                     <div class="flex gap-4">
-                                        <input id="rep-${rid}" type="text" class="flex-grow bg-[var(--bg-main)] border border-[var(--border)] rounded-2xl px-6 py-3 text-sm focus:border-blue-600 outline-none" placeholder="Type your professional reply...">
-                                        <button onclick="sendReply('${rid}')" class="btn-primary px-8 py-3 text-[10px] uppercase font-black tracking-widest">Send</button>
+                                        <input id="rep-${rid}" type="text" class="flex-grow bg-[var(--bg-main)] border border-[var(--border)] rounded-2xl px-6 py-3 text-sm focus:border-blue-600 outline-none" placeholder="Write your professional response...">
+                                        <button onclick="sendReply('${rid}')" class="btn-primary px-8 py-3 text-[10px] uppercase font-black tracking-widest">Post Reply</button>
                                     </div>
                                 `}
                             </div>
                         </div>`;
                 }
-            } catch (e) {
-                grid.innerHTML = "Error loading reviews.";
-            }
+            } catch (e) { console.error(e); }
         }
 
         async function sendReply(rid) {
@@ -187,11 +184,21 @@
                 const tx = await engContract.postReply(rid, text);
                 await tx.wait();
                 location.reload();
-            } catch(e) { alert("Action failed."); }
+            } catch(e) { alert("Reply failed."); }
         }
 
-        if (window.isVeritasReady) { initPage(); }
-        window.addEventListener('contractsReady', initPage);
+        /**
+         * RELIABLE CONNECTIVITY
+         */
+        function startApp() {
+            if (window.isVeritasReady) {
+                initPage();
+            } else {
+                window.addEventListener('contractsReady', initPage);
+            }
+        }
+
+        window.addEventListener('load', startApp);
     </script>
 </body>
 </html>
