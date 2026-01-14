@@ -1,167 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explore Stores | Veritas</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore | Veritas</title>
+    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <style>
-        .store-card { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
-        .store-card.visible { opacity: 1; transform: translateY(0); }
-        .category-section { margin-bottom: 5rem; }
-    </style>
 </head>
 <body class="bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen">
-
     <div id="header-root"></div>
-
     <main class="max-w-7xl mx-auto px-6 py-20">
-        <div class="mb-20">
-            <h1 class="text-7xl md:text-8xl font-black italic uppercase tracking-tighter mb-4">
-                Verified <span class="text-blue-600">Stores</span>
-            </h1>
-            <p class="opacity-40 text-[10px] font-bold uppercase tracking-[0.3em] italic">Browsing the Polkadot Paseo Ecosystem</p>
-        </div>
-
-        <div id="categories-container">
-            <div id="loader" class="py-20 text-center">
-                <p class="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse opacity-30">
-                    Accessing Ledger Records...
-                </p>
-            </div>
-        </div>
+        <h1 class="text-7xl md:text-8xl font-black italic uppercase tracking-tighter mb-20 text-center">Verified <span class="text-blue-600">Stores</span></h1>
+        <div id="categories-container"><p class="text-center opacity-30 animate-pulse">Syncing Ledger...</p></div>
     </main>
-
     <div id="footer-root"></div>
-
-    <script src="app.js"></script>
-    <script src="components.js"></script>
-
+    <script src="app.js"></script><script src="components.js"></script>
     <script>
-        let allStores = [];
-
         async function initPage() {
-            console.log("Explore: Initializing...");
             const container = document.getElementById('categories-container');
-            if (!window.regContract || !container) return;
-
+            if (!regContract || !container) return;
             try {
-                // 1. Fetch Merchant Events
-                const filter = regContract.filters.BusinessRegistered();
-                const events = await regContract.queryFilter(filter, -100000);
-                const uniqueAddresses = [...new Set(events.map(e => e.args[0] || e.args.owner))];
-
-                // 2. Fetch Details & Analytics for each store
-                const storePromises = uniqueAddresses.map(async (addr) => {
-                    const b = await getCachedData(`biz_${addr}`, () => regContract.businesses(addr));
-                    if (!b.isActive) return null;
-
-                    // Fetch individual ratings for display
-                    const revFilter = revContract.filters.ReviewSubmitted(addr);
-                    const revEvents = await revContract.queryFilter(revFilter, -50000);
-                    
-                    let avgRating = 0;
-                    if(revEvents.length > 0) {
-                        const sum = revEvents.reduce((acc, ev) => acc + Number(ev.args[2]), 0);
-                        avgRating = sum / revEvents.length;
-                    }
-
-                    return {
-                        address: addr,
-                        name: b.name,
-                        category: ethers.decodeBytes32String(b.category),
-                        volume: Number(b.volume),
-                        rating: avgRating
-                    };
+                const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), -100000);
+                const addrs = [...new Set(events.map(e => e.args[0]))];
+                const stores = [];
+                for(let addr of addrs) {
+                    const b = await regContract.businesses(addr);
+                    if(b.isActive) stores.push({ addr, name: b.name, category: ethers.decodeBytes32String(b.category), vol: b.volume });
+                }
+                const grouped = stores.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc; }, {});
+                container.innerHTML = "";
+                Object.keys(grouped).forEach(cat => {
+                    const section = document.createElement('section');
+                    section.className = "mb-20";
+                    section.innerHTML = `<h2 class="text-2xl font-black uppercase italic text-blue-600 mb-10 border-b border-[var(--border)] pb-4">${cat.replace('_',' ')}</h2>
+                        <div class="grid md:grid-cols-3 gap-8">${grouped[cat].map(s => `
+                            <a href="store.html?id=${s.addr}" class="p-10 rounded-[2rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition block">
+                                <h3 class="text-3xl font-black uppercase mb-4">${sanitize(s.name)}</h3>
+                                <p class="text-[9px] font-bold opacity-30 uppercase">${s.vol} Verified Logs</p>
+                            </a>`).join('')}</div>`;
+                    container.appendChild(section);
                 });
-
-                allStores = (await Promise.all(storePromises)).filter(s => s !== null);
-                renderByCategories();
-
-            } catch (e) {
-                console.error("Explore Sync Error:", e);
-                container.innerHTML = "<p class='text-red-500 font-black uppercase text-[10px]'>Network Sync Error. Please Refresh.</p>";
-            }
+            } catch (e) { container.innerHTML = "Sync Error."; }
         }
-
-        function renderByCategories() {
-            const container = document.getElementById('categories-container');
-            container.innerHTML = "";
-
-            if (allStores.length === 0) {
-                container.innerHTML = "<p class='opacity-30 uppercase text-[10px] font-black py-20'>No merchants found on-chain.</p>";
-                return;
-            }
-
-            // Group stores by category
-            const grouped = allStores.reduce((acc, store) => {
-                const cat = store.category || "General";
-                if (!acc[cat]) acc[cat] = [];
-                acc[cat].push(store);
-                return acc;
-            }, {});
-
-            // Render each category section
-            Object.keys(grouped).forEach(catName => {
-                const stores = grouped[catName];
-                const cleanCatName = catName.replace(/_/g, ' ');
-
-                const section = document.createElement('section');
-                section.className = "category-section";
-                section.innerHTML = `
-                    <div class="flex items-center gap-6 mb-10">
-                        <h2 class="text-2xl font-black italic uppercase tracking-tighter text-blue-600">${cleanCatName}</h2>
-                        <div class="h-[1px] flex-grow bg-[var(--border)] opacity-30"></div>
-                        <span class="text-[9px] font-bold opacity-30 uppercase tracking-widest">${stores.length} Stores</span>
-                    </div>
-                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        ${stores.map(s => renderStoreCard(s)).join('')}
-                    </div>
-                `;
-                container.appendChild(section);
-            });
-
-            // Trigger stagger animation for all cards
-            setTimeout(() => {
-                document.querySelectorAll('.store-card').forEach((el, i) => {
-                    setTimeout(() => el.classList.add('visible'), i * 50);
-                });
-            }, 100);
-        }
-
-        function renderStoreCard(s) {
-            return `
-                <a href="store.html?id=${s.address}" class="store-card p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg hover:-translate-y-2">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="flex items-center gap-2">
-                             <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                             <p class="text-[8px] font-black uppercase opacity-40 tracking-widest group-hover:text-blue-600 transition-colors">Verified Log</p>
-                        </div>
-                        <div class="flex items-center gap-1 text-blue-600 font-bold text-xs italic">
-                            <span>★</span><span>${s.rating > 0 ? s.rating.toFixed(1) : 'N/A'}</span>
-                        </div>
-                    </div>
-                    <h3 class="text-4xl font-black italic uppercase leading-none mb-8 tracking-tighter group-hover:text-blue-600 transition-colors">${sanitize(s.name)}</h3>
-                    <div class="flex justify-between items-center opacity-30 text-[8px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
-                        <span>${s.volume} Logs</span>
-                        <span class="font-mono opacity-50">${s.address.slice(0,6)}...${s.address.slice(-4)}</span>
-                    </div>
-                </a>`;
-        }
-
-        // --- RELIABLE CONNECTION LOGIC ---
-        function startExplore() {
-            if (window.isVeritasReady) {
-                initPage();
-            } else {
-                window.addEventListener('contractsReady', initPage);
-            }
-        }
-
-        // Run when window loads
-        window.addEventListener('load', startExplore);
     </script>
 </body>
 </html>
