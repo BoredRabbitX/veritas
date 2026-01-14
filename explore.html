@@ -1,73 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explore Stores | Veritas</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore | Veritas</title>
+    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen bg-black text-white font-sans">
-
-    <main class="main-content flex-grow px-6 py-12">
-        <div class="max-w-7xl mx-auto">
-            <h1 class="text-7xl font-black italic tracking-tighter uppercase mb-12">
-                Verified <span class="text-blue-600 block sm:inline italic">Stores</span>
-            </h1>
-            
-            <div id="grid" class="grid md:grid-cols-3 gap-8">
-                <div id="loader" class="col-span-full text-center py-20 opacity-30 animate-pulse text-[10px] font-bold uppercase tracking-[0.5em]">
-                    Scanning Paseo Chain...
-                </div>
-            </div>
+<body class="flex flex-col min-h-screen">
+    <main class="flex-grow p-6 py-20">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-7xl font-black italic uppercase mb-12">Verified <span class="text-blue-600">Stores</span></h1>
+            <div id="grid" class="grid md:grid-cols-3 gap-8"></div>
         </div>
     </main>
-
-    <script src="app.js"></script>
-    <script src="components.js"></script>
+    <script src="app.js"></script><script src="components.js"></script>
     <script>
         async function initPage() {
             const grid = document.getElementById('grid');
-            try {
-                const filter = regContract.filters.BusinessRegistered();
-                const events = await regContract.queryFilter(filter, -50000); 
-                const owners = [...new Set(events.map(e => e.args.owner))];
-                
-                if(owners.length === 0) {
-                    document.getElementById('loader').innerText = "No stores registered yet.";
-                    return;
-                }
-
-                grid.innerHTML = "";
-                for(let addr of owners.reverse()) {
-                    const b = await regContract.businesses(addr);
-                    if(!b.isActive) continue;
-
-                    // Fetch average rating for this specific store
-                    const revFilter = revContract.filters.ReviewSubmitted(addr);
-                    const revEvents = await revContract.queryFilter(revFilter, -50000);
-                    const avg = revEvents.length ? (revEvents.reduce((s,e)=>s+Number(e.args.rating || e.args[2]),0)/revEvents.length).toFixed(1) : "0.0";
-                    
-                    // FORMAT CATEGORY: Remove underscores and show clean text
-                    const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
-
-                    grid.innerHTML += `
-                        <a href="store.html?id=${addr}" class="bg-zinc-900 border border-white/5 p-8 rounded-[2rem] block hover:border-blue-600 transition group relative overflow-hidden">
-                            <div class="flex justify-between items-start mb-6">
-                                <span class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">${cleanCat}</span>
-                                <span class="font-black italic text-sm text-white opacity-40 group-hover:opacity-100 transition">★ ${avg}</span>
-                            </div>
-                            <h3 class="text-3xl font-black italic uppercase tracking-tighter mb-4 leading-none">${b.name}</h3>
-                            <div class="flex items-center gap-2 mt-6">
-                                <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                                <p class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Verified Merchant</p>
-                            </div>
-                        </a>`;
-                }
-            } catch(e) { 
-                console.error(e);
-                grid.innerHTML = "<p class='opacity-30 text-xs uppercase'>Error syncing with Paseo Network.</p>";
+            const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), -50000);
+            const owners = [...new Set(events.map(e => e.args.owner))];
+            grid.innerHTML = "";
+            for(let addr of owners.reverse()) {
+                const b = await regContract.businesses(addr);
+                if(!b.isActive) continue;
+                const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
+                grid.innerHTML += `
+                    <a href="store.html?id=${addr}" class="p-8 rounded-[2rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition block text-left">
+                        <p class="text-blue-600 text-[9px] font-bold uppercase mb-4">${cleanCat}</p>
+                        <h3 class="text-3xl font-black italic uppercase italic leading-none mb-4">${b.name}</h3>
+                        <div class="opacity-30 text-[9px] font-bold uppercase">Volume: ${b.volume} TX</div>
+                    </a>`;
             }
         }
     </script>
