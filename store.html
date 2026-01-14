@@ -5,36 +5,48 @@
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen bg-black text-white">
     <main class="main-content flex-grow px-6 py-12">
-        <div class="max-w-4xl mx-auto text-white">
+        <div class="max-w-4xl mx-auto">
             <p id="storeCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-4"></p>
             <h1 id="storeName" class="text-7xl font-black italic uppercase mb-12 tracking-tighter">Loading...</h1>
-            <div id="reviewsList" class="space-y-6"></div>
+            
+            <div class="space-y-4">
+                <h3 class="text-xs font-black uppercase tracking-widest opacity-20 italic mb-8">Verified Customer Feedback</h3>
+                <div id="reviewsList" class="space-y-6"></div>
+            </div>
         </div>
     </main>
-    <script src="app.js"></script><script src="components.js"></script>
+    <script src="app.js"></script>
+    <script src="components.js"></script>
     <script>
         async function initPage() {
             const id = new URLSearchParams(window.location.search).get('id');
-            const b = await regContract.businesses(id);
-            document.getElementById('storeName').innerText = b.name;
-            document.getElementById('storeCat').innerText = ethers.decodeBytes32String(b.category);
-            const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(id), 0);
-            const list = document.getElementById('reviewsList');
-            for(let i = events.length-1; i >= 0; i--) {
-                const {author, rating, content, receiptId} = events[i].args;
-                const reply = await engContract.merchantReplies(receiptId);
-                list.innerHTML += `
-                    <div class="bg-white/5 p-8 rounded-3xl border border-white/5">
-                        <div class="flex justify-between mb-4">
-                            <span class="text-[9px] font-mono opacity-30">${author.slice(0,10)}...</span>
-                            <span class="text-blue-600 font-black italic">${"★".repeat(rating)}</span>
-                        </div>
-                        <p class="text-xl italic">"${content}"</p>
-                        ${reply ? `<div class="mt-6 pt-6 border-t border-white/5 text-xs opacity-70 italic text-zinc-400">Response: ${reply}</div>` : ''}
-                    </div>`;
-            }
+            if(!id) return;
+
+            try {
+                const b = await regContract.businesses(id);
+                document.getElementById('storeName').innerText = b.name;
+                document.getElementById('storeCat').innerText = ethers.decodeBytes32String(b.category);
+                
+                const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(id), -50000);
+                const list = document.getElementById('reviewsList');
+                list.innerHTML = events.length ? "" : "<p class='opacity-30 italic'>No reviews yet.</p>";
+
+                for(let i = events.length-1; i >= 0; i--) {
+                    const {author, rating, content, receiptId} = events[i].args;
+                    const reply = await engContract.merchantReplies(receiptId);
+                    list.innerHTML += `
+                        <div class="bg-zinc-900 p-8 rounded-3xl border border-white/5">
+                            <div class="flex justify-between mb-4">
+                                <span class="text-[9px] font-mono opacity-30 uppercase">${author.slice(0,10)}...</span>
+                                <span class="text-blue-600 font-black italic">${"★".repeat(rating)}</span>
+                            </div>
+                            <p class="text-xl italic">"${content}"</p>
+                            ${reply ? `<div class="mt-6 pt-6 border-t border-white/5 text-xs opacity-70 italic text-zinc-400 font-mono">Response: ${reply}</div>` : ''}
+                        </div>`;
+                }
+            } catch(e) { console.error(e); }
         }
     </script>
 </body>
