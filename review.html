@@ -1,67 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Review | Veritas</title>
-    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        .merchant-reveal { animation: slideDown 0.4s ease-out forwards; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<body class="bg-[var(--bg-main)]">
+<body class="bg-[var(--bg-main)] text-[var(--text-main)]">
     <div id="header-root"></div>
+
     <main class="max-w-2xl mx-auto px-6 py-20">
-        <div class="card-veritas p-12">
-            <h1 class="text-5xl font-black italic uppercase mb-10 leading-none tracking-tighter">Verified <span class="text-blue-600">Review</span></h1>
+        <div class="card-veritas p-12 shadow-2xl">
+            <h1 class="text-5xl font-black italic uppercase mb-10 leading-none tracking-tighter">
+                Verified <span class="text-blue-600">Review</span>
+            </h1>
+
             <div class="space-y-8">
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block">Receipt ID</label>
-                    <input id="rId" oninput="detectMerchant(this.value)" class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600" placeholder="Paste Log ID...">
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt ID</label>
+                    <input id="rId" type="text" 
+                           oninput="detectMerchant(this.value)" 
+                           class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 transition-colors" 
+                           placeholder="Paste your unique Log ID...">
                 </div>
-                <div id="merchantBadge" class="hidden p-6 bg-blue-600/5 rounded-2xl border border-blue-600/20">
-                    <p class="text-[8px] font-black text-blue-600 uppercase mb-1">Detected Merchant</p>
+
+                <div id="merchantBadge" class="hidden merchant-reveal p-6 bg-blue-600/5 rounded-2xl border border-blue-600/20">
+                    <p class="text-[8px] font-black text-blue-600 uppercase mb-2 tracking-widest">Reviewing Merchant:</p>
                     <h3 id="detectedName" class="text-2xl font-black uppercase italic leading-none">---</h3>
                     <input type="hidden" id="mAddr">
                 </div>
+
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block">Rating</label>
-                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold">
-                        <option value="5">★★★★★ - Excellent</option><option value="4">★★★★☆ - Good</option>
-                        <option value="3">★★★☆☆ - Average</option><option value="2">★★☆☆☆ - Poor</option><option value="1">★☆☆☆☆ - Terrible</option>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Your Name / Alias</label>
+                    <input id="reviewerName" type="text" 
+                           class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm focus:border-blue-600 outline-none transition" 
+                           placeholder="How should we call you?">
+                </div>
+
+                <div>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Rating Score</label>
+                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold text-sm outline-none focus:border-blue-600 transition">
+                        <option value="5">★★★★★ - Excellent</option>
+                        <option value="4">★★★★☆ - Good</option>
+                        <option value="3">★★★☆☆ - Average</option>
+                        <option value="2">★★☆☆☆ - Poor</option>
+                        <option value="1">★☆☆☆☆ - Terrible</option>
                     </select>
                 </div>
+
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block">Experience</label>
-                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)]" placeholder="Tell the truth..."></textarea>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Detailed Experience</label>
+                    <textarea id="comment" 
+                              class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm outline-none focus:border-blue-600 transition resize-none" 
+                              placeholder="Describe your service experience honestly..."></textarea>
                 </div>
-                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-widest shadow-xl">Broadcast Review</button>
+
+                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl group">
+                    <span class="inline-block group-hover:translate-x-1 transition-transform">Publish on Blockchain</span>
+                </button>
             </div>
         </div>
     </main>
+
     <div id="footer-root"></div>
-    <script src="app.js"></script><script src="components.js"></script>
+
+    <script src="app.js"></script>
+    <script src="components.js"></script>
     <script>
+        /**
+         * Automatically finds the merchant associated with the Receipt ID
+         */
         async function detectMerchant(rid) {
-            if(rid.length < 10) return;
+            const badge = document.getElementById('merchantBadge');
+            const nameDisplay = document.getElementById('detectedName');
+            const addrInput = document.getElementById('mAddr');
+
+            if(rid.length < 10) {
+                badge.classList.add('hidden');
+                return;
+            }
+
             try {
+                // Query Engine to find who issued this receipt
                 const issuer = await engContract.receiptIssuers(rid);
+                
                 if(issuer !== "0x0000000000000000000000000000000000000000") {
+                    // Fetch Merchant business name
                     const b = await regContract.businesses(issuer);
-                    document.getElementById('detectedName').innerText = b.name;
-                    document.getElementById('mAddr').value = issuer;
-                    document.getElementById('merchantBadge').classList.remove('hidden');
+                    nameDisplay.innerText = b.name;
+                    addrInput.value = issuer;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.log("Searching...");
+            }
         }
+
         async function submitReview() {
-            if(!signer) return alert("Connect Wallet!");
+            if(!window.signer) return alert("Please connect your wallet first.");
+            
             const btn = document.getElementById('submitBtn');
-            const [m, r, s, c] = [document.getElementById('mAddr').value, document.getElementById('rId').value, document.getElementById('stars').value, document.getElementById('comment').value];
-            if(!m) return alert("Invalid Receipt!");
-            btn.disabled = true; btn.innerText = "Broadcasting...";
+            const mAddr = document.getElementById('mAddr').value;
+            const rId = document.getElementById('rId').value;
+            const reviewer = document.getElementById('reviewerName').value;
+            const stars = document.getElementById('stars').value;
+            const comment = document.getElementById('comment').value;
+
+            if(!mAddr) return alert("Valid Receipt ID required!");
+            if(!reviewer) return alert("Please enter your name.");
+            if(!comment) return alert("Please write a comment about your experience.");
+
+            btn.disabled = true;
+            btn.innerText = "Broadcasting to Paseo...";
+
             try {
-                const tx = await revContract.submitReview(m, s, c, r);
-                await tx.wait(); alert("Review Permanent!"); window.location.href="explore.html";
-            } catch(e) { alert("Failed."); btn.disabled = false; btn.innerText = "Broadcast Review"; }
+                // Formatting content to include reviewer name
+                const finalContent = `[${reviewer}] ${comment}`;
+                
+                // Blockchain Transaction
+                const tx = await revContract.submitReview(mAddr, stars, finalContent, rId);
+                
+                alert("Transaction sent! Your review is being written to the ledger.");
+                await tx.wait();
+                
+                alert("Review Published Successfully!");
+                window.location.href = "explore.html";
+            } catch(e) {
+                console.error(e);
+                alert("Transaction failed. Ensure you have PAS tokens and a valid Receipt.");
+                btn.disabled = false;
+                btn.innerText = "Publish on Blockchain";
+            }
         }
+
+        function initPage() { console.log("Review system ready."); }
     </script>
 </body>
 </html>
