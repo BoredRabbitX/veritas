@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Merchant Hub | Veritas</title>
+    <meta charset="UTF-8"><title>Merchant Hub | Veritas Beta 1.0</title>
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -14,46 +14,60 @@
                 <button onclick="connectWallet()" class="btn-primary px-10 py-4">Connect Wallet</button>
             </div>
 
-            <div id="mainDashboard" class="hidden space-y-12">
+            <div id="mainDashboard" class="hidden space-y-12 text-white">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-10">
                     <div>
                         <p id="dispCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-2"></p>
-                        <h1 id="dispName" class="text-6xl font-black italic uppercase tracking-tighter leading-none text-white">Store</h1>
+                        <h1 id="dispName" class="text-6xl font-black italic uppercase tracking-tighter leading-none">Store</h1>
                     </div>
                     <div class="flex gap-4">
                         <div class="bg-white/5 p-6 rounded-2xl border border-white/5 text-center min-w-[120px]">
-                            <p class="text-[9px] font-bold opacity-30 uppercase mb-1">Reviews</p>
-                            <p id="statCount" class="text-3xl font-black italic text-white">0</p>
+                            <p class="text-[9px] font-bold opacity-30 uppercase mb-1 text-zinc-400">Reviews</p>
+                            <p id="statCount" class="text-3xl font-black italic">0</p>
                         </div>
                         <div class="bg-blue-600 p-6 rounded-2xl text-center min-w-[120px]">
                             <p class="text-[9px] font-bold opacity-80 uppercase mb-1 text-white">Avg Rating</p>
-                            <p id="statAvg" class="text-3xl font-black italic text-white">0.0</p>
+                            <p id="statAvg" class="text-3xl font-black italic">0.0</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="grid lg:grid-cols-2 gap-10">
                     <section class="p-8 bg-white/5 rounded-3xl border border-blue-600/20">
-                        <h3 class="text-xl font-black uppercase italic mb-6 text-white uppercase">Issue Receipt</h3>
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-black uppercase italic">Issue Receipt</h3>
+                            <span id="qrStatus" class="text-[9px] font-bold uppercase text-blue-500 tracking-widest hidden italic animate-pulse">Ready</span>
+                        </div>
+                        
                         <div class="space-y-6">
-                            <input id="receiptRaw" type="text" readonly placeholder="V3-WAITING" class="bg-black/50 border border-white/10 w-full p-4 rounded-xl font-mono text-center text-blue-500 text-lg uppercase">
-                            <button id="genBtn" onclick="generateReceipt()" class="btn-primary w-full py-4 uppercase font-black">Sign New Receipt</button>
-                            <div id="qrcode" class="bg-white p-4 rounded-2xl w-48 h-48 mx-auto flex items-center justify-center">
-                                <span class="text-black text-[10px] font-black opacity-20 uppercase">QR Ready</span>
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Receipt ID</label>
+                                <input id="receiptRaw" type="text" readonly placeholder="V3-ID-WAITING" class="bg-black border border-white/10 w-full p-4 rounded-xl font-mono text-center text-blue-500 text-lg uppercase outline-none">
+                            </div>
+
+                            <button id="genBtn" onclick="generateReceipt()" class="btn-primary w-full py-4 uppercase font-black italic tracking-widest">Sign & Generate QR</button>
+                            
+                            <div class="relative flex justify-center py-6 bg-black rounded-2xl border border-white/10 min-h-[220px]">
+                                <div id="qrcode" class="p-2 bg-white rounded-xl shadow-2xl shadow-blue-600/10">
+                                    <div class="w-40 h-40 flex items-center justify-center opacity-10">
+                                        <span class="text-[8px] font-black uppercase text-center italic">Waiting for<br>Transaction</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </section>
 
                     <section>
-                        <h3 class="text-xl font-black uppercase italic mb-6 text-white uppercase tracking-tight">Recent Feedback</h3>
-                        <div id="merchantInbox" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                            <p class="opacity-30 italic text-sm uppercase">Synchronizing...</p>
+                        <h3 class="text-xl font-black uppercase italic mb-6 tracking-tight">Verified Feedback Inbox</h3>
+                        <div id="merchantInbox" class="space-y-4 max-h-[550px] overflow-y-auto pr-2">
+                            <p class="opacity-20 italic text-sm uppercase">Loading logs...</p>
                         </div>
                     </section>
                 </div>
             </div>
         </div>
     </main>
+
     <script src="app.js"></script>
     <script src="components.js"></script>
     <script>
@@ -62,12 +76,13 @@
             document.getElementById('mainDashboard').classList.remove('hidden');
             const addr = await signer.getAddress();
             const biz = await regContract.businesses(addr);
+            
             if(biz.isActive) {
                 document.getElementById('dispName').innerText = biz.name;
                 document.getElementById('dispCat').innerText = ethers.decodeBytes32String(biz.category);
                 await loadMerchantData(addr);
             } else {
-                grid.innerHTML = "Merchant profile not found.";
+                window.location.href = "index.html";
             }
         }
 
@@ -75,49 +90,98 @@
             const list = document.getElementById('merchantInbox');
             const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), 0);
             let totalScore = 0;
-            list.innerHTML = events.length ? "" : '<p class="opacity-30 italic text-sm uppercase">No reviews found.</p>';
+            list.innerHTML = events.length ? "" : '<p class="opacity-20 italic text-[10px] uppercase">No feedback yet.</p>';
 
             for(let i = events.length-1; i >= 0; i--) {
                 const {author, rating, content, receiptId} = events[i].args;
                 totalScore += Number(rating);
                 const reply = await engContract.merchantReplies(receiptId);
+
                 list.innerHTML += `
-                    <div class="bg-white/5 border border-white/5 p-6 rounded-2xl">
-                        <div class="flex justify-between items-center mb-3 text-white">
-                            <span class="text-[9px] font-mono opacity-30 tracking-widest uppercase">${author.slice(0,10)}...</span>
+                    <div class="bg-white/5 border border-white/5 p-6 rounded-2xl mb-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-[9px] font-mono opacity-30 uppercase">${author.slice(0,12)}...</span>
                             <span class="text-blue-600 font-black italic text-xs">${"★".repeat(rating)}</span>
                         </div>
                         <p class="text-sm italic mb-4 text-zinc-300">"${content}"</p>
-                        ${reply ? `<div class="mt-4 p-4 bg-blue-600/10 border-l-2 border-blue-600 rounded-r-xl"><p class="text-[9px] font-black text-blue-500 uppercase mb-1 italic">Response:</p><p class="text-xs italic opacity-80 text-zinc-400">${reply}</p></div>` : `
-                        <div class="flex gap-2">
-                            <input id="rep-${receiptId}" type="text" placeholder="Reply..." class="bg-black border border-white/10 flex-grow p-3 rounded-xl text-xs text-white outline-none focus:border-blue-600">
-                            <button onclick="sendReply('${receiptId}')" class="bg-white text-black text-[9px] font-black px-6 rounded-xl uppercase">Post</button>
-                        </div>`}
+                        ${reply ? `
+                            <div class="bg-blue-600/10 p-4 rounded-xl border-l-2 border-blue-600">
+                                <p class="text-[9px] font-black text-blue-500 uppercase mb-1 italic">Your Official Reply</p>
+                                <p class="text-xs italic opacity-80 text-zinc-400">${reply}</p>
+                            </div>
+                        ` : `
+                            <div class="flex gap-2">
+                                <input id="rep-${receiptId}" type="text" placeholder="Write a response..." class="bg-black border border-white/10 flex-grow p-3 rounded-xl text-xs text-white outline-none focus:border-blue-600">
+                                <button onclick="sendReply('${receiptId}')" class="bg-white text-black text-[9px] font-black px-6 rounded-xl uppercase hover:bg-blue-600 hover:text-white transition">Post</button>
+                            </div>
+                        `}
                     </div>`;
             }
+
             document.getElementById('statCount').innerText = events.length;
             document.getElementById('statAvg').innerText = events.length ? (totalScore / events.length).toFixed(1) : "0.0";
         }
 
         async function sendReply(rid) {
+            const btn = event.target;
             const msg = document.getElementById(`rep-${rid}`).value;
             if(!msg) return;
+            
+            btn.innerText = "WAIT...";
+            btn.disabled = true;
+
             try {
                 const tx = await engContract.postReply(rid, msg);
-                await tx.wait(); location.reload();
-            } catch(e) { alert(e.message); }
+                await tx.wait();
+                location.reload();
+            } catch(e) { 
+                alert(e.message); 
+                btn.innerText = "POST";
+                btn.disabled = false;
+            }
         }
 
         async function generateReceipt() {
+            const btn = document.getElementById('genBtn');
+            const statusLabel = document.getElementById('qrStatus');
             const id = "V3-" + Math.random().toString(36).substring(2,8).toUpperCase();
+            
+            btn.innerText = "SIGNING ON-CHAIN...";
+            btn.disabled = true;
+            statusLabel.innerText = "Transacting...";
+            statusLabel.classList.remove('hidden');
+
             try {
                 const hash = ethers.keccak256(ethers.toUtf8Bytes(id));
                 const tx = await engContract.issueReceipt(hash);
                 await tx.wait();
+                
                 document.getElementById('receiptRaw').value = id;
-                const url = window.location.origin + window.location.pathname.replace('dashboard.html', 'review.html') + `?biz=${await signer.getAddress()}&id=${id}`;
-                new QRCode(document.getElementById('qrcode'), { text: url, width: 160, height: 160 });
-            } catch(e) { alert(e.message); }
+                
+                // QR Logic
+                const qrDiv = document.getElementById('qrcode');
+                qrDiv.innerHTML = ""; // Clear waiting message
+                
+                const url = `${window.location.origin}/review.html?biz=${await signer.getAddress()}&id=${id}`;
+                new QRCode(qrDiv, {
+                    text: url,
+                    width: 160,
+                    height: 160,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+                
+                statusLabel.innerText = "Receipt Ready!";
+                btn.innerText = "SIGN NEW RECEIPT";
+                btn.disabled = false;
+                
+            } catch(e) { 
+                alert(e.message);
+                btn.innerText = "SIGN NEW RECEIPT";
+                btn.disabled = false;
+                statusLabel.classList.add('hidden');
+            }
         }
     </script>
 </body>
