@@ -23,14 +23,11 @@
                 
                 <section id="regSection" class="hidden max-w-2xl mx-auto py-20 text-center">
                     <h1 class="text-6xl font-black italic uppercase mb-4 tracking-tighter">Register <span class="text-blue-600 text-7xl italic leading-none block">Business</span></h1>
-                    <p class="opacity-40 text-[10px] mb-10 uppercase tracking-[0.5em] font-bold">Official Veritas Merchant Onboarding</p>
-                    
                     <div class="space-y-4 bg-[var(--card-bg)] p-10 rounded-[3rem] border border-[var(--border)] text-left shadow-xl">
                         <div class="space-y-2">
                             <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-4">Business Name</label>
                             <input id="bizName" type="text" placeholder="e.g. The Quantum Store" class="bg-[var(--input-bg)] border border-[var(--border)] w-full p-5 rounded-2xl outline-none focus:border-blue-600 transition text-[var(--text-main)]">
                         </div>
-
                         <div class="space-y-2">
                             <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-4">Industry Category</label>
                             <select id="bizCat" class="bg-[var(--input-bg)] border border-[var(--border)] w-full p-5 rounded-2xl outline-none focus:border-blue-600 transition text-[var(--text-main)] appearance-none cursor-pointer italic font-bold">
@@ -49,7 +46,6 @@
                                 <option value="ART_DESIGN">Art & Design</option>
                             </select>
                         </div>
-
                         <button onclick="register()" class="btn-primary w-full py-5 mt-4 font-black uppercase italic tracking-widest shadow-xl shadow-blue-600/10 text-white">Deploy Merchant Identity</button>
                     </div>
                 </section>
@@ -99,9 +95,7 @@
 
                         <section class="space-y-6">
                             <h3 class="text-2xl font-black uppercase italic tracking-tight">Feedback Inbox</h3>
-                            <div id="merchantInbox" class="space-y-6 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
-                                <p class="opacity-20 italic text-sm uppercase tracking-widest py-10">No reviews found yet.</p>
-                            </div>
+                            <div id="merchantInbox" class="space-y-6 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar"></div>
                         </section>
                     </div>
                 </section>
@@ -150,8 +144,12 @@
 
         async function loadMerchantData(addr) {
             const list = document.getElementById('merchantInbox');
+            const b = await regContract.businesses(addr);
+            const merchantName = b.name;
             const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), -50000);
-            if(events.length > 0) list.innerHTML = "";
+            
+            list.innerHTML = events.length === 0 ? '<p class="opacity-20 italic py-10">No reviews found yet.</p>' : "";
+            
             for(let i = events.length-1; i >= 0; i--) {
                 const ev = events[i];
                 const author = ev.args.author || ev.args[1];
@@ -164,12 +162,17 @@
                     <div class="bg-[var(--card-bg)] border border-[var(--border)] p-8 rounded-[2rem] mb-4 shadow-sm">
                         <div class="flex justify-between items-center mb-4 text-[10px]">
                             <span class="opacity-30 uppercase font-mono">${author.slice(0,14)}...</span>
-                            <span class="text-blue-500 font-bold italic tracking-widest">${"★".repeat(rating)}</span>
+                            <span class="text-blue-600 font-bold italic tracking-widest">${"★".repeat(rating)}</span>
                         </div>
                         <p class="text-base italic mb-6 opacity-90">"${content}"</p>
-                        ${reply ? `<div class="p-5 bg-blue-600/10 border-l-2 border-blue-600 text-xs italic opacity-80 rounded-r-2xl font-medium">${reply}</div>` : `
+                        ${reply ? `
+                            <div class="p-5 bg-blue-600/10 border-l-2 border-blue-600 rounded-r-2xl">
+                                <p class="text-[8px] font-black text-blue-500 uppercase mb-1 italic opacity-60">${merchantName} Response</p>
+                                <p class="text-xs italic opacity-80 font-medium">${reply}</p>
+                            </div>
+                        ` : `
                         <div class="flex gap-3">
-                            <input id="rep-${receiptId}" type="text" placeholder="Reply..." class="bg-[var(--bg-main)] border border-[var(--border)] flex-grow p-4 rounded-xl text-xs text-[var(--text-main)] outline-none focus:border-blue-600">
+                            <input id="rep-${receiptId}" type="text" placeholder="Reply as ${merchantName}..." class="bg-[var(--bg-main)] border border-[var(--border)] flex-grow p-4 rounded-xl text-xs text-[var(--text-main)] outline-none focus:border-blue-600">
                             <button onclick="sendReply('${receiptId}')" class="bg-blue-600 text-white text-[9px] font-black px-6 rounded-xl uppercase hover:bg-blue-700 transition">Post</button>
                         </div>`}
                     </div>`;
