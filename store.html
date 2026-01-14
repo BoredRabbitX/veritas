@@ -19,8 +19,6 @@
         .review-card.visible { opacity: 1; transform: translateY(0); }
         .stat-bar { height: 3px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
         .stat-fill { height: 100%; background: #2563eb; width: 0; transition: width 1.2s cubic-bezier(0.2, 1, 0.3, 1); }
-        
-        /* Typography fix */
         .stars-mini { letter-spacing: -1px; font-size: 14px; }
     </style>
 </head>
@@ -42,7 +40,6 @@
             <aside class="lg:col-span-4">
                 <div class="card-veritas p-8 sticky top-32 bg-white/[0.02] border-white/5 rounded-[2rem]">
                     <p class="text-[9px] font-bold uppercase tracking-widest opacity-30 mb-8">Reputation Score</p>
-                    
                     <div class="mb-10">
                         <div class="flex items-baseline gap-2">
                             <h2 id="avgScore" class="text-8xl font-black italic tracking-tighter text-blue-600">0.0</h2>
@@ -53,14 +50,12 @@
                             Derived from <span id="totalLogs" class="text-[var(--text-main)]">0</span> verified<br>ledger interactions
                         </p>
                     </div>
-
                     <div id="barsContainer" class="space-y-4 pt-6 border-t border-white/5"></div>
                 </div>
             </aside>
 
             <section class="lg:col-span-8">
                 <h3 class="text-xl font-bold italic uppercase mb-8 tracking-tight">Verified <span class="text-blue-600">Feedback</span></h3>
-                
                 <div id="reviewsList" class="space-y-4">
                     <div id="initialLoader" class="py-20 text-center border border-dashed border-white/10 rounded-[2rem] opacity-20">
                         <p class="text-[9px] font-bold uppercase tracking-[0.3em] animate-pulse">Synchronizing Ledger...</p>
@@ -76,6 +71,9 @@
     <script src="components.js"></script>
 
     <script>
+        // FLAG ANTIDUPLICAZIONE
+        let isStoreInitialized = false;
+
         function animateValue(id, start, end, duration, isFloat = false) {
             const obj = document.getElementById(id);
             if (!obj || isNaN(end)) return;
@@ -91,15 +89,15 @@
         }
 
         async function initPage() {
-            // Check global contracts from app.js
-            if (!window.regContract || !window.revContract) return;
+            // Se già inizializzata o contratti non pronti, esce
+            if (isStoreInitialized || !window.regContract || !window.revContract) return;
+            isStoreInitialized = true; // Blocca chiamate successive
 
             const urlParams = new URLSearchParams(window.location.search);
             const storeId = urlParams.get('id');
             if (!storeId) return;
 
             try {
-                // 1. Business Identity
                 const b = await window.regContract.businesses(storeId);
                 if (!b.isActive) return;
 
@@ -109,10 +107,9 @@
                 catElement.innerText = ethers.decodeBytes32String(b.category).replace(/_/g, ' ');
                 catElement.style.opacity = "1";
 
-                // 2. Query Reviews
                 const events = await window.revContract.queryFilter(window.revContract.filters.ReviewSubmitted(storeId), -50000);
                 const reviewsList = document.getElementById('reviewsList');
-                reviewsList.innerHTML = "";
+                reviewsList.innerHTML = ""; // Pulisce il loader
 
                 if (events.length === 0) {
                     reviewsList.innerHTML = `<div class="py-16 text-center border border-dashed border-white/10 rounded-[2rem] opacity-20 uppercase text-[9px] font-bold tracking-widest">No verified entries found</div>`;
@@ -150,7 +147,6 @@
                         </div>`;
                 }
 
-                // 3. Stats Update
                 const total = events.length;
                 const avg = sum / total;
                 animateValue("avgScore", 0, avg, 1500, true);
@@ -170,7 +166,6 @@
                         </div>`;
                 });
 
-                // Staggered Reveal
                 setTimeout(() => {
                     document.querySelectorAll('.review-card').forEach((card, i) => {
                         setTimeout(() => card.classList.add('visible'), i * 80);
@@ -183,8 +178,10 @@
             }
         }
 
+        // GESTIONE EVENTI SINCRONIZZATA
         window.addEventListener('contractsReady', initPage);
         window.addEventListener('load', () => {
+            // Esegue solo se app.js ha già finito prima del load, altrimenti aspetta contractsReady
             if(window.isVeritasReady) initPage();
         });
     </script>
