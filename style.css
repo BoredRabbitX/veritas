@@ -1,34 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
 
 :root {
-    /* DARK THEME: Deep Sapphire & Slate */
-    --bg-main: #020617;        /* Sfondo quasi nero con punta di blu */
-    --card-bg: #0f172a;        /* Slate bluastro profondo */
-    --input-bg: #1e293b;       /* Contrasto per i campi */
-    --text-main: #f8fafc;      /* Bianco ghiaccio */
-    --text-muted: #94a3b8;     /* Grigio bluastro per testi secondari */
-    --border: rgba(51, 65, 85, 0.4);
-    --primary: #3b82f6;        /* Bright Blue */
-    --primary-glow: rgba(59, 130, 246, 0.3);
-    --accent: #8b5cf6;         /* Viola per sfumature */
+    /* DARK THEME: Pure Technical Slate */
+    --bg-main: #02040a;        /* Deep Black/Blue */
+    --card-bg: rgba(255, 255, 255, 0.015);
+    --input-bg: rgba(255, 255, 255, 0.03);
+    --text-main: #f0f2f5;      /* Off-White */
+    --text-muted: #6b7280;     /* Neutral Gray */
+    --border: rgba(255, 255, 255, 0.06);
+    --primary: #2563eb;        /* Solid Tech Blue */
+    --primary-glow: rgba(37, 99, 235, 0.15);
 }
 
 html.light {
-    /* LIGHT THEME: Clean Slate & Silver */
-    --bg-main: #f8fafc;        /* Sfondo carta chiaro */
-    --card-bg: #ffffff;        /* Bianco puro */
-    --input-bg: #f1f5f9;       /* Grigio chiarissimo */
-    --text-main: #0f172a;      /* Slate scuro */
-    --text-muted: #64748b;     /* Grigio per testi secondari */
-    --border: rgba(226, 232, 240, 0.8);
+    /* LIGHT THEME: Paper & Ink */
+    --bg-main: #ffffff;
+    --card-bg: #fcfcfd;
+    --input-bg: #f3f4f6;
+    --text-main: #0a0a0a;
+    --text-muted: #6b7280;
+    --border: rgba(0, 0, 0, 0.05);
     --primary: #2563eb;
-    --primary-glow: rgba(37, 99, 235, 0.1);
+    --primary-glow: rgba(37, 99, 235, 0.05);
 }
 
 * {
     box-sizing: border-box;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
 }
 
 body {
@@ -36,84 +35,86 @@ body {
     color: var(--text-main);
     font-family: 'Inter', sans-serif;
     margin: 0;
-    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s ease;
+    transition: background-color 0.5s ease;
     overflow-x: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
 }
 
-main { flex-grow: 1; }
-
-/* NAVBAR & GLASSMORPHISM */
+/* NAVBAR GLASS EFFECT */
 .nav-container {
-    width: 100%;
-    background: var(--bg-main);
-    border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
-/* CARDS: Neo-Brutalist Soft */
-.card-veritas, .bg-\[var\(--card-bg\)\] {
+/* CARDS: Flat & Precise */
+.card-veritas {
     background-color: var(--card-bg) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 24px !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    border-radius: 1.5rem !important;
+    transition: all 0.3s cubic-bezier(0.2, 1, 0.3, 1);
 }
 
 .card-veritas:hover {
-    border-color: var(--primary) !important;
+    border-color: rgba(37, 99, 235, 0.3) !important;
+    background-color: rgba(255, 255, 255, 0.03) !important;
 }
 
-/* BUTTONS: Premium Gradient */
+/* BUTTONS: Solid Protocol Style */
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+    background: var(--primary) !important;
     color: white !important;
     font-weight: 700 !important;
-    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 10px;
     border: none !important;
-    border-radius: 14px !important;
+    border-radius: 8px !important;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 0 10px 15px -3px var(--primary-glow);
+    transition: all 0.2s ease !important;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 25px -5px var(--primary-glow);
     filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px var(--primary-glow);
 }
 
-/* INPUTS: Sleek & Modern */
+.btn-primary:disabled {
+    opacity: 0.3 !important;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* INPUTS: Minimalist */
 input, select, textarea {
     background-color: var(--input-bg) !important;
     color: var(--text-main) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 14px !important;
-    padding: 14px 18px !important;
-    font-size: 0.95rem !important;
+    border-radius: 10px !important;
+    padding: 12px 16px !important;
+    font-size: 13px !important;
     transition: all 0.2s ease !important;
 }
 
 input:focus {
     border-color: var(--primary) !important;
-    box-shadow: 0 0 0 4px var(--primary-glow) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
     outline: none !important;
 }
 
-/* SCROLLBAR CUSTOM */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-main); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+/* UTILITIES */
+.italic { font-style: italic; }
+.tracking-tighter { letter-spacing: -0.05em; }
+
+/* CUSTOM SCROLLBAR */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* RESPONSIVE HEADINGS */
+/* MOBILE OPTIMIZATION */
 @media (max-width: 640px) {
-    .text-7xl, .text-8xl, .text-9xl { font-size: 3.2rem !important; line-height: 1 !important; letter-spacing: -0.05em !important; }
-    .text-6xl { font-size: 2.8rem !important; }
+    .text-7xl, .text-8xl, .text-9xl { 
+        font-size: 3.5rem !important; 
+        line-height: 0.9 !important; 
+    }
 }
