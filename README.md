@@ -6,15 +6,15 @@ Veritas is a modular protocol built on **Paseo AssetHub** that mathematically li
 ## 🏗️ Modular Architecture (V3.5)
 To overcome EVM code-size limits and ensure scalability, Veritas is split into three core modules:
 
-1. **Veritas Registry** (`0x8f91...fb51`)
+1. **Veritas Registry**
    - The "Single Source of Truth" for merchant identities.
    - Stores store names, categories, and transaction volumes.
    
-2. **Veritas Engine** (`0x8f82...f6f7`)
+2. **Veritas Engine**
    - Handles receipt issuance and cryptographic storage.
    - Manages on-chain **Merchant Replies** to customer reviews.
 
-3. **Veritas Reviewer** (`0x6ab...56c8`)
+3. **Veritas Reviewer**
    - Process consumer feedback and verifies receipt ownership.
    - Connects reviews to IPFS evidence (Phase 2).
 
