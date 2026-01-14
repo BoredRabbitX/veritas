@@ -1,25 +1,40 @@
-const contractAddress = "0x7ca8b8cDdaa0381509961d042C51F52867cCfD05";
+// Contract Addresses
+const registryAddress = "0x8f91fb51d494b8121761e2c9fc47a400d8d93fab";
+const engineAddress = "0x8f825875b9c0eb681af7b4383aa7ded7bf39f6f7";
+const reviewerAddress = "0x6abed4f2cb88e2019cca0589e00a3ced212956c8";
+
 const EXPECTED_CHAIN_ID = 420420422; 
 
-const abi = [
-    "function registerBusiness(string _name, string _category) external",
-    "function issueReceipt(bytes32 _receiptHash) external",
-    "function postReview(address _business, string _customerName, uint8 _rating, string _content, bytes32 _receiptId) external",
-    "function businesses(address) view returns (string name, string category, bool isActive)",
-    "function usedReceipts(bytes32) view returns (bool)",
-    "function validReceipts(bytes32) view returns (bool)",
-    "event BusinessRegistered(address indexed owner, string name)",
-    "event ReviewAdded(address indexed business, address indexed author, uint8 rating, string content)"
+// Full ABIs
+const abiRegistry = [
+    "function businesses(address) view returns (string name, bytes32 category, bool isActive, uint32 volume)",
+    "function registerBusiness(string _name, bytes32 _category) external",
+    "function setAuth(address _contract, bool _status) external"
 ];
 
-let provider, signer, contract;
+const abiEngine = [
+    "function issueReceipt(bytes32 _receiptHash) external",
+    "function postReply(bytes32 _receiptId, string _content) external",
+    "function merchantReplies(bytes32) view returns (string)",
+    "function receiptIssuers(bytes32) view returns (address)",
+    "event ReceiptIssued(address indexed merchant, bytes32 indexed receiptHash)"
+];
+
+const abiReviewer = [
+    "function submitReview(address _business, uint8 _rating, string _content, string _ipfsHash, bytes32 _receiptId) external",
+    "function usedReceipts(bytes32) view returns (bool)",
+    "event ReviewSubmitted(address indexed business, address indexed author, uint8 rating, string content, string ipfsHash, bytes32 receiptId)"
+];
+
+let provider, signer, regContract, engContract, revContract;
 
 async function connectWallet(silent = false) {
-    if (!window.ethereum) return false;
+    if (!window.ethereum) {
+        if(!silent) alert("Please install MetaMask");
+        return false;
+    }
     try {
         provider = new ethers.BrowserProvider(window.ethereum, "any");
-        
-        // Modalità silenziosa per autoconnessione
         const accounts = silent 
             ? await window.ethereum.request({ method: 'eth_accounts' }) 
             : await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -27,27 +42,27 @@ async function connectWallet(silent = false) {
         if (accounts.length > 0) {
             const network = await provider.getNetwork();
             if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
-                if(!silent) alert("Switch to Paseo AssetHub (420420422)");
+                if(!silent) alert(`Switch network to Paseo AssetHub (${EXPECTED_CHAIN_ID})`);
                 return false;
             }
 
             signer = await provider.getSigner();
-            contract = new ethers.Contract(contractAddress, abi, signer);
+            regContract = new ethers.Contract(registryAddress, abiRegistry, signer);
+            engContract = new ethers.Contract(engineAddress, abiEngine, signer);
+            revContract = new ethers.Contract(reviewerAddress, abiReviewer, signer);
             
             const addr = await signer.getAddress();
             const btn = document.getElementById('connectBtn');
             if (btn) btn.innerText = addr.slice(0,6) + "...";
             
             localStorage.setItem('veritas_autoconnect', 'true');
+            if (typeof initPage === "function") initPage();
             return true;
         }
-    } catch (e) { console.error("Conn Error:", e); }
+    } catch (e) { console.error("Wallet Error:", e); }
     return false;
 }
 
-// Esegui autoconnessione al caricamento di ogni pagina
 window.addEventListener('load', () => {
-    if (localStorage.getItem('veritas_autoconnect') === 'true') {
-        connectWallet(true);
-    }
+    if (localStorage.getItem('veritas_autoconnect') === 'true') connectWallet(true);
 });
