@@ -5,58 +5,119 @@
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen bg-black text-white flex justify-center items-center">
-    <div class="max-w-xl w-full bg-zinc-900 p-10 rounded-[3rem] border border-white/5">
-        <h1 class="text-5xl font-black italic uppercase tracking-tighter mb-8">Post Review</h1>
-        <div class="space-y-4 mb-6">
-            <input id="bizAddr" type="text" placeholder="Merchant Address" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono">
-            <input id="receiptId" type="text" placeholder="Receipt ID" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase tracking-widest">
-        </div>
-        <div class="flex justify-center gap-2 py-6 bg-black rounded-2xl border border-white/10 mb-6">
-            <div id="stars" class="flex gap-2 text-4xl cursor-pointer">
-                <span class="star text-blue-600" data-v="1">★</span><span class="star text-blue-600" data-v="2">★</span>
-                <span class="star text-blue-600" data-v="3">★</span><span class="star text-blue-600" data-v="4">★</span>
-                <span class="star text-blue-600" data-v="5">★</span>
+<body class="flex flex-col min-h-screen bg-black text-white">
+
+    <main class="main-content flex-grow flex items-center justify-center px-6 py-20">
+        <div class="max-w-xl w-full">
+            
+            <div id="authGuard" class="text-center py-10">
+                <h2 class="text-4xl font-black italic uppercase mb-8 tracking-tighter">Identity Required</h2>
+                <button onclick="connectWallet()" class="btn-primary px-10 py-4">Connect Wallet</button>
+            </div>
+
+            <div id="reviewForm" class="hidden space-y-8">
+                <div class="text-center">
+                    <h1 class="text-6xl font-black italic uppercase tracking-tighter mb-2">Post Review</h1>
+                    <p class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-8">Verified Feedback Module</p>
+                </div>
+
+                <div class="bg-zinc-900 border border-white/5 p-10 rounded-[3rem] shadow-2xl">
+                    <div class="space-y-6">
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Your Name</label>
+                            <input id="userName" type="text" placeholder="e.g. Satoshi" class="bg-black border border-white/10 w-full p-4 rounded-2xl outline-none focus:border-blue-600 transition text-white">
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Merchant Address</label>
+                                <input id="bizAddr" type="text" placeholder="0x..." class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono outline-none focus:border-blue-600 transition text-zinc-400">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Receipt ID</label>
+                                <input id="receiptId" type="text" placeholder="V3-XXXXXX" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase outline-none focus:border-blue-600 transition font-bold">
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 text-center">
+                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest mb-2 block">Rating</label>
+                            <div class="flex justify-center gap-3 py-6 bg-black rounded-3xl border border-white/10">
+                                <div id="starContainer" class="flex gap-2 text-4xl cursor-pointer">
+                                    <span class="star text-blue-600 transition hover:scale-110" data-v="1">★</span>
+                                    <span class="star text-blue-600 transition hover:scale-110" data-v="2">★</span>
+                                    <span class="star text-blue-600 transition hover:scale-110" data-v="3">★</span>
+                                    <span class="star text-blue-600 transition hover:scale-110" data-v="4">★</span>
+                                    <span class="star text-blue-600 transition hover:scale-110" data-v="5">★</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Your Experience</label>
+                            <textarea id="content" rows="4" class="bg-black border border-white/10 w-full p-5 rounded-3xl outline-none focus:border-blue-600 transition text-sm text-zinc-300" placeholder="How was the service?"></textarea>
+                        </div>
+
+                        <button id="subBtn" onclick="submit()" class="btn-primary w-full py-6 font-black uppercase tracking-widest italic shadow-xl shadow-blue-600/10">Publish Review On-Chain</button>
+                    </div>
+                </div>
             </div>
         </div>
-        <textarea id="content" rows="4" class="bg-black border border-white/10 w-full p-4 rounded-xl mb-6 text-sm" placeholder="Tell us about your experience..."></textarea>
-        <button id="subBtn" onclick="submit()" class="btn-primary w-full py-5 font-black uppercase tracking-widest italic">Publish On-Chain</button>
-    </div>
-    <script src="app.js"></script><script src="components.js"></script>
+    </main>
+
+    <script src="app.js"></script>
+    <script src="components.js"></script>
     <script>
-        let rating = 5;
-        document.querySelectorAll('.star').forEach(s => s.onclick = function() {
-            rating = this.getAttribute('data-v');
-            document.querySelectorAll('.star').forEach(st => st.classList.toggle('opacity-30', st.getAttribute('data-v') > rating));
+        let currentRating = 5;
+
+        // Gestione Stelline
+        document.querySelectorAll('.star').forEach(star => {
+            star.onclick = function() {
+                currentRating = this.getAttribute('data-v');
+                document.querySelectorAll('.star').forEach(s => {
+                    const val = s.getAttribute('data-v');
+                    s.classList.toggle('text-blue-600', val <= currentRating);
+                    s.classList.toggle('opacity-20', val > currentRating);
+                });
+            }
         });
 
         async function initPage() {
-            const p = new URLSearchParams(window.location.search);
-            if(p.get('biz')) document.getElementById('bizAddr').value = p.get('biz');
-            if(p.get('id')) document.getElementById('receiptId').value = p.get('id');
+            document.getElementById('authGuard').classList.add('hidden');
+            document.getElementById('reviewForm').classList.remove('hidden');
+            
+            const params = new URLSearchParams(window.location.search);
+            const biz = params.get('biz');
+            const id = params.get('id');
+            
+            if(biz) document.getElementById('bizAddr').value = biz;
+            if(id) document.getElementById('receiptId').value = id;
         }
 
         async function submit() {
             const btn = document.getElementById('subBtn');
+            const name = document.getElementById('userName').value;
+            const biz = document.getElementById('bizAddr').value;
             const ridRaw = document.getElementById('receiptId').value.trim().toUpperCase();
-            const rid = ethers.keccak256(ethers.toUtf8Bytes(ridRaw));
-            
-            btn.innerText = "VALIDATING...";
+            const msg = document.getElementById('content').value;
+
+            if(!name || !msg || !ridRaw || !biz) return alert("All fields are required.");
+
+            btn.innerText = "SIGNING...";
             btn.disabled = true;
 
             try {
-                // Nuova firma: address _business, uint8 _rating, string _content, bytes32 _receiptId
-                const tx = await revContract.submitReview(
-                    document.getElementById('bizAddr').value, 
-                    rating, 
-                    document.getElementById('content').value, 
-                    rid
-                );
+                const ridHash = ethers.keccak256(ethers.toUtf8Bytes(ridRaw));
+                const fullContent = `${name}: ${msg}`;
+                
+                // Nota: La funzione submitReview ora ha 4 parametri (senza ipfsHash)
+                const tx = await revContract.submitReview(biz, currentRating, fullContent, ridHash);
                 await tx.wait();
+                
                 window.location.href = "explore.html";
             } catch(e) { 
-                alert("Error: " + e.reason || e.message); 
-                btn.innerText = "PUBLISH ON-CHAIN";
+                console.error(e);
+                alert("Error: " + (e.reason || "Transaction failed. Check if Receipt ID is already used.")); 
+                btn.innerText = "PUBLISH REVIEW ON-CHAIN";
                 btn.disabled = false;
             }
         }
