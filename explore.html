@@ -100,6 +100,16 @@ const b = await getCachedData(`biz_${addr}`, () => regContract.businesses(addr))
     // Fallback di sicurezza se app.js ha già finito
     window.addEventListener('load', () => {
         if (window.regContract) initPage();
+
+        // Questo garantisce che la pagina parta non appena app.js è pronto
+function startApp() {
+    if (window.isVeritasReady) {
+        initPage();
+    } else {
+        window.addEventListener('contractsReady', initPage);
+    }
+}
+window.addEventListener('load', startApp);
     });
     </script>
 </body>
