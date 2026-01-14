@@ -67,8 +67,7 @@
 
             // 3. Ciclo sugli indirizzi UNICI (più recenti prima)
             for(let addr of uniqueAddresses.reverse()) {
-                const b = await regContract.businesses(addr);
-                
+const b = await getCachedData(`biz_${addr}`, () => regContract.businesses(addr));                
                 if(!b.isActive) continue;
                 
                 const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
