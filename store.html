@@ -9,49 +9,61 @@
     <link rel="stylesheet" href="style.css">
     <style>
         #avgScore, #totalLogs { font-variant-numeric: tabular-nums; }
-        .review-card { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        .review-card { 
+            opacity: 0; 
+            transform: translateY(15px); 
+            transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1); 
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
         .review-card.visible { opacity: 1; transform: translateY(0); }
-        .stat-bar { height: 4px; background: var(--border); border-radius: 10px; overflow: hidden; }
-        .stat-fill { height: 100%; background: #2563eb; width: 0; transition: width 1.5s cubic-bezier(0.23, 1, 0.32, 1); }
+        .stat-bar { height: 3px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
+        .stat-fill { height: 100%; background: #2563eb; width: 0; transition: width 1.2s cubic-bezier(0.2, 1, 0.3, 1); }
+        
+        /* Typography fix */
+        .stars-mini { letter-spacing: -1px; font-size: 14px; }
     </style>
 </head>
-<body class="bg-[var(--bg-main)] text-[var(--text-main)]">
+<body class="bg-[var(--bg-main)] text-[var(--text-main)] antialiased">
 
     <div id="header-root"></div>
 
-    <main class="max-w-7xl mx-auto px-6 py-20">
-        <div class="mb-20">
-            <p id="storeCat" class="text-blue-600 font-black uppercase tracking-[0.4em] text-[11px] mb-4 italic opacity-0 transition-opacity duration-700">---</p>
-            <h1 id="storeName" class="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-[0.9] mb-8">---</h1>
-            <div class="flex gap-8 opacity-40 text-[10px] font-bold uppercase tracking-widest">
-                <span class="flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Verified Merchant</span>
-                <span>On-Chain ID: <span id="storeAddr" class="font-mono">0x...</span></span>
+    <main class="max-w-6xl mx-auto px-6 py-20">
+        <div class="mb-16">
+            <p id="storeCat" class="text-blue-600 font-bold uppercase tracking-[0.4em] text-[10px] mb-3 italic opacity-0 transition-opacity duration-700">---</p>
+            <h1 id="storeName" class="text-5xl md:text-7xl font-black italic uppercase tracking-tighter leading-none mb-6">---</h1>
+            <div class="flex flex-wrap gap-6 opacity-30 text-[9px] font-bold uppercase tracking-[0.2em]">
+                <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Verified Merchant</span>
+                <span class="font-mono">ID: <span id="storeAddr">0x...</span></span>
             </div>
         </div>
 
-        <div class="grid lg:grid-cols-12 gap-16">
+        <div class="grid lg:grid-cols-12 gap-12">
             <aside class="lg:col-span-4">
-                <div class="card-veritas p-10 sticky top-32 overflow-hidden relative">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16"></div>
-                    <p class="text-[10px] font-black uppercase tracking-widest opacity-30 mb-10 italic">Rating Analysis</p>
+                <div class="card-veritas p-8 sticky top-32 bg-white/[0.02] border-white/5 rounded-[2rem]">
+                    <p class="text-[9px] font-bold uppercase tracking-widest opacity-30 mb-8">Reputation Score</p>
                     
-                    <div class="mb-12">
-                        <h2 id="avgScore" class="text-9xl font-black italic leading-none mb-4 tracking-tighter">0.0</h2>
-                        <div id="starIcons" class="flex gap-1 text-blue-600 text-2xl mb-6">★★★★★</div>
-                        <p class="text-[10px] font-bold opacity-40 uppercase leading-relaxed">
-                            Based on <span id="totalLogs" class="text-blue-600">0</span> verified<br>blockchain reviews
+                    <div class="mb-10">
+                        <div class="flex items-baseline gap-2">
+                            <h2 id="avgScore" class="text-8xl font-black italic tracking-tighter text-blue-600">0.0</h2>
+                            <span class="text-xl font-bold opacity-20">/ 5.0</span>
+                        </div>
+                        <div id="starIcons" class="stars-mini text-blue-600/50 my-4 tracking-normal">★★★★★</div>
+                        <p class="text-[9px] font-bold opacity-30 uppercase leading-relaxed tracking-wider">
+                            Derived from <span id="totalLogs" class="text-[var(--text-main)]">0</span> verified<br>ledger interactions
                         </p>
                     </div>
 
-                    <div id="barsContainer" class="space-y-5"></div>
+                    <div id="barsContainer" class="space-y-4 pt-6 border-t border-white/5"></div>
                 </div>
             </aside>
 
             <section class="lg:col-span-8">
-                <h3 class="text-2xl font-black italic uppercase mb-10 tracking-tight">Verified <span class="text-blue-600">Feedback</span></h3>
-                <div id="reviewsList" class="space-y-8">
-                    <div id="initialLoader" class="p-20 text-center border border-dashed border-[var(--border)] rounded-[3rem] opacity-20">
-                        <p class="text-[10px] font-black uppercase tracking-widest animate-pulse">Scanning Polkadot Ledger...</p>
+                <h3 class="text-xl font-bold italic uppercase mb-8 tracking-tight">Verified <span class="text-blue-600">Feedback</span></h3>
+                
+                <div id="reviewsList" class="space-y-4">
+                    <div id="initialLoader" class="py-20 text-center border border-dashed border-white/10 rounded-[2rem] opacity-20">
+                        <p class="text-[9px] font-bold uppercase tracking-[0.3em] animate-pulse">Synchronizing Ledger...</p>
                     </div>
                 </div>
             </section>
@@ -79,15 +91,16 @@
         }
 
         async function initPage() {
-            if (typeof regContract === "undefined" || typeof revContract === "undefined") return;
+            // Check global contracts from app.js
+            if (!window.regContract || !window.revContract) return;
 
             const urlParams = new URLSearchParams(window.location.search);
             const storeId = urlParams.get('id');
             if (!storeId) return;
 
             try {
-                // 1. Merchant Profile
-                const b = await regContract.businesses(storeId);
+                // 1. Business Identity
+                const b = await window.regContract.businesses(storeId);
                 if (!b.isActive) return;
 
                 document.getElementById('storeName').innerText = b.name;
@@ -96,15 +109,13 @@
                 catElement.innerText = ethers.decodeBytes32String(b.category).replace(/_/g, ' ');
                 catElement.style.opacity = "1";
 
-                // 2. Reviews Fetching
-                const filter = revContract.filters.ReviewSubmitted(storeId);
-                const events = await revContract.queryFilter(filter, -100000);
-                
+                // 2. Query Reviews
+                const events = await window.revContract.queryFilter(window.revContract.filters.ReviewSubmitted(storeId), -50000);
                 const reviewsList = document.getElementById('reviewsList');
                 reviewsList.innerHTML = "";
 
                 if (events.length === 0) {
-                    reviewsList.innerHTML = `<div class="p-20 text-center border border-dashed border-[var(--border)] rounded-[3rem] opacity-30 uppercase text-[10px] font-black">No reviews found.</div>`;
+                    reviewsList.innerHTML = `<div class="py-16 text-center border border-dashed border-white/10 rounded-[2rem] opacity-20 uppercase text-[9px] font-bold tracking-widest">No verified entries found</div>`;
                     return;
                 }
 
@@ -112,7 +123,6 @@
                 let counts = {5:0, 4:0, 3:0, 2:0, 1:0};
 
                 for (let ev of events.reverse()) {
-                    // FIX: Convert BigInt to Number explicitly
                     const rating = Number(ev.args[2]); 
                     const content = ev.args[3];
                     const receiptId = ev.args[4];
@@ -120,27 +130,27 @@
                     sum += rating;
                     counts[rating]++;
 
-                    const reply = await engContract.merchantReplies(receiptId);
+                    const reply = await window.engContract.merchantReplies(receiptId);
 
                     reviewsList.innerHTML += `
-                        <div class="review-card p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] shadow-lg group">
-                            <div class="flex justify-between items-start mb-8">
-                                <div class="text-blue-600 text-xl font-bold">
-                                    ${"★".repeat(rating)}${"☆".repeat(5 - rating)}
+                        <div class="review-card p-8 rounded-[1.5rem] group">
+                            <div class="flex justify-between items-center mb-6">
+                                <div class="text-blue-600 text-[10px] font-bold">
+                                    ${"●".repeat(rating)}${"○".repeat(5 - rating)}
                                 </div>
-                                <span class="text-[9px] font-mono opacity-20 group-hover:opacity-100 transition tracking-tighter uppercase">ID: ${receiptId.slice(0,18)}...</span>
+                                <span class="text-[7px] font-mono opacity-20 group-hover:opacity-40 transition uppercase">REC: ${receiptId.slice(0,14)}</span>
                             </div>
-                            <p class="text-3xl font-medium italic leading-tight tracking-tight mb-10">"${sanitize(content)}"</p>
+                            <p class="text-xl font-medium italic leading-snug tracking-tight mb-8">"${sanitize(content)}"</p>
                             ${reply ? `
-                                <div class="mt-8 p-8 bg-[var(--bg-main)] rounded-3xl border border-blue-600/10 relative">
-                                    <span class="absolute -top-3 left-6 bg-blue-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full tracking-widest shadow-lg">Merchant Reply</span>
-                                    <p class="text-base opacity-70 italic leading-relaxed">${sanitize(reply)}</p>
+                                <div class="mt-6 p-6 bg-blue-600/[0.03] rounded-2xl border-l border-blue-600/30">
+                                    <p class="text-[7px] font-black uppercase text-blue-600 mb-2 tracking-widest">Official Response</p>
+                                    <p class="text-[11px] opacity-60 italic leading-relaxed">${sanitize(reply)}</p>
                                 </div>
                             ` : ''}
                         </div>`;
                 }
 
-                // 3. Update Sidebar
+                // 3. Stats Update
                 const total = events.length;
                 const avg = sum / total;
                 animateValue("avgScore", 0, avg, 1500, true);
@@ -151,21 +161,21 @@
                 [5,4,3,2,1].forEach(num => {
                     const percentage = (counts[num] / total) * 100;
                     barsContainer.innerHTML += `
-                        <div class="flex items-center gap-4 group">
-                            <span class="w-8 text-[9px] font-black opacity-30 group-hover:opacity-100 transition">${num} ST</span>
+                        <div class="flex items-center gap-3 group">
+                            <span class="w-6 text-[8px] font-bold opacity-30 group-hover:opacity-100 transition">${num}ST</span>
                             <div class="flex-grow stat-bar">
                                 <div class="stat-fill" style="width: ${percentage}%"></div>
                             </div>
-                            <span class="w-6 text-[9px] font-mono opacity-30 text-right group-hover:opacity-100 transition">${counts[num]}</span>
+                            <span class="w-4 text-[8px] font-mono opacity-20 text-right group-hover:opacity-100 transition">${counts[num]}</span>
                         </div>`;
                 });
 
-                // Show Cards
+                // Staggered Reveal
                 setTimeout(() => {
                     document.querySelectorAll('.review-card').forEach((card, i) => {
-                        setTimeout(() => card.classList.add('visible'), i * 150);
+                        setTimeout(() => card.classList.add('visible'), i * 80);
                     });
-                }, 100);
+                }, 50);
 
             } catch (e) {
                 console.error("Store init error:", e);
@@ -175,7 +185,7 @@
 
         window.addEventListener('contractsReady', initPage);
         window.addEventListener('load', () => {
-            setTimeout(() => { if(window.isVeritasReady) initPage(); }, 600);
+            if(window.isVeritasReady) initPage();
         });
     </script>
 </body>
