@@ -1,57 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Review | Veritas</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        .merchant-reveal { animation: slideDown 0.4s ease-out forwards; }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        #merchantBadge { border: 2px solid #2563eb; background: rgba(37, 99, 235, 0.05); }
+        .merchant-reveal { animation: slideDown 0.4s ease-out forwards; display: block !important; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        #merchantBadge { border: 2px solid #2563eb; background: rgba(37, 99, 235, 0.1); }
     </style>
 </head>
-<body class="bg-[var(--bg-main)] text-[var(--text-main)]">
+<body class="bg-[var(--bg-main)]">
     <div id="header-root"></div>
-
     <main class="max-w-2xl mx-auto px-6 py-20">
-        <div class="card-veritas p-12 shadow-2xl">
-            <h1 class="text-5xl font-black italic uppercase mb-10 leading-none tracking-tighter">
-                Verified <span class="text-blue-600">Review</span>
-            </h1>
-
+        <div class="card-veritas p-12">
+            <h1 class="text-5xl font-black italic uppercase mb-10 leading-none tracking-tighter">Verified <span class="text-blue-600">Review</span></h1>
+            
             <div class="space-y-8">
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt ID / Code</label>
-                    <input id="rId" type="text" 
-                           class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 transition-colors uppercase" 
-                           placeholder="PASTE YOUR CODE OR HASH...">
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt ID / Hash</label>
+                    <input id="rId" type="text" oninput="detectMerchant(this.value.trim())" class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600 uppercase" placeholder="ENTER CODE...">
                 </div>
 
-                <div id="merchantBadge" class="hidden merchant-reveal p-6 rounded-2xl">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
-                        <p class="text-[8px] font-black text-blue-600 uppercase tracking-widest leading-none">Detected Merchant Identity</p>
-                    </div>
-                    <h3 id="detectedName" class="text-3xl font-black uppercase italic leading-none text-blue-600">---</h3>
+                <div id="merchantBadge" class="hidden p-6 rounded-2xl">
+                    <p class="text-[8px] font-black text-blue-600 uppercase mb-2 tracking-widest">Target Merchant Identified:</p>
+                    <h3 id="detectedName" class="text-3xl font-black uppercase italic leading-none">---</h3>
                     <input type="hidden" id="mAddr">
                 </div>
 
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Your Name / Alias</label>
-                    <input id="reviewerName" type="text" 
-                           class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm focus:border-blue-600 outline-none transition" 
-                           placeholder="How should we display you?">
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Your Name</label>
+                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm" placeholder="Reviewer name...">
                 </div>
 
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Rating Score</label>
-                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold text-sm outline-none focus:border-blue-600 transition">
+                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold">
                         <option value="5">★★★★★ - Excellent</option>
                         <option value="4">★★★★☆ - Good</option>
                         <option value="3">★★★☆☆ - Average</option>
@@ -62,60 +47,44 @@
 
                 <div>
                     <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Detailed Experience</label>
-                    <textarea id="comment" 
-                              class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm outline-none focus:border-blue-600 transition resize-none" 
-                              placeholder="Describe your service experience..."></textarea>
+                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)]" placeholder="Tell the truth..."></textarea>
                 </div>
 
-                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl">
-                    Broadcast Review
-                </button>
+                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-widest">Broadcast Review</button>
             </div>
         </div>
     </main>
 
     <div id="footer-root"></div>
-
-    <script src="app.js"></script>
-    <script src="components.js"></script>
+    <script src="app.js"></script><script src="components.js"></script>
     <script>
-        // Automatic Listener for Receipt ID input
-        document.getElementById('rId').addEventListener('input', function(e) {
-            detectMerchant(e.target.value.trim());
-        });
-
         async function detectMerchant(rid) {
             const badge = document.getElementById('merchantBadge');
             const nameDisplay = document.getElementById('detectedName');
             const addrInput = document.getElementById('mAddr');
 
-            // Wait for contracts to load in case of direct link
             if (!window.engContract || rid.length < 10) {
                 badge.classList.add('hidden');
                 return;
             }
 
             try {
-                // Query who issued this specific receipt ID
+                // Interroghiamo la blockchain con l'hash ricevuto
                 const issuer = await engContract.receiptIssuers(rid);
-                
                 if (issuer && issuer !== "0x0000000000000000000000000000000000000000") {
                     const b = await regContract.businesses(issuer);
-                    nameDisplay.innerText = b.name; // THE MERCHANT NAME APPEARS HERE
+                    nameDisplay.innerText = sanitize(b.name);
                     addrInput.value = issuer;
-                    badge.classList.remove('hidden'); // SHOW THE BOX
+                    badge.classList.remove('hidden');
+                    badge.classList.add('merchant-reveal');
                 } else {
                     badge.classList.add('hidden');
                 }
-            } catch(e) {
-                console.warn("Detection in progress...");
-                badge.classList.add('hidden');
-            }
+            } catch(e) { badge.classList.add('hidden'); }
         }
 
         async function submitReview() {
-            if (!window.signer) return alert("Connect Wallet via Header button!");
-            
+            if (!window.signer) return alert("Connect Wallet!");
             const btn = document.getElementById('submitBtn');
             const mAddr = document.getElementById('mAddr').value;
             const rId = document.getElementById('rId').value.trim();
@@ -123,45 +92,34 @@
             const stars = document.getElementById('stars').value;
             const comment = document.getElementById('comment').value;
 
-            if (!mAddr) return alert("Error: Merchant not detected. Ensure your Receipt ID is correct.");
-            if (!reviewer || !comment) return alert("Please fill in your name and comment.");
+            if (!mAddr) return alert("Merchant not found. Check Receipt ID.");
+            if (!reviewer || !comment) return alert("Fields missing.");
 
-            btn.disabled = true;
-            btn.innerText = "Mining on Paseo...";
+            btn.disabled = true; btn.innerText = "Broadcasting...";
 
             try {
-                // Permanently include the reviewer's name in the content
                 const finalContent = `[${reviewer}] ${comment}`;
-                
-                // Blockchain Interaction
                 const tx = await revContract.submitReview(mAddr, stars, finalContent, rId);
                 await tx.wait();
-                
-                alert("Verified Review Successfully Published!");
-                window.location.href = "explore.html";
-            } catch(e) {
-                console.error(e);
-                alert("Blockchain error: verify your Receipt and PAS balance.");
-                btn.disabled = false;
-                btn.innerText = "Broadcast Review";
+                alert("Success!"); window.location.href="explore.html";
+            } catch(e) { 
+                alert("Error."); btn.disabled = false; btn.innerText = "Broadcast Review";
             }
         }
 
-        // Logic for incoming QR links (?rid=0x...)
+        // AUTO-DETECT DAL QR CODE
         window.addEventListener('load', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlRid = urlParams.get('rid');
+            const urlRid = new URLSearchParams(window.location.search).get('rid');
             if (urlRid) {
                 document.getElementById('rId').value = urlRid;
-                // Wait 1.2s for RPC connection to stabilize before auto-detecting
-                setTimeout(() => detectMerchant(urlRid), 1200);
+                // Diamo tempo ai contratti di caricarsi
+                setTimeout(() => detectMerchant(urlRid), 1500);
             }
         });
 
-        // Re-detect if contracts ready late
         window.addEventListener('contractsReady', () => {
-            const currentRid = document.getElementById('rId').value;
-            if (currentRid) detectMerchant(currentRid);
+            const val = document.getElementById('rId').value;
+            if (val) detectMerchant(val);
         });
     </script>
 </body>
