@@ -136,31 +136,55 @@
             } catch (e) { console.error(e); }
         }
 
-        function generateReceipt() {
+      async function generateReceipt() {
     const resultBox = document.getElementById('receiptResult');
     const qrContainer = document.getElementById('qrcode');
     const placeholder = document.getElementById('qrPlaceholder');
-    
+    const codeDisplay = document.getElementById('receiptCode');
+
     resultBox.classList.remove('hidden');
     qrContainer.innerHTML = "";
     placeholder.classList.remove('hidden');
 
-    // Generiamo l'hash (32 bytes)
-    const rawHash = ethers.hexlify(ethers.randomBytes(32));
+    // 1. Genera un codice umano corto (8 caratteri casuali)
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let randomPart = "";
+    for (let i = 0; i < 8; i++) {
+        randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const humanCode = `VER-${randomPart.slice(0,4)}-${randomPart.slice(4,8)}`;
     
-    // Creiamo il codice "umano" per la visualizzazione
-    const humanCode = `VER-${rawHash.slice(2, 6).toUpperCase()}-${rawHash.slice(6, 10).toUpperCase()}`;
-    document.getElementById('receiptCode').innerText = humanCode;
+    // 2. TRASFORMA IL CODICE IN BYTES32 PER LA BLOCKCHAIN
+    // Questo è il passaggio chiave: scriviamo sulla chain il codice corto!
+    const ridBytes = ethers.encodeBytes32String(humanCode);
 
-    setTimeout(() => {
-        placeholder.classList.add('hidden');
-        new QRCode(qrContainer, {
-            // IL QR DEVE PASSARE L'HASH LUNGO NELL'URL
-            text: `${window.location.origin}/review.html?rid=${rawHash}`,
-            width: 180, height: 180,
-            colorDark : "#2563eb", colorLight : "#ffffff"
-        });
-    }, 800);
+    try {
+        // Chiamata al contratto (Engine) per registrare il codice
+        // Nota: Assicurati che nel tuo Engine la funzione si chiami 'issueReceipt' o simile
+        const tx = await engContract.issueReceipt(ridBytes);
+        
+        codeDisplay.innerText = humanCode;
+
+        setTimeout(() => {
+            placeholder.classList.add('hidden');
+            new QRCode(qrContainer, {
+                // Il QR ora passa il codice umano, così è tutto coerente
+                text: `${window.location.origin}/review.html?rid=${humanCode}`,
+                width: 180,
+                height: 180,
+                colorDark : "#2563eb",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }, 800);
+        
+        // Aspettiamo la conferma della transazione (opzionale ma consigliato)
+        // await tx.wait(); 
+        
+    } catch (e) {
+        console.error("Maledizione, errore nel minting:", e);
+        alert("Blockchain Error: could not issue receipt.");
+    }
 }
 
         async function loadReviews(addr) {
