@@ -48,61 +48,69 @@
     <script src="app.js"></script>
     <script src="components.js"></script>
     <script>
-        async function initPage() {
+       async function initPage() {
+    console.log("Store: Initializing content...");
+    const grid = document.getElementById('reviewsList'); // Il tuo ID originale
+    
     try {
-        const params = new URLSearchParams(window.location.search);
-        const storeAddr = params.get('id');
-        if (!storeAddr) return;
-
-        // Visualizza lo stato di caricamento
-        document.getElementById('reviewsContainer').innerHTML = "<p class='opacity-50 animate-pulse uppercase text-[10px]'>Fetching reviews from Polkadot...</p>";
-
-        // Recupera info del business (Usa regContract già pronto in app.js)
-        const b = await regContract.businesses(storeAddr);
-        document.getElementById('storeName').innerText = b.name;
-        document.getElementById('storeCategory').innerText = ethers.decodeBytes32String(b.category).split('_').join(' ');
-
-        // Recupera le recensioni (Usa revContract già pronto in app.js)
-        // Filtriamo gli eventi per l'indirizzo di questo store specifico
-        const filter = revContract.filters.ReviewSubmitted(storeAddr);
-        const events = await revContract.queryFilter(filter, -50000); // ultimi 50k blocchi
-
-        const container = document.getElementById('reviewsContainer');
-        container.innerHTML = ""; // Puliamo il loader
-
-        if (events.length === 0) {
-            container.innerHTML = "<p class='opacity-30 uppercase text-[10px]'>No reviews yet for this business.</p>";
+        const id = new URLSearchParams(window.location.search).get('id');
+        if(!id) {
+            if(grid) grid.innerHTML = "No store ID provided.";
             return;
         }
 
-        for (let e of events.reverse()) {
-            const { author, rating, content, receiptId } = e.args;
+        // 1. Recupero dati Business
+        // Usiamo regContract inizializzato globalmente da app.js
+        const b = await regContract.businesses(id);
+        if(!b.isActive) {
+            if(grid) grid.innerHTML = "Business not found or inactive.";
+            return;
+        };
+
+        const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
+        
+        // Mapping degli ID corretti (quelli del tuo HTML originale)
+        if(document.getElementById('storeName')) document.getElementById('storeName').innerText = b.name;
+        if(document.getElementById('storeCat')) document.getElementById('storeCat').innerText = cleanCat;
+        if(document.getElementById('storeVol')) document.getElementById('storeVol').innerText = b.volume;
+
+        // 2. Recupero Recensioni
+        const filter = revContract.filters.ReviewSubmitted(id);
+        const events = await revContract.queryFilter(filter, -50000);
+        
+        if(!grid) return;
+        grid.innerHTML = events.length ? "" : "No verified feedback found for this store.";
+
+        // 3. Render Recensioni e Risposte
+        for(let i = events.length-1; i >= 0; i--) {
+            const ev = events[i];
+            const author = ev.args.author || ev.args[1];
+            const rating = Number(ev.args.rating || ev.args[2]);
+            const content = ev.args.content || ev.args[3];
+            const receiptId = ev.args.receiptId || ev.args[4];
             
-            // Verifica se il merchant ha risposto (Usa engContract già pronto in app.js)
+            // Recupero risposta del merchant (Ricordiamo: funzione ora disponibile!)
             const reply = await engContract.merchantReplies(receiptId);
-            
-            container.innerHTML += `
-                <div class="p-8 rounded-[2rem] border border-[var(--border)] bg-[var(--card-bg)] mb-6">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex gap-1 text-blue-600">
-                            ${'★'.repeat(rating)}${'☆'.repeat(5-rating)}
-                        </div>
-                        <span class="text-[9px] font-bold opacity-30">${author.slice(0,6)}...${author.slice(-4)}</span>
+
+            grid.innerHTML += `
+                <div class="bg-[var(--card-bg)] p-10 rounded-[2.5rem] border border-[var(--border)] hover:border-blue-600/30 transition shadow-sm mb-8">
+                    <div class="flex justify-between mb-6">
+                        <span class="text-[9px] font-mono opacity-30 uppercase tracking-widest">Customer: ${author.slice(0,14)}...</span>
+                        <span class="text-blue-600 font-black italic text-lg leading-none">${"★".repeat(rating)}</span>
                     </div>
-                    <p class="text-xl font-medium mb-6">"${content}"</p>
-                    
+                    <p class="text-2xl italic leading-relaxed opacity-90 tracking-tight">"${content}"</p>
                     ${reply ? `
-                        <div class="mt-6 p-6 bg-[var(--bg-main)] rounded-2xl border-l-4 border-blue-600">
-                            <p class="text-[9px] font-black uppercase text-blue-600 mb-2">Merchant Reply</p>
-                            <p class="text-sm italic opacity-80">${reply}</p>
+                        <div class="mt-8 pt-8 border-t border-[var(--border)] text-right">
+                            <p class="text-[9px] font-black text-blue-500 uppercase mb-3 italic opacity-50">${b.name} Response</p>
+                            <p class="text-base italic opacity-70 pl-8">${reply}</p>
                         </div>
                     ` : ''}
-                </div>
-            `;
+                </div>`;
         }
-    } catch (error) {
-        console.error("Store page error:", error);
-        document.getElementById('reviewsContainer').innerHTML = "<p class='text-red-500 uppercase text-[10px] font-bold'>Blockchain access error. Please try again later.</p>";
+
+    } catch(e) { 
+        console.error("Store init error:", e);
+        if(grid) grid.innerHTML = "<p class='opacity-50 uppercase text-[10px]'>Syncing with Paseo Hub... Please refresh.</p>";
     }
 }
     </script>
