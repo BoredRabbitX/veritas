@@ -3,26 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explore | Veritas</title>
+    <title>Explore Stores | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        .store-card { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        .store-card.visible { opacity: 1; transform: translateY(0); }
+        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23666'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
+    </style>
 </head>
-<body class="flex flex-col min-h-screen bg-[var(--bg-main)]">
+<body class="bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen">
 
     <div id="header-root"></div>
 
-    <main class="flex-grow p-6 py-20">
-        <div class="max-w-7xl mx-auto text-center">
-            <h1 class="text-7xl font-black italic uppercase mb-12 tracking-tighter">
+    <main class="max-w-7xl mx-auto px-6 py-20">
+        <div class="mb-16 text-center">
+            <h1 class="text-7xl md:text-8xl font-black italic uppercase tracking-tighter mb-8">
                 Verified <span class="text-blue-600">Stores</span>
             </h1>
-            <div id="grid" class="grid md:grid-cols-3 gap-8">
-                <div class="col-span-full py-20 opacity-20">
-                    <p class="text-[10px] font-black uppercase tracking-widest animate-pulse">
-                        Connecting to Polkadot Network...
-                    </p>
+            
+            <div class="flex flex-wrap justify-center gap-4 bg-[var(--card-bg)] p-6 rounded-[2rem] border border-[var(--border)] shadow-xl inline-flex mx-auto">
+                <div class="flex flex-col items-start px-4">
+                    <label class="text-[8px] font-black uppercase opacity-40 mb-2 tracking-widest">Industry</label>
+                    <select id="filterCat" onchange="applyFilters()" class="bg-transparent font-bold text-xs outline-none pr-8">
+                        <option value="all">All Categories</option>
+                        <option value="Food_Drink">Food & Drink</option>
+                        <option value="Retail_Shop">Retail Shop</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Professional_Services">Services</option>
+                    </select>
                 </div>
+                <div class="w-[1px] h-10 bg-[var(--border)] hidden md:block"></div>
+                <div class="flex flex-col items-start px-4">
+                    <label class="text-[8px] font-black uppercase opacity-40 mb-2 tracking-widest">Sort By</label>
+                    <select id="filterSort" onchange="applyFilters()" class="bg-transparent font-bold text-xs outline-none pr-8">
+                        <option value="newest">Newest First</option>
+                        <option value="rating">Highest Rated</option>
+                        <option value="volume">Most Reviewed</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="col-span-full py-20 text-center">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse opacity-30">
+                    Broadcasting to Polkadot Paseo Hub...
+                </p>
             </div>
         </div>
     </main>
@@ -33,84 +61,107 @@
     <script src="components.js"></script>
 
     <script>
-    async function initPage(retryCount = 0) {
-        try {
+        let allStores = [];
+
+        async function initPage() {
             const grid = document.getElementById('grid');
-            if (!grid) return;
+            if (!window.regContract || !grid) return;
 
-            // Protezione: aspetta che i contratti siano inizializzati in app.js
-            if (!window.regContract) {
-                if (retryCount < 10) {
-                    console.log("Explore: Waiting for contracts...");
-                    setTimeout(() => initPage(retryCount + 1), 500);
-                    return;
-                }
-                grid.innerHTML = "<p class='text-red-500 uppercase text-[10px]'>Connection Timeout. Please check MetaMask or RPC.</p>";
-                return;
-            }
-            
-            grid.innerHTML = "<div class='col-span-full py-20 opacity-50 uppercase text-[10px] animate-pulse italic'>Reading Ledger Events...</div>";
+            try {
+                // 1. Fetch Events
+                const filter = regContract.filters.BusinessRegistered();
+                const events = await regContract.queryFilter(filter, -100000);
+                const uniqueAddresses = [...new Set(events.map(e => e.args[0] || e.args.owner))];
 
-            // 1. Recupera tutti gli eventi di registrazione
-            const filter = regContract.filters.BusinessRegistered();
-            const events = await regContract.queryFilter(filter, -100000); 
-            
-            // 2. FILTRO DUPLICATI: Indirizzi unici
-            const uniqueAddresses = [...new Set(events.map(e => e.args[0] || e.args.owner))];
-            
-            grid.innerHTML = ""; 
-            
-            if (uniqueAddresses.length === 0) {
-                grid.innerHTML = "<p class='col-span-full opacity-30 uppercase text-[10px] py-20'>No merchants registered yet.</p>";
-                return;
-            }
+                // 2. Load Detailed Data with Analytics
+                const storePromises = uniqueAddresses.map(async (addr) => {
+                    const b = await getCachedData(`biz_${addr}`, () => regContract.businesses(addr));
+                    if (!b.isActive) return null;
 
-            // 3. Ciclo sugli indirizzi UNICI (più recenti prima)
-            for(let addr of uniqueAddresses.reverse()) {
-const b = await getCachedData(`biz_${addr}`, () => regContract.businesses(addr));                
-                if(!b.isActive) continue;
-                
-                const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
-                
-                grid.innerHTML += `
-                    <a href="store.html?id=${addr}" class="p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg hover:-translate-y-2">
-                        <div class="flex justify-between items-start mb-6">
-                            <p class="text-blue-600 text-[10px] font-black uppercase tracking-[0.2em]">${cleanCat}</p>
-                            <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
-                        </div>
-                        <h3 class="text-4xl font-black italic uppercase leading-none mb-6 tracking-tighter group-hover:text-blue-500 transition-colors">${b.name}</h3>
-                        <div class="flex justify-between items-center opacity-30 text-[9px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
-                            <span>${b.volume} Verified Logs</span>
-                            <span class="font-mono">${addr.slice(0,6)}...${addr.slice(-4)}</span>
-                        </div>
-                    </a>`;
-            }
-        } catch (e) {
-            console.error("Explore error:", e);
-            if(document.getElementById('grid')) {
-                document.getElementById('grid').innerHTML = "<p class='text-red-500 text-[10px] font-bold uppercase'>Sync Error. Please Refresh.</p>";
+                    // Fetch individual ratings for sorting
+                    const revFilter = revContract.filters.ReviewSubmitted(addr);
+                    const revEvents = await revContract.queryFilter(revFilter, -50000);
+                    
+                    let avgRating = 0;
+                    if(revEvents.length > 0) {
+                        const sum = revEvents.reduce((acc, ev) => acc + Number(ev.args[2]), 0);
+                        avgRating = sum / revEvents.length;
+                    }
+
+                    return {
+                        address: addr,
+                        name: b.name,
+                        category: ethers.decodeBytes32String(b.category),
+                        volume: Number(b.volume),
+                        rating: avgRating,
+                        timestamp: Date.now() // For basic newest sort
+                    };
+                });
+
+                allStores = (await Promise.all(storePromises)).filter(s => s !== null);
+                applyFilters();
+
+            } catch (e) {
+                console.error(e);
+                grid.innerHTML = "<p class='col-span-full text-red-500 font-black uppercase text-[10px]'>Network Sync Error</p>";
             }
         }
-    }
 
-    // --- ATTIVAZIONE ---
-    // Ascolta il segnale da app.js
-    window.addEventListener('contractsReady', initPage);
+        function applyFilters() {
+            const grid = document.getElementById('grid');
+            const cat = document.getElementById('filterCat').value;
+            const sort = document.getElementById('filterSort').value;
 
-    // Fallback di sicurezza se app.js ha già finito
-    window.addEventListener('load', () => {
-        if (window.regContract) initPage();
+            // Filter
+            let filtered = allStores.filter(s => cat === 'all' || s.category === cat);
 
-        // Questo garantisce che la pagina parta non appena app.js è pronto
-function startApp() {
-    if (window.isVeritasReady) {
-        initPage();
-    } else {
+            // Sort
+            if (sort === 'rating') filtered.sort((a, b) => b.rating - a.rating);
+            else if (sort === 'volume') filtered.sort((a, b) => b.volume - a.volume);
+            else filtered.reverse(); // Newest (default reverse of blockchain order)
+
+            renderGrid(filtered);
+        }
+
+        function renderGrid(stores) {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = "";
+
+            if (stores.length === 0) {
+                grid.innerHTML = "<p class='col-span-full opacity-30 uppercase text-[10px] font-black py-20'>No merchants match your criteria.</p>";
+                return;
+            }
+
+            stores.forEach((s, index) => {
+                const cleanCat = s.category.replace(/_/g, ' ');
+                const card = `
+                    <a href="store.html?id=${s.address}" class="store-card p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg hover:-translate-y-2">
+                        <div class="flex justify-between items-start mb-6">
+                            <p class="text-blue-600 text-[9px] font-black uppercase tracking-[0.2em] italic">${cleanCat}</p>
+                            <div class="flex items-center gap-1 text-blue-600 font-bold text-xs">
+                                <span>★</span><span>${s.rating > 0 ? s.rating.toFixed(1) : 'N/A'}</span>
+                            </div>
+                        </div>
+                        <h3 class="text-4xl font-black italic uppercase leading-none mb-8 tracking-tighter group-hover:text-blue-600 transition-colors">${sanitize(s.name)}</h3>
+                        <div class="flex justify-between items-center opacity-30 text-[8px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
+                            <span>${s.volume} Logs</span>
+                            <span class="font-mono opacity-50">${s.address.slice(0,6)}...${s.address.slice(-4)}</span>
+                        </div>
+                    </a>`;
+                grid.innerHTML += card;
+            });
+
+            // Trigger stagger animation
+            setTimeout(() => {
+                document.querySelectorAll('.store-card').forEach((el, i) => {
+                    setTimeout(() => el.classList.add('visible'), i * 100);
+                });
+            }, 50);
+        }
+
+        // Synchronization logic
+        if (window.isVeritasReady) { initPage(); }
         window.addEventListener('contractsReady', initPage);
-    }
-}
-window.addEventListener('load', startApp);
-    });
     </script>
 </body>
 </html>
