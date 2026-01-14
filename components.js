@@ -73,22 +73,23 @@ const headerHTML = `
     </nav>
 </div>`;
 
-const footerHTML = `
-<footer class="mt-auto border-t border-white/5 py-12 px-6">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] font-bold uppercase tracking-widest opacity-30">
-        <div>Veritas Protocol © 2026</div>
-        <div class="flex gap-8">
-            <a href="https://paseo.subscan.io/" target="_blank">Explorer</a>
-            <button onclick="window.copyAddressAndGoToFaucet()">Faucet</button>
+const headerHTML = `
+<nav class="sticky top-0 z-[100] border-b border-[var(--border)] bg-[var(--bg-main)] opacity-95 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-16">
+        <a href="index.html" class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">V</div>
+            <span class="text-xl font-black italic uppercase tracking-tighter">Veritas</span>
+        </a>
+        <div class="flex items-center gap-3">
+            <button onclick="window.toggleTheme()" class="w-10 h-10 rounded-xl border border-[var(--border)] flex items-center justify-center bg-[var(--card-bg)]">
+                <span id="themeIcon">${document.documentElement.classList.contains('light') ? '☀️' : '🌙'}</span>
+            </button>
+            <button onclick="window.copyAddressAndGoToFaucet()" class="hidden sm:block px-3 py-1 bg-pink-500/10 text-pink-500 rounded-full text-[9px] font-bold uppercase border border-pink-500/20">Faucet</button>
+            <button id="connectBtn" class="btn-primary text-[10px] py-2 px-4 rounded-xl" onclick="connectWallet()">Connect</button>
         </div>
     </div>
-</footer>`;
+</nav>`;
 
-window.toggleMobileMenu = function() {
-    const menu = document.getElementById('mobileMenu');
-    menu.classList.toggle('hidden');
-    menu.classList.toggle('active');
-};
-
+const footerHTML = `<footer class="p-12 border-t border-[var(--border)] text-[10px] font-bold uppercase opacity-30 text-center">Veritas Protocol © 2026</footer>`;
 document.body.insertAdjacentHTML('afterbegin', headerHTML);
 document.body.insertAdjacentHTML('beforeend', footerHTML);
