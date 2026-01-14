@@ -204,6 +204,15 @@
         // Fallback: se app.js ha già finito prima che questo script caricasse
         window.addEventListener('load', () => {
             if (window.regContract) initPage();
+            // Questo garantisce che la pagina parta non appena app.js è pronto
+function startApp() {
+    if (window.isVeritasReady) {
+        initPage();
+    } else {
+        window.addEventListener('contractsReady', initPage);
+    }
+}
+window.addEventListener('load', startApp);
         });
     </script>
 </body>
