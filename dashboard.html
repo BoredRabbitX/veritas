@@ -1,36 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merchant Hub | Veritas</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"><title>Merchant Hub | Veritas</title>
+    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
-    <div class="nav-container">
-        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <div class="flex items-center gap-8">
-                <a href="index.html" class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/20">V</div>
-                    <span class="text-2xl font-black tracking-tighter uppercase italic">Veritas</span>
-                </a>
-                <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
-                    <a href="explore.html" class="opacity-60 hover:opacity-100 transition">Explore</a>
-                    <a href="review.html" class="opacity-60 hover:opacity-100 transition">Submit Review</a>
-                    <a href="dashboard.html" class="text-blue-600 transition">Merchant Hub</a>
-                </div>
-            </div>
-            <button id="connectBtn" class="btn-primary text-xs py-2 px-6" onclick="connectWallet()">Connect Wallet</button>
-        </nav>
-    </div>
-
     <main class="main-content flex-grow px-6 py-12">
         <div class="max-w-5xl mx-auto">
             <div id="authGuard" class="text-center py-20">
-                <h2 class="text-4xl font-black italic uppercase tracking-tighter mb-4">Merchant Access</h2>
+                <h2 class="text-4xl font-black italic uppercase tracking-tighter mb-4 text-white">Merchant Access</h2>
                 <button onclick="connectWallet()" class="btn-primary px-10 py-4">Connect Wallet</button>
             </div>
 
@@ -38,23 +18,23 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-10">
                     <div>
                         <p id="dispCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-2"></p>
-                        <h1 id="dispName" class="text-6xl font-black italic uppercase tracking-tighter leading-none">Store</h1>
+                        <h1 id="dispName" class="text-6xl font-black italic uppercase tracking-tighter leading-none text-white">Store</h1>
                     </div>
                     <div class="flex gap-4">
                         <div class="bg-white/5 p-6 rounded-2xl border border-white/5 text-center min-w-[120px]">
                             <p class="text-[9px] font-bold opacity-30 uppercase mb-1">Reviews</p>
-                            <p id="statCount" class="text-3xl font-black italic">0</p>
+                            <p id="statCount" class="text-3xl font-black italic text-white">0</p>
                         </div>
                         <div class="bg-blue-600 p-6 rounded-2xl text-center min-w-[120px]">
-                            <p class="text-[9px] font-bold opacity-80 uppercase mb-1">Avg Rating</p>
-                            <p id="statAvg" class="text-3xl font-black italic">0.0</p>
+                            <p class="text-[9px] font-bold opacity-80 uppercase mb-1 text-white">Avg Rating</p>
+                            <p id="statAvg" class="text-3xl font-black italic text-white">0.0</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="grid lg:grid-cols-2 gap-10">
                     <section class="p-8 bg-white/5 rounded-3xl border border-blue-600/20">
-                        <h3 class="text-xl font-black uppercase italic mb-6 tracking-tight">Issue Receipt</h3>
+                        <h3 class="text-xl font-black uppercase italic mb-6 text-white uppercase">Issue Receipt</h3>
                         <div class="space-y-6">
                             <input id="receiptRaw" type="text" readonly placeholder="V3-WAITING" class="bg-black/50 border border-white/10 w-full p-4 rounded-xl font-mono text-center text-blue-500 text-lg uppercase">
                             <button id="genBtn" onclick="generateReceipt()" class="btn-primary w-full py-4 uppercase font-black">Sign New Receipt</button>
@@ -65,7 +45,7 @@
                     </section>
 
                     <section>
-                        <h3 class="text-xl font-black uppercase italic mb-6 tracking-tight">Recent Feedback</h3>
+                        <h3 class="text-xl font-black uppercase italic mb-6 text-white uppercase tracking-tight">Recent Feedback</h3>
                         <div id="merchantInbox" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                             <p class="opacity-30 italic text-sm uppercase">Synchronizing...</p>
                         </div>
@@ -74,8 +54,8 @@
             </div>
         </div>
     </main>
-
     <script src="app.js"></script>
+    <script src="components.js"></script>
     <script>
         async function initPage() {
             document.getElementById('authGuard').classList.add('hidden');
@@ -87,7 +67,7 @@
                 document.getElementById('dispCat').innerText = ethers.decodeBytes32String(biz.category);
                 await loadMerchantData(addr);
             } else {
-                window.location.href = "index.html";
+                grid.innerHTML = "Merchant profile not found.";
             }
         }
 
@@ -103,14 +83,14 @@
                 const reply = await engContract.merchantReplies(receiptId);
                 list.innerHTML += `
                     <div class="bg-white/5 border border-white/5 p-6 rounded-2xl">
-                        <div class="flex justify-between items-center mb-3">
+                        <div class="flex justify-between items-center mb-3 text-white">
                             <span class="text-[9px] font-mono opacity-30 tracking-widest uppercase">${author.slice(0,10)}...</span>
                             <span class="text-blue-600 font-black italic text-xs">${"★".repeat(rating)}</span>
                         </div>
-                        <p class="text-sm italic mb-4">"${content}"</p>
-                        ${reply ? `<div class="mt-4 p-4 bg-blue-600/10 border-l-2 border-blue-600 rounded-r-xl"><p class="text-[9px] font-black text-blue-500 uppercase mb-1 italic">Official Response:</p><p class="text-xs italic opacity-80">${reply}</p></div>` : `
+                        <p class="text-sm italic mb-4 text-zinc-300">"${content}"</p>
+                        ${reply ? `<div class="mt-4 p-4 bg-blue-600/10 border-l-2 border-blue-600 rounded-r-xl"><p class="text-[9px] font-black text-blue-500 uppercase mb-1 italic">Response:</p><p class="text-xs italic opacity-80 text-zinc-400">${reply}</p></div>` : `
                         <div class="flex gap-2">
-                            <input id="rep-${receiptId}" type="text" placeholder="Reply to customer..." class="bg-black border border-white/10 flex-grow p-3 rounded-xl text-xs outline-none focus:border-blue-600">
+                            <input id="rep-${receiptId}" type="text" placeholder="Reply..." class="bg-black border border-white/10 flex-grow p-3 rounded-xl text-xs text-white outline-none focus:border-blue-600">
                             <button onclick="sendReply('${receiptId}')" class="bg-white text-black text-[9px] font-black px-6 rounded-xl uppercase">Post</button>
                         </div>`}
                     </div>`;
@@ -124,8 +104,7 @@
             if(!msg) return;
             try {
                 const tx = await engContract.postReply(rid, msg);
-                await tx.wait();
-                location.reload();
+                await tx.wait(); location.reload();
             } catch(e) { alert(e.message); }
         }
 
@@ -137,9 +116,7 @@
                 await tx.wait();
                 document.getElementById('receiptRaw').value = id;
                 const url = window.location.origin + window.location.pathname.replace('dashboard.html', 'review.html') + `?biz=${await signer.getAddress()}&id=${id}`;
-                const qrDiv = document.getElementById('qrcode');
-                qrDiv.innerHTML = "";
-                new QRCode(qrDiv, { text: url, width: 160, height: 160 });
+                new QRCode(document.getElementById('qrcode'), { text: url, width: 160, height: 160 });
             } catch(e) { alert(e.message); }
         }
     </script>
