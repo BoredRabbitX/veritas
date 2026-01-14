@@ -48,51 +48,76 @@
     <script src="app.js"></script>
     <script src="components.js"></script>
     <script>
-       async function initPage() {
-    console.log("Store: Initializing content...");
-    const grid = document.getElementById('reviewsList'); // Il tuo ID originale
+     async function initPage() {
+    console.log("Store: Initializing Analytics & Reviews...");
+    const list = document.getElementById('reviewsList');
     
     try {
         const id = new URLSearchParams(window.location.search).get('id');
-        if(!id) {
-            if(grid) grid.innerHTML = "No store ID provided.";
-            return;
-        }
+        if(!id) return;
 
-        // 1. Recupero dati Business
-        // Usiamo regContract inizializzato globalmente da app.js
+        // 1. Dati Business
         const b = await regContract.businesses(id);
-        if(!b.isActive) {
-            if(grid) grid.innerHTML = "Business not found or inactive.";
-            return;
-        };
+        if(!b.isActive) return;
 
         const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
-        
-        // Mapping degli ID corretti (quelli del tuo HTML originale)
         if(document.getElementById('storeName')) document.getElementById('storeName').innerText = b.name;
         if(document.getElementById('storeCat')) document.getElementById('storeCat').innerText = cleanCat;
         if(document.getElementById('storeVol')) document.getElementById('storeVol').innerText = b.volume;
 
-        // 2. Recupero Recensioni
+        // 2. Recupero Recensioni per calcoli
         const filter = revContract.filters.ReviewSubmitted(id);
         const events = await revContract.queryFilter(filter, -50000);
         
-        if(!grid) return;
-        grid.innerHTML = events.length ? "" : "No verified feedback found for this store.";
+        if(!list) return;
+        list.innerHTML = events.length ? "" : "No verified feedback found for this store.";
 
-        // 3. Render Recensioni e Risposte
+        // --- CALCOLO STATISTICHE ---
+        let totalRating = 0;
+        let starCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
+        const totalReviews = events.length;
+
+        if(totalReviews > 0) {
+            // Ciclo per calcolare i dati
+            for(let ev of events) {
+                const r = Number(ev.args.rating || ev.args[2]);
+                totalRating += r;
+                starCounts[r]++;
+            }
+
+            // Aggiorna Media e Totale nel DOM
+            const average = (totalRating / totalReviews).toFixed(1);
+            if(document.getElementById('avgStars')) document.getElementById('avgStars').innerText = average;
+            if(document.getElementById('totalRev')) document.getElementById('totalRev').innerText = totalReviews;
+
+            // Aggiorna le barre grafiche se presenti
+            const barsContainer = document.getElementById('barsContainer');
+            if(barsContainer) {
+                barsContainer.innerHTML = "";
+                for(let s=5; s>=1; s--) {
+                    const percentage = ((starCounts[s] / totalReviews) * 100).toFixed(0);
+                    barsContainer.innerHTML += `
+                        <div class="flex items-center gap-4 mb-2">
+                            <span class="w-12 text-[9px] font-bold opacity-40 uppercase">${s} Stars</span>
+                            <div class="flex-grow bg-[var(--bg-main)] h-1 rounded-full overflow-hidden border border-[var(--border)]">
+                                <div class="bg-blue-600 h-full" style="width: ${percentage}%"></div>
+                            </div>
+                            <span class="w-8 text-[9px] font-mono opacity-40 text-right">${starCounts[s]}</span>
+                        </div>`;
+                }
+            }
+        }
+
+        // 3. Render Lista Recensioni (Reverse per vedere le ultime prime)
         for(let i = events.length-1; i >= 0; i--) {
             const ev = events[i];
             const author = ev.args.author || ev.args[1];
             const rating = Number(ev.args.rating || ev.args[2]);
             const content = ev.args.content || ev.args[3];
             const receiptId = ev.args.receiptId || ev.args[4];
-            
-            // Recupero risposta del merchant (Ricordiamo: funzione ora disponibile!)
             const reply = await engContract.merchantReplies(receiptId);
 
-            grid.innerHTML += `
+            list.innerHTML += `
                 <div class="bg-[var(--card-bg)] p-10 rounded-[2.5rem] border border-[var(--border)] hover:border-blue-600/30 transition shadow-sm mb-8">
                     <div class="flex justify-between mb-6">
                         <span class="text-[9px] font-mono opacity-30 uppercase tracking-widest">Customer: ${author.slice(0,14)}...</span>
@@ -109,8 +134,7 @@
         }
 
     } catch(e) { 
-        console.error("Store init error:", e);
-        if(grid) grid.innerHTML = "<p class='opacity-50 uppercase text-[10px]'>Syncing with Paseo Hub... Please refresh.</p>";
+        console.error("Store Analytics Error:", e);
     }
 }
     </script>
