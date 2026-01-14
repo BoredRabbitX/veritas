@@ -1,151 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Review | Veritas Protocol</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Review | Veritas</title>
+    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .merchant-badge { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
-        .merchant-badge.active { max-height: 100px; opacity: 1; margin-top: 1.5rem; }
-    </style>
 </head>
-<body class="bg-[var(--bg-main)] text-[var(--text-main)]">
-
+<body class="bg-[var(--bg-main)]">
     <div id="header-root"></div>
-
     <main class="max-w-2xl mx-auto px-6 py-20">
-        <div class="card-veritas p-8 md:p-12 shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16"></div>
-
-            <h1 class="text-5xl font-black italic uppercase mb-2 leading-none tracking-tighter">
-                Verified <span class="text-blue-600">Review</span>
-            </h1>
-            <p class="text-[10px] font-bold uppercase opacity-40 tracking-[0.2em] mb-10">Blockchain-backed feedback system</p>
-            
+        <div class="card-veritas p-12">
+            <h1 class="text-5xl font-black italic uppercase mb-10 leading-none tracking-tighter">Verified <span class="text-blue-600">Review</span></h1>
             <div class="space-y-8">
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Receipt / Log ID</label>
-                    <input id="rId" type="text" 
-                           oninput="detectMerchant(this.value)"
-                           class="w-full text-lg font-mono bg-transparent border-b border-[var(--border)] py-3 focus:border-blue-600 outline-none transition-colors" 
-                           placeholder="Enter your unique Receipt ID...">
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block">Receipt ID</label>
+                    <input id="rId" oninput="detectMerchant(this.value)" class="w-full text-lg font-mono border-b border-[var(--border)] bg-transparent py-2 outline-none focus:border-blue-600" placeholder="Paste Log ID...">
                 </div>
-
-                <div id="merchantBadge" class="merchant-badge p-6 rounded-2xl bg-blue-600/5 border border-blue-600/10 flex items-center justify-between">
-                    <div>
-                        <p class="text-[8px] font-black text-blue-600 uppercase tracking-widest mb-1">Target Merchant Identified</p>
-                        <h3 id="detectedName" class="text-2xl font-black italic uppercase leading-none text-[var(--text-main)]">---</h3>
-                        <input type="hidden" id="mAddr">
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                    </div>
+                <div id="merchantBadge" class="hidden p-6 bg-blue-600/5 rounded-2xl border border-blue-600/20">
+                    <p class="text-[8px] font-black text-blue-600 uppercase mb-1">Detected Merchant</p>
+                    <h3 id="detectedName" class="text-2xl font-black uppercase italic leading-none">---</h3>
+                    <input type="hidden" id="mAddr">
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Score</label>
-                        <select id="stars" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl px-4 py-4 text-sm font-bold focus:border-blue-600 outline-none transition shadow-sm">
-                            <option value="5">★★★★★ - Excellent</option>
-                            <option value="4">★★★★☆ - Good</option>
-                            <option value="3">★★★☆☆ - Average</option>
-                            <option value="2">★★☆☆☆ - Poor</option>
-                            <option value="1">★☆☆☆☆ - Terrible</option>
-                        </select>
-                    </div>
-                </div>
-
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Your Experience</label>
-                    <textarea id="comment" 
-                              class="w-full h-40 bg-[var(--card-bg)] border border-[var(--border)] rounded-2xl p-6 text-sm focus:border-blue-600 outline-none transition shadow-sm resize-none" 
-                              placeholder="Describe your service experience honestly..."></textarea>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block">Rating</label>
+                    <select id="stars" class="w-full p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] font-bold">
+                        <option value="5">★★★★★ - Excellent</option><option value="4">★★★★☆ - Good</option>
+                        <option value="3">★★★☆☆ - Average</option><option value="2">★★☆☆☆ - Poor</option><option value="1">★☆☆☆☆ - Terrible</option>
+                    </select>
                 </div>
-
-                <button onclick="submitReview()" id="submitBtn" class="btn-primary w-full py-6 text-[11px] font-black uppercase tracking-[0.3em] shadow-xl group">
-                    <span class="inline-block group-hover:translate-x-1 transition-transform">Publish to Polkadot Hub</span>
-                </button>
+                <div>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block">Experience</label>
+                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)]" placeholder="Tell the truth..."></textarea>
+                </div>
+                <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-widest shadow-xl">Broadcast Review</button>
             </div>
         </div>
     </main>
-
     <div id="footer-root"></div>
-
-    <script src="app.js"></script>
-    <script src="components.js"></script>
+    <script src="app.js"></script><script src="components.js"></script>
     <script>
-        // Automatic Merchant Detection
-        async function detectMerchant(receiptId) {
-            const badge = document.getElementById('merchantBadge');
-            const nameLabel = document.getElementById('detectedName');
-            const addrInput = document.getElementById('mAddr');
-
-            if (!receiptId || receiptId.length < 10) {
-                badge.classList.remove('active');
-                return;
-            }
-
+        async function detectMerchant(rid) {
+            if(rid.length < 10) return;
             try {
-                // Query the Engine contract to find who issued this receipt
-                const issuerAddr = await engContract.receiptIssuers(receiptId);
-                
-                if (issuerAddr !== "0x0000000000000000000000000000000000000000") {
-                    // Fetch the merchant name from the Registry
-                    const biz = await regContract.businesses(issuerAddr);
-                    
-                    nameLabel.innerText = biz.name;
-                    addrInput.value = issuerAddr;
-                    badge.classList.add('active');
-                } else {
-                    badge.classList.remove('active');
+                const issuer = await engContract.receiptIssuers(rid);
+                if(issuer !== "0x0000000000000000000000000000000000000000") {
+                    const b = await regContract.businesses(issuer);
+                    document.getElementById('detectedName').innerText = b.name;
+                    document.getElementById('mAddr').value = issuer;
+                    document.getElementById('merchantBadge').classList.remove('hidden');
                 }
-            } catch (e) {
-                console.log("Detecting...");
-            }
+            } catch(e) {}
         }
-
         async function submitReview() {
-            if(!window.signer) return alert("Please connect your wallet first.");
-            
+            if(!signer) return alert("Connect Wallet!");
             const btn = document.getElementById('submitBtn');
-            const mAddr = document.getElementById('mAddr').value;
-            const rId = document.getElementById('rId').value;
-            const stars = document.getElementById('stars').value;
-            const comment = document.getElementById('comment').value;
-
-            if(!mAddr) return alert("Valid Receipt ID required.");
-            if(!comment) return alert("Please write a comment.");
-
+            const [m, r, s, c] = [document.getElementById('mAddr').value, document.getElementById('rId').value, document.getElementById('stars').value, document.getElementById('comment').value];
+            if(!m) return alert("Invalid Receipt!");
+            btn.disabled = true; btn.innerText = "Broadcasting...";
             try {
-                btn.innerText = "WAITING FOR BLOCKCHAIN...";
-                btn.disabled = true;
-
-                // Call the Reviewer Smart Contract
-                const tx = await revContract.submitReview(mAddr, stars, comment, rId);
-                
-                alert("Transaction Broadcasted! Publishing your verified feedback...");
-                await tx.wait();
-                
-                alert("Success! Review is now permanent on-chain.");
-                window.location.href = "explore.html";
-            } catch(e) { 
-                console.error(e);
-                alert("Error: Transaction rejected or insufficient PAS tokens."); 
-                btn.innerText = "PUBLISH TO POLKADOT HUB";
-                btn.disabled = false;
-            }
+                const tx = await revContract.submitReview(m, s, c, r);
+                await tx.wait(); alert("Review Permanent!"); window.location.href="explore.html";
+            } catch(e) { alert("Failed."); btn.disabled = false; btn.innerText = "Broadcast Review"; }
         }
-
-        // Standard initialization
-        function initPage() { 
-            console.log("Review Page: Synchronized."); 
-        }
-
-        if (window.isVeritasReady) { initPage(); }
-        window.addEventListener('contractsReady', initPage);
     </script>
 </body>
 </html>
