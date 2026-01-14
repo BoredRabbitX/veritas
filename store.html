@@ -1,59 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Details | Veritas</title>
-    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Details | Veritas Protocol</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #avgScore, #totalLogs { font-variant-numeric: tabular-nums; }
+        .review-card { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        .review-card.visible { opacity: 1; transform: translateY(0); }
+        .stat-bar { height: 4px; background: var(--border); border-radius: 10px; overflow: hidden; }
+        .stat-fill { height: 100%; background: #2563eb; width: 0; transition: width 1.5s cubic-bezier(0.23, 1, 0.32, 1); }
+    </style>
 </head>
-<body class="bg-[var(--bg-main)]">
+<body class="bg-[var(--bg-main)] text-[var(--text-main)]">
+
     <div id="header-root"></div>
+
     <main class="max-w-7xl mx-auto px-6 py-20">
         <div class="mb-20">
-            <p id="storeCat" class="text-blue-600 font-black uppercase tracking-widest text-[10px] mb-4 italic">---</p>
-            <h1 id="storeName" class="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-none mb-4">---</h1>
+            <p id="storeCat" class="text-blue-600 font-black uppercase tracking-[0.4em] text-[11px] mb-4 italic opacity-0">---</p>
+            <h1 id="storeName" class="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-[0.9] mb-8">---</h1>
+            <div class="flex gap-8 opacity-40 text-[10px] font-bold uppercase tracking-widest">
+                <span class="flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Verified Merchant</span>
+                <span>On-Chain ID: <span id="storeAddr" class="font-mono">0x...</span></span>
+            </div>
         </div>
+
         <div class="grid lg:grid-cols-12 gap-16">
             <aside class="lg:col-span-4">
-                <div class="card-veritas p-10 sticky top-32">
-                    <p class="text-[10px] font-black uppercase opacity-30 mb-8">Scoreboard</p>
-                    <h2 id="avgScore" class="text-8xl font-black italic leading-none mb-6">0.0</h2>
-                    <p class="text-[10px] font-bold opacity-40 uppercase">Based on <span id="totalLogs">0</span> Blockchain Logs</p>
+                <div class="card-veritas p-10 sticky top-32 overflow-hidden relative">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16"></div>
+                    
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-30 mb-10 italic">Rating Analysis</p>
+                    
+                    <div class="mb-12">
+                        <h2 id="avgScore" class="text-9xl font-black italic leading-none mb-4 tracking-tighter">0.0</h2>
+                        <div id="starIcons" class="flex gap-1 text-blue-600 text-2xl mb-6">★★★★★</div>
+                        <p class="text-[10px] font-bold opacity-40 uppercase leading-relaxed">
+                            Based on <span id="totalLogs" class="text-blue-600">0</span> verified<br>blockchain reviews
+                        </p>
+                    </div>
+
+                    <div id="barsContainer" class="space-y-5">
+                        </div>
                 </div>
             </aside>
-            <section id="reviewsList" class="lg:col-span-8 space-y-8">
-                <p class="opacity-30 italic animate-pulse">Scanning ledger...</p>
+
+            <section class="lg:col-span-8">
+                <h3 class="text-2xl font-black italic uppercase mb-10 tracking-tight">Verified <span class="text-blue-600">Feedback</span></h3>
+                <div id="reviewsList" class="space-y-8">
+                    <div class="p-20 text-center border border-dashed border-[var(--border)] rounded-[3rem] opacity-20">
+                        <p class="text-[10px] font-black uppercase tracking-widest animate-pulse">Scanning Polkadot Ledger...</p>
+                    </div>
+                </div>
             </section>
         </div>
     </main>
+
     <div id="footer-root"></div>
-    <script src="app.js"></script><script src="components.js"></script>
+
+    <script src="app.js"></script>
+    <script src="components.js"></script>
+
     <script>
-        async function initPage() {
-            if(!regContract) return;
-            const id = new URLSearchParams(window.location.search).get('id');
-            const b = await regContract.businesses(id);
-            document.getElementById('storeName').innerText = b.name;
-            document.getElementById('storeCat').innerText = ethers.decodeBytes32String(b.category).replace('_',' ');
-            
-            const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(id), -100000);
-            const list = document.getElementById('reviewsList');
-            list.innerHTML = "";
-            let sum = 0;
-            events.reverse().forEach(ev => {
-                const { rating, content, receiptId } = ev.args;
-                sum += Number(rating);
-                list.innerHTML += `<div class="p-10 border border-[var(--border)] bg-[var(--card-bg)] rounded-[2.5rem]">
-                    <div class="flex justify-between mb-8">
-                        <span class="text-blue-600 font-bold">${"★".repeat(rating)}</span>
-                        <span class="text-[9px] opacity-20 font-mono">#${receiptId.slice(0,12)}</span>
-                    </div>
-                    <p class="text-3xl italic font-medium leading-tight">"${sanitize(content)}"</p>
-                </div>`;
-            });
-            document.getElementById('avgScore').innerText = events.length ? (sum/events.length).toFixed(1) : "0.0";
-            document.getElementById('totalLogs').innerText = events.length;
+        // Count-up animation for numbers
+        function animateValue(id, start, end, duration, isFloat = false) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const val = progress * (end - start) + start;
+                obj.innerText = isFloat ? val.toFixed(1) : Math.floor(val);
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
         }
+
+        async function initPage() {
+            if (!regContract || !revContract) return;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const storeId = urlParams.get('id');
+            if (!storeId) return;
+
+            try {
+                // 1. Fetch Store Data
+                const b = await regContract.businesses(storeId);
+                if (!b.isActive) return;
+
+                document.getElementById('storeName').innerText = b.name;
+                document.getElementById('storeAddr').innerText = `${storeId.slice(0,6)}...${storeId.slice(-4)}`;
+                const catElement = document.getElementById('storeCat');
+                catElement.innerText = ethers.decodeBytes32String(b.category).replace(/_/g, ' ');
+                catElement.style.opacity = "1";
+
+                // 2. Fetch Reviews
+                const filter = revContract.filters.ReviewSubmitted(storeId);
+                const events = await revContract.queryFilter(filter, -100000);
+                
+                const reviewsList = document.getElementById('reviewsList');
+                reviewsList.innerHTML = "";
+
+                if (events.length === 0) {
+                    reviewsList.innerHTML = `<div class="p-20 text-center border border-dashed border-[var(--border)] rounded-[3rem] opacity-30 uppercase text-[10px] font-black">No reviews found for this merchant.</div>`;
+                    return;
+                }
+
+                let sum = 0;
+                let counts = {5:0, 4:0, 3:0, 2:0, 1:0};
+
+                // Prepare Review Cards
+                for (let ev of events.reverse()) {
+                    const { rating, content, receiptId } = ev.args;
+                    sum += Number(rating);
+                    counts[Number(rating)]++;
+
+                    // Check for merchant reply
+                    const reply = await engContract.merchantReplies(receiptId);
+
+                    reviewsList.innerHTML += `
+                        <div class="review-card p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] shadow-lg group">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="text-blue-600 text-xl font-bold">${"★".repeat(rating)}${"☆".repeat(5-rating)}</div>
+                                <span class="text-[9px] font-mono opacity-20 group-hover:opacity-100 transition tracking-tighter">RECEIPT: ${receiptId.slice(0,18)}...</span>
+                            </div>
+                            <p class="text-3xl font-medium italic leading-tight tracking-tight mb-10">"${sanitize(content)}"</p>
+                            
+                            ${reply ? `
+                                <div class="mt-8 p-8 bg-[var(--bg-main)] rounded-3xl border border-blue-600/10 relative">
+                                    <span class="absolute -top-3 left-6 bg-blue-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full tracking-widest shadow-lg">Official Response</span>
+                                    <p class="text-base opacity-70 italic leading-relaxed">${sanitize(reply)}</p>
+                                </div>
+                            ` : ''}
+                        </div>`;
+                }
+
+                // 3. Update Analytics
+                const avg = sum / events.length;
+                animateValue("avgScore", 0, avg, 1500, true);
+                animateValue("totalLogs", 0, events.length, 1000);
+
+                // Render Progress Bars
+                const barsContainer = document.getElementById('barsContainer');
+                barsContainer.innerHTML = "";
+                [5,4,3,2,1].forEach(num => {
+                    const percentage = (counts[num] / events.length) * 100;
+                    barsContainer.innerHTML += `
+                        <div class="flex items-center gap-4 group">
+                            <span class="w-8 text-[9px] font-black opacity-30 group-hover:opacity-100 transition">${num} ST</span>
+                            <div class="flex-grow stat-bar">
+                                <div class="stat-fill" style="width: ${percentage}%"></div>
+                            </div>
+                            <span class="w-6 text-[9px] font-mono opacity-30 text-right group-hover:opacity-100 transition">${counts[num]}</span>
+                        </div>`;
+                });
+
+                // 4. Trigger Animations
+                setTimeout(() => {
+                    document.querySelectorAll('.review-card').forEach((card, i) => {
+                        setTimeout(() => card.classList.add('visible'), i * 150);
+                    });
+                }, 100);
+
+            } catch (e) {
+                console.error("Store init error:", e);
+            }
+        }
+
+        // Reliable Launch
+        if (window.isVeritasReady) { initPage(); }
+        window.addEventListener('contractsReady', initPage);
     </script>
 </body>
 </html>
