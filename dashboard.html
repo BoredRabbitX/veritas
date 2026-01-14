@@ -6,51 +6,86 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen bg-black text-white">
+<body class="flex flex-col min-h-screen bg-black text-white font-sans">
+
     <main class="main-content flex-grow px-6 py-12">
-        <div class="max-w-5xl mx-auto">
+        <div class="max-w-6xl mx-auto">
+            
             <div id="authGuard" class="text-center py-20">
-                <h2 class="text-4xl font-black italic uppercase mb-8">Merchant Access</h2>
-                <button onclick="connectWallet()" class="btn-primary px-10 py-4">Connect Wallet</button>
+                <h2 class="text-4xl font-black italic uppercase mb-8 tracking-tighter">Merchant Access</h2>
+                <button onclick="connectWallet()" class="btn-primary px-10 py-4 italic font-black uppercase tracking-widest">Connect Wallet</button>
             </div>
 
             <div id="mainDashboard" class="hidden">
+                
                 <section id="regSection" class="hidden max-w-2xl mx-auto py-20 text-center">
-                    <h2 class="text-5xl font-black italic uppercase mb-4">Register Business</h2>
-                    <p class="opacity-40 text-xs mb-10 uppercase tracking-widest">Activate your on-chain identity</p>
-                    <div class="space-y-4">
-                        <input id="bizName" type="text" placeholder="Store Name" class="bg-zinc-900 border border-white/10 w-full p-4 rounded-2xl outline-none focus:border-blue-600">
-                        <input id="bizCat" type="text" placeholder="Category (e.g. Food, Tech)" class="bg-zinc-900 border border-white/10 w-full p-4 rounded-2xl outline-none focus:border-blue-600">
-                        <button onclick="register()" class="btn-primary w-full py-5 font-black uppercase italic tracking-widest">Register on Paseo</button>
+                    <h1 class="text-6xl font-black italic uppercase mb-4 tracking-tighter">Register <span class="text-blue-600 text-7xl italic leading-none block">Business</span></h1>
+                    <p class="opacity-40 text-xs mb-10 uppercase tracking-[0.5em] font-bold">Activate your on-chain identity</p>
+                    <div class="space-y-4 bg-zinc-900/50 p-10 rounded-[3rem] border border-white/5">
+                        <input id="bizName" type="text" placeholder="Store Name" class="bg-black border border-white/10 w-full p-5 rounded-2xl outline-none focus:border-blue-600 transition text-white">
+                        <input id="bizCat" type="text" placeholder="Category (e.g. Retail, Tech)" class="bg-black border border-white/10 w-full p-5 rounded-2xl outline-none focus:border-blue-600 transition text-white">
+                        <button onclick="register()" class="btn-primary w-full py-5 font-black uppercase italic tracking-widest shadow-xl shadow-blue-600/10">Register on Paseo</button>
                     </div>
                 </section>
 
                 <section id="activeDashboard" class="hidden space-y-12">
-                    <div class="flex justify-between items-end border-b border-white/5 pb-10">
+                    
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 border-b border-white/5 pb-10">
                         <div>
-                            <p id="dispCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-2"></p>
-                            <h1 id="dispName" class="text-6xl font-black italic uppercase tracking-tighter leading-none">Store</h1>
+                            <p id="dispCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.5em] mb-3"></p>
+                            <h1 id="dispName" class="text-7xl font-black italic uppercase tracking-tighter leading-none text-white"></h1>
                         </div>
-                        <div class="bg-zinc-900 p-6 rounded-2xl border border-white/5 text-center min-w-[120px]">
-                            <p class="text-[9px] font-bold opacity-30 uppercase mb-1 text-zinc-400">TX Volume</p>
-                            <p id="statVol" class="text-3xl font-black italic">0</p>
+                        
+                        <div class="grid grid-cols-3 gap-4 w-full lg:w-auto">
+                            <div class="bg-zinc-900 p-6 rounded-3xl border border-white/5 text-center min-w-[120px]">
+                                <p class="text-[9px] font-bold opacity-30 uppercase mb-1 tracking-widest">Reviews</p>
+                                <p id="statRev" class="text-3xl font-black italic">0</p>
+                            </div>
+                            <div class="bg-zinc-900 p-6 rounded-3xl border border-white/5 text-center min-w-[120px]">
+                                <p class="text-[9px] font-bold opacity-30 uppercase mb-1 tracking-widest">Rating</p>
+                                <p id="statRate" class="text-3xl font-black italic text-blue-600">0.0</p>
+                            </div>
+                            <div class="bg-zinc-900 p-6 rounded-3xl border border-white/5 text-center min-w-[120px]">
+                                <p class="text-[9px] font-bold opacity-30 uppercase mb-1 tracking-widest">Volume</p>
+                                <p id="statVol" class="text-3xl font-black italic">0</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid lg:grid-cols-2 gap-10">
-                        <section class="p-8 bg-zinc-900 rounded-[2.5rem] border border-blue-600/20">
-                            <h3 class="text-xl font-black uppercase italic mb-6">Issue Receipt</h3>
-                            <div class="space-y-6">
-                                <input id="receiptRaw" type="text" readonly placeholder="V3-WAITING" class="bg-black border border-white/10 w-full p-4 rounded-xl font-mono text-center text-blue-500 text-lg uppercase outline-none">
-                                <button id="genBtn" onclick="generateReceipt()" class="btn-primary w-full py-4 uppercase font-black italic">Sign & Generate QR</button>
-                                <div class="flex justify-center py-6 bg-black rounded-2xl border border-white/10 min-h-[200px]">
-                                    <div id="qrcode" class="p-2 bg-white rounded-xl"></div>
+                    <div class="grid lg:grid-cols-2 gap-12">
+                        <section class="p-10 bg-zinc-900/40 rounded-[3rem] border border-white/5 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-2xl font-black uppercase italic mb-2 tracking-tight">Issue Receipt</h3>
+                                <p class="opacity-30 text-[10px] font-bold uppercase tracking-widest mb-8">Generate verified customer access</p>
+                                
+                                <div class="space-y-6">
+                                    <div class="space-y-2">
+                                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">On-Chain ID</label>
+                                        <input id="receiptRaw" type="text" readonly placeholder="V3-ID-WAITING" class="bg-black border border-white/10 w-full p-5 rounded-2xl font-mono text-center text-zinc-500 text-xl uppercase outline-none">
+                                    </div>
+                                    <button id="genBtn" onclick="generateReceipt()" class="btn-primary w-full py-5 font-black uppercase italic tracking-widest shadow-lg shadow-blue-600/20">Sign & Generate QR</button>
                                 </div>
                             </div>
+
+                            <div class="mt-10 flex flex-col items-center justify-center py-6 bg-black/40 rounded-3xl border border-white/5 min-h-[260px]">
+                                <div id="qrPlaceholder" class="text-center">
+                                    <div class="w-20 h-20 border-2 border-dashed border-white/10 rounded-full mx-auto mb-4 flex items-center justify-center">
+                                        <div class="w-2 h-2 bg-white/10 rounded-full animate-ping"></div>
+                                    </div>
+                                    <p class="text-[9px] font-bold opacity-20 uppercase italic tracking-widest">Waiting for Transaction</p>
+                                </div>
+                                <div id="qrcode" class="hidden p-4 bg-white rounded-3xl shadow-2xl"></div>
+                            </div>
                         </section>
-                        <section>
-                            <h3 class="text-xl font-black uppercase italic mb-6">Feedback Inbox</h3>
-                            <div id="merchantInbox" class="space-y-4"></div>
+
+                        <section class="space-y-6">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-2xl font-black uppercase italic tracking-tight">Feedback Inbox</h3>
+                                <span class="text-blue-600 text-[10px] font-bold uppercase animate-pulse">Live Sync</span>
+                            </div>
+                            <div id="merchantInbox" class="space-y-6 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
+                                <p class="opacity-20 italic text-sm uppercase tracking-widest py-10">No verified logs found yet.</p>
+                            </div>
                         </section>
                     </div>
                 </section>
@@ -73,6 +108,8 @@
                 document.getElementById('dispName').innerText = b.name;
                 document.getElementById('dispCat').innerText = ethers.decodeBytes32String(b.category);
                 document.getElementById('statVol').innerText = b.volume;
+                
+                await updateStats(addr);
                 await loadMerchantData(addr);
             } else {
                 document.getElementById('regSection').classList.remove('hidden');
@@ -82,7 +119,7 @@
         async function register() {
             const name = document.getElementById('bizName').value;
             const cat = ethers.encodeBytes32String(document.getElementById('bizCat').value);
-            if(!name) return alert("Please enter a name");
+            if(!name) return alert("Business Name required");
             try {
                 const tx = await regContract.registerBusiness(name, cat);
                 await tx.wait();
@@ -90,43 +127,94 @@
             } catch(e) { alert(e.reason || e.message); }
         }
 
+        async function updateStats(addr) {
+            try {
+                const filter = revContract.filters.ReviewSubmitted(addr);
+                const events = await revContract.queryFilter(filter, -50000);
+                const count = events.length;
+                let avg = 0;
+                if (count > 0) {
+                    const sum = events.reduce((acc, ev) => acc + Number(ev.args.rating), 0);
+                    avg = (sum / count).toFixed(1);
+                }
+                document.getElementById('statRev').innerText = count;
+                document.getElementById('statRate').innerText = avg;
+            } catch (e) { console.error("Stats error", e); }
+        }
+
         async function loadMerchantData(addr) {
             const list = document.getElementById('merchantInbox');
             const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), -50000);
-            list.innerHTML = events.length ? "" : "<p class='opacity-20 italic text-xs uppercase'>No reviews yet.</p>";
+            if(events.length > 0) list.innerHTML = "";
             
             for(let i = events.length-1; i >= 0; i--) {
                 const {author, rating, content, receiptId} = events[i].args;
                 const reply = await engContract.merchantReplies(receiptId);
                 list.innerHTML += `
-                    <div class="bg-zinc-900 border border-white/5 p-6 rounded-2xl mb-4">
-                        <div class="flex justify-between items-center mb-2 text-[10px]">
-                            <span class="opacity-30 uppercase font-mono">${author.slice(0,12)}...</span>
-                            <span class="text-blue-500 font-bold italic">${"★".repeat(rating)}</span>
+                    <div class="bg-zinc-900 border border-white/5 p-8 rounded-[2rem] hover:border-white/20 transition">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-[10px] font-mono opacity-30 uppercase tracking-tighter">${author.slice(0,16)}...</span>
+                            <span class="text-blue-500 font-bold italic tracking-widest">${"★".repeat(rating)}</span>
                         </div>
-                        <p class="text-sm italic mb-4 opacity-80">"${content}"</p>
-                        ${reply ? `<div class="p-4 bg-blue-600/10 border-l-2 border-blue-600 text-xs italic opacity-70">${reply}</div>` : `
-                        <div class="flex gap-2">
-                            <input id="rep-${receiptId}" type="text" placeholder="Reply..." class="bg-black border border-white/10 flex-grow p-3 rounded-xl text-xs outline-none">
-                            <button onclick="sendReply('${receiptId}')" class="bg-white text-black text-[9px] font-black px-6 rounded-xl uppercase">Post</button>
-                        </div>`}
+                        <p class="text-base italic mb-6 opacity-90 leading-relaxed text-zinc-300">"${content}"</p>
+                        ${reply ? `
+                            <div class="p-5 bg-blue-600/10 border-l-2 border-blue-600 text-xs italic opacity-80 rounded-r-2xl">
+                                <p class="text-[9px] font-black text-blue-500 uppercase mb-2 tracking-widest italic">Your Response</p>
+                                ${reply}
+                            </div>
+                        ` : `
+                            <div class="flex gap-3">
+                                <input id="rep-${receiptId}" type="text" placeholder="Post on-chain reply..." class="bg-black border border-white/10 flex-grow p-4 rounded-xl text-xs outline-none focus:border-blue-600 transition">
+                                <button onclick="sendReply('${receiptId}')" class="bg-white text-black text-[9px] font-black px-6 rounded-xl uppercase hover:bg-blue-600 hover:text-white transition">Post</button>
+                            </div>
+                        `}
                     </div>`;
             }
         }
 
         async function sendReply(rid) {
             const msg = document.getElementById(`rep-${rid}`).value;
-            const tx = await engContract.postReply(rid, msg);
-            await tx.wait(); location.reload();
+            if(!msg) return;
+            try {
+                const tx = await engContract.postReply(rid, msg);
+                await tx.wait();
+                location.reload();
+            } catch(e) { alert(e.message); }
         }
 
         async function generateReceipt() {
+            const btn = document.getElementById('genBtn');
             const id = "V3-" + Math.random().toString(36).substring(2,8).toUpperCase();
-            const tx = await engContract.issueReceipt(ethers.keccak256(ethers.toUtf8Bytes(id)));
-            await tx.wait();
-            document.getElementById('receiptRaw').value = id;
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById('qrcode'), { text: `${window.location.origin}/review.html?biz=${await signer.getAddress()}&id=${id}`, width: 160, height: 160 });
+            btn.innerText = "SIGNING...";
+            btn.disabled = true;
+
+            try {
+                const ridHash = ethers.keccak256(ethers.toUtf8Bytes(id));
+                const tx = await engContract.issueReceipt(ridHash);
+                await tx.wait();
+
+                document.getElementById('receiptRaw').value = id;
+                document.getElementById('receiptRaw').classList.replace('text-zinc-500', 'text-blue-500');
+                
+                document.getElementById('qrPlaceholder').classList.add('hidden');
+                const qrDiv = document.getElementById('qrcode');
+                qrDiv.classList.remove('hidden');
+                qrDiv.innerHTML = "";
+                
+                new QRCode(qrDiv, { 
+                    text: `${window.location.origin}/review.html?biz=${await signer.getAddress()}&id=${id}`, 
+                    width: 180, 
+                    height: 180,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff"
+                });
+                btn.innerText = "SIGN & GENERATE QR";
+                btn.disabled = false;
+            } catch(e) { 
+                alert("Transaction failed: " + e.message); 
+                btn.innerText = "SIGN & GENERATE QR";
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
