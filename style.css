@@ -1,72 +1,51 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap');
 
 :root {
-    /* DARK MODE (Default) */
-    --bg-dark: #09090b;
+    /* DARK THEME */
+    --bg-main: #09090b;
     --card-bg: #18181b;
-    --input-bg: #27272a;
-    --primary: #2563eb;
+    --input-bg: #18181b;
     --text-main: #f4f4f5;
+    --text-muted: rgba(244, 244, 245, 0.5);
     --border: rgba(255, 255, 255, 0.1);
-    --input-text: #ffffff;
+    --primary: #2563eb;
 }
 
-/* LIGHT MODE OVERRIDE */
 html.light {
-    --bg-dark: #f4f4f5;
+    /* LIGHT THEME */
+    --bg-main: #f4f4f5;
     --card-bg: #ffffff;
-    --input-bg: #e4e4e7;
-    --primary: #2563eb;
+    --input-bg: #ffffff;
     --text-main: #09090b;
+    --text-muted: rgba(9, 9, 11, 0.6);
     --border: rgba(0, 0, 0, 0.1);
-    --input-text: #000000;
+    --primary: #2563eb;
 }
 
 body {
-    background-color: var(--bg-dark);
+    background-color: var(--bg-main);
     color: var(--text-main);
     font-family: 'Inter', sans-serif;
     margin: 0;
-    line-height: 1.5;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.nav-container {
-    /* Usiamo la variabile per il background della nav */
-    background: var(--bg-dark);
-    opacity: 0.95;
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 100;
-}
+/* Classi Utility per il Tema Totale */
+.dynamic-card { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-main); }
+.dynamic-text { color: var(--text-main); }
+.dynamic-muted { color: var(--text-muted); }
 
-.card-veritas {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-}
-
-/* Fix for input legibility */
 input, select, textarea {
-    width: 100%;
     background: var(--input-bg) !important;
+    color: var(--text-main) !important;
     border: 1px solid var(--border) !important;
-    color: var(--input-text) !important; /* Usiamo la variabile per il testo */
-    padding: 12px 16px !important;
-    border-radius: 12px !important;
-    outline: none !important;
-    transition: all 0.3s ease;
 }
 
 .btn-primary {
     background: var(--primary);
-    color: white;
-    font-weight: 700;
-    padding: 12px 24px;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    text-transform: uppercase;
+    color: white !important;
+    font-weight: 900;
+    transition: transform 0.2s;
 }
+
+.btn-primary:hover { transform: scale(1.02); }
