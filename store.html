@@ -79,18 +79,14 @@
         }
 
         async function initPage() {
-            // Check if contracts are injected
-            if (typeof regContract === "undefined" || typeof revContract === "undefined") {
-                console.warn("Contracts not ready, retrying...");
-                return;
-            }
+            if (typeof regContract === "undefined" || typeof revContract === "undefined") return;
 
             const urlParams = new URLSearchParams(window.location.search);
             const storeId = urlParams.get('id');
             if (!storeId) return;
 
             try {
-                // 1. Fetch Store Data
+                // 1. Merchant Profile
                 const b = await regContract.businesses(storeId);
                 if (!b.isActive) return;
 
@@ -100,7 +96,7 @@
                 catElement.innerText = ethers.decodeBytes32String(b.category).replace(/_/g, ' ');
                 catElement.style.opacity = "1";
 
-                // 2. Fetch Reviews
+                // 2. Reviews Fetching
                 const filter = revContract.filters.ReviewSubmitted(storeId);
                 const events = await revContract.queryFilter(filter, -100000);
                 
@@ -108,7 +104,7 @@
                 reviewsList.innerHTML = "";
 
                 if (events.length === 0) {
-                    reviewsList.innerHTML = `<div class="p-20 text-center border border-dashed border-[var(--border)] rounded-[3rem] opacity-30 uppercase text-[10px] font-black">No reviews found for this merchant.</div>`;
+                    reviewsList.innerHTML = `<div class="p-20 text-center border border-dashed border-[var(--border)] rounded-[3rem] opacity-30 uppercase text-[10px] font-black">No reviews found.</div>`;
                     return;
                 }
 
@@ -116,37 +112,44 @@
                 let counts = {5:0, 4:0, 3:0, 2:0, 1:0};
 
                 for (let ev of events.reverse()) {
-                    const { rating, content, receiptId } = ev.args;
-                    sum += Number(rating);
-                    counts[Number(rating)]++;
+                    // FIX: Convert BigInt to Number explicitly
+                    const rating = Number(ev.args[2]); 
+                    const content = ev.args[3];
+                    const receiptId = ev.args[4];
+
+                    sum += rating;
+                    counts[rating]++;
 
                     const reply = await engContract.merchantReplies(receiptId);
 
                     reviewsList.innerHTML += `
                         <div class="review-card p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] shadow-lg group">
                             <div class="flex justify-between items-start mb-8">
-                                <div class="text-blue-600 text-xl font-bold">${"★".repeat(rating)}${"☆".repeat(5-rating)}</div>
-                                <span class="text-[9px] font-mono opacity-20 group-hover:opacity-100 transition tracking-tighter">RECEIPT: ${receiptId.slice(0,18)}...</span>
+                                <div class="text-blue-600 text-xl font-bold">
+                                    ${"★".repeat(rating)}${"☆".repeat(5 - rating)}
+                                </div>
+                                <span class="text-[9px] font-mono opacity-20 group-hover:opacity-100 transition tracking-tighter uppercase">ID: ${receiptId.slice(0,18)}...</span>
                             </div>
                             <p class="text-3xl font-medium italic leading-tight tracking-tight mb-10">"${sanitize(content)}"</p>
                             ${reply ? `
                                 <div class="mt-8 p-8 bg-[var(--bg-main)] rounded-3xl border border-blue-600/10 relative">
-                                    <span class="absolute -top-3 left-6 bg-blue-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full tracking-widest shadow-lg">Official Response</span>
+                                    <span class="absolute -top-3 left-6 bg-blue-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full tracking-widest shadow-lg">Merchant Reply</span>
                                     <p class="text-base opacity-70 italic leading-relaxed">${sanitize(reply)}</p>
                                 </div>
                             ` : ''}
                         </div>`;
                 }
 
-                // 3. Update Analytics
-                const avg = sum / events.length;
+                // 3. Update Sidebar
+                const total = events.length;
+                const avg = sum / total;
                 animateValue("avgScore", 0, avg, 1500, true);
-                animateValue("totalLogs", 0, events.length, 1000);
+                animateValue("totalLogs", 0, total, 1000);
 
                 const barsContainer = document.getElementById('barsContainer');
                 barsContainer.innerHTML = "";
                 [5,4,3,2,1].forEach(num => {
-                    const percentage = (counts[num] / events.length) * 100;
+                    const percentage = (counts[num] / total) * 100;
                     barsContainer.innerHTML += `
                         <div class="flex items-center gap-4 group">
                             <span class="w-8 text-[9px] font-black opacity-30 group-hover:opacity-100 transition">${num} ST</span>
@@ -157,7 +160,7 @@
                         </div>`;
                 });
 
-                // 4. Trigger Animations
+                // Show Cards
                 setTimeout(() => {
                     document.querySelectorAll('.review-card').forEach((card, i) => {
                         setTimeout(() => card.classList.add('visible'), i * 150);
@@ -166,16 +169,13 @@
 
             } catch (e) {
                 console.error("Store init error:", e);
-                document.getElementById('reviewsList').innerHTML = "Blockchain Sync Error. Check Console.";
+                document.getElementById('reviewsList').innerHTML = "Sync Error.";
             }
         }
 
-        // Logic sync: Wait for app.js to signal ready
         window.addEventListener('contractsReady', initPage);
-        
-        // Fallback if event was missed
         window.addEventListener('load', () => {
-            setTimeout(() => { if(window.isVeritasReady) initPage(); }, 500);
+            setTimeout(() => { if(window.isVeritasReady) initPage(); }, 600);
         });
     </script>
 </body>
