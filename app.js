@@ -1,5 +1,5 @@
-/** * VERITAS CORE - Beta 1.0 
- * Hybrid Reading: Public RPC + MetaMask
+/** * VERITAS CORE - Beta 1.1 
+ * Official Paseo RPC: https://testnet-passet-hub-eth-rpc.polkadot.io
  **/
 
 const registryAddress = "0xea45643b2b4bf3a5bb12588d7e9b8a147b040964";
@@ -10,30 +10,15 @@ const PASEO_RPC = "https://testnet-passet-hub-eth-rpc.polkadot.io";
 
 let provider, signer, regContract, engContract, revContract;
 
-const abiRegistry = [
-    "function businesses(address) view returns (string name, bytes32 category, bool isActive, uint32 volume)",
-    "function registerBusiness(string _name, bytes32 _category) external",
-    "event BusinessRegistered(address indexed owner, string name, bytes32 category)"
-];
-const abiEngine = [
-    "function issueReceipt(bytes32) external",
-    "function postReply(bytes32, string) external",
-    "function merchantReplies(bytes32) view returns (string)",
-    "function receiptIssuers(bytes32) view returns (address)"
-];
-const abiReviewer = [
-    "function submitReview(address, uint8, string, bytes32) external",
-    "event ReviewSubmitted(address indexed business, address indexed author, uint8 rating, string content, bytes32 indexed receiptId)"
-];
+const abiRegistry = ["function businesses(address) view returns (string name, bytes32 category, bool isActive, uint32 volume)","function registerBusiness(string _name, bytes32 _category) external","event BusinessRegistered(address indexed owner, string name, bytes32 category)"];
+const abiEngine = ["function issueReceipt(bytes32) external","function postReply(bytes32, string) external","function merchantReplies(bytes32) view returns (string)","function receiptIssuers(bytes32) view returns (address)"];
+const abiReviewer = ["function submitReview(address, uint8, string, bytes32) external","event ReviewSubmitted(address indexed business, address indexed author, uint8 rating, string content, bytes32 indexed receiptId)"];
 
-// --- LOGICA DI INIZIALIZZAZIONE CONTRATTI ---
-async function setupContracts(target) {
-    regContract = new ethers.Contract(registryAddress, abiRegistry, target);
-    engContract = new ethers.Contract(engineAddress, abiEngine, target);
-    revContract = new ethers.Contract(reviewerAddress, abiReviewer, target);
-}
+// --- 1. THEME (Immediato) ---
+(function() {
+    if (localStorage.getItem('veritas-theme') === 'light') document.documentElement.classList.add('light');
+})();
 
-// --- THEME ---
 window.toggleTheme = function() {
     const isLight = document.documentElement.classList.toggle('light');
     localStorage.setItem('veritas-theme', isLight ? 'light' : 'dark');
@@ -41,7 +26,14 @@ window.toggleTheme = function() {
     if (icon) icon.innerText = isLight ? '☀️' : '🌙';
 };
 
-// --- WALLET ---
+// --- 2. CONTRACT SETUP (Non-blocking) ---
+function setupContracts(target) {
+    regContract = new ethers.Contract(registryAddress, abiRegistry, target);
+    engContract = new ethers.Contract(engineAddress, abiEngine, target);
+    revContract = new ethers.Contract(reviewerAddress, abiReviewer, target);
+}
+
+// --- 3. WALLET LOGIC ---
 async function connectWallet(silent = false) {
     if (!window.ethereum) return false;
     try {
@@ -52,20 +44,41 @@ async function connectWallet(silent = false) {
 
         if (accounts.length > 0) {
             signer = await provider.getSigner();
-            await setupContracts(signer); // Passa a modalità scrittura
-            
+            setupContracts(signer);
             const addr = await signer.getAddress();
-            const btn = document.getElementById('connectBtn');
-            if (btn) btn.innerText = addr.slice(0,6) + "...";
-            
+            if (document.getElementById('connectBtn')) document.getElementById('connectBtn').innerText = addr.slice(0,6) + "...";
             localStorage.setItem('veritas_autoconnect', 'true');
-            if (typeof initPage === "function") await initPage();
+            if (typeof initPage === "function") initPage();
             return true;
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Wallet Error:", e); }
     return false;
 }
 
+// --- 4. BOOTSTRAP (The Fix) ---
+async function bootstrap() {
+    console.log("Veritas: Starting Bootstrap...");
+    
+    // Inizializza subito con RPC pubblico per non avere "undefined"
+    const publicProvider = new ethers.JsonRpcProvider(PASEO_RPC);
+    setupContracts(publicProvider);
+
+    // Se l'utente ha l'autoconnect, MetaMask sovrascriverà i contratti
+    if (localStorage.getItem('veritas_autoconnect') === 'true') {
+        await connectWallet(true);
+    } else {
+        // Se non è connesso, avviamo comunque la logica della pagina
+        if (typeof initPage === "function") {
+            console.log("Veritas: Running initPage in guest mode...");
+            initPage();
+        }
+    }
+}
+
+// Avvio forzato
+window.addEventListener('load', bootstrap);
+
+// Utility
 window.addPaseoNetwork = async function() {
     const params = [{ chainId: '0x190f9636', chainName: 'Paseo AssetHub', nativeCurrency: { name: 'Paseo', symbol: 'PAS', decimals: 18 }, rpcUrls: [PASEO_RPC], blockExplorerUrls: ['https://paseo.subscan.io'] }];
     await window.ethereum.request({ method: 'wallet_addEthereumChain', params });
@@ -75,27 +88,6 @@ window.copyAddressAndGoToFaucet = async function() {
     if (!signer) return alert("Connect wallet first!");
     const addr = await signer.getAddress();
     await navigator.clipboard.writeText(addr);
-    alert("Address copied!");
+    alert("Address copied!"); 
     window.open("https://faucet.polkadot.io/", "_blank");
 };
-
-// --- BOOTSTRAP ---
-(async function init() {
-    // 1. Tema
-    if (localStorage.getItem('veritas-theme') === 'light') document.documentElement.classList.add('light');
-
-    // 2. Fallback Sola Lettura immediato
-    const publicProvider = new ethers.JsonRpcProvider(PASEO_RPC);
-    await setupContracts(publicProvider);
-
-    // 3. Gestione caricamento pagina
-    window.addEventListener('load', async () => {
-        // Se l'utente era già connesso, prova il ripristino
-        if (localStorage.getItem('veritas_autoconnect') === 'true') {
-            await connectWallet(true);
-        } else {
-            // Se non è connesso, carica comunque i dati tramite RPC
-            if (typeof initPage === "function") await initPage();
-        }
-    });
-})();
