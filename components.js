@@ -56,7 +56,7 @@ const footerContent = `
 
             <div class="flex flex-col items-center md:items-end gap-4">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-center md:text-right opacity-60 leading-relaxed">
-                    Per un Web3 libero su <br class="md:hidden"> 
+                    For a free Web3 on <br class="md:hidden"> 
                     <span class="text-[var(--text-main)]">Polkadot Paseo Hub</span>
                 </p>
                 <div class="flex gap-4">
