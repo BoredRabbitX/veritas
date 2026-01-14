@@ -1,16 +1,15 @@
 /** * VERITAS CORE - Beta 1.0 
- * Hybrid Provider: Public RPC for Reading + MetaMask for Writing
+ * Hybrid Reading: Public RPC + MetaMask
  **/
 
 const registryAddress = "0xea45643b2b4bf3a5bb12588d7e9b8a147b040964";
 const engineAddress = "0xf85ba77ea82080bb4f32d6d77bc8e65b1c81ac81";
 const reviewerAddress = "0x5c65e66016c36de0ec94fe87e3c035ead54aa9da";
 const EXPECTED_CHAIN_ID = 420420422;
-const PASEO_RPC = "https://pas-rpc.stakeworld.io"; // Public Node
+const PASEO_RPC = "https://pas-rpc.stakeworld.io";
 
 let provider, signer, regContract, engContract, revContract;
 
-// --- 1. ABI DEFINITIONS ---
 const abiRegistry = [
     "function businesses(address) view returns (string name, bytes32 category, bool isActive, uint32 volume)",
     "function registerBusiness(string _name, bytes32 _category) external",
@@ -27,7 +26,14 @@ const abiReviewer = [
     "event ReviewSubmitted(address indexed business, address indexed author, uint8 rating, string content, bytes32 indexed receiptId)"
 ];
 
-// --- 2. THEME ---
+// --- LOGICA DI INIZIALIZZAZIONE CONTRATTI ---
+async function setupContracts(target) {
+    regContract = new ethers.Contract(registryAddress, abiRegistry, target);
+    engContract = new ethers.Contract(engineAddress, abiEngine, target);
+    revContract = new ethers.Contract(reviewerAddress, abiReviewer, target);
+}
+
+// --- THEME ---
 window.toggleTheme = function() {
     const isLight = document.documentElement.classList.toggle('light');
     localStorage.setItem('veritas-theme', isLight ? 'light' : 'dark');
@@ -35,28 +41,9 @@ window.toggleTheme = function() {
     if (icon) icon.innerText = isLight ? '☀️' : '🌙';
 };
 
-// --- 3. SMART FAUCET ---
-window.copyAddressAndGoToFaucet = async function() {
-    if (!signer) return alert("Please connect your wallet first!");
-    const addr = await signer.getAddress();
-    await navigator.clipboard.writeText(addr);
-    alert("Address copied! Paste it in the faucet.");
-    window.open("https://faucet.polkadot.io/", "_blank");
-};
-
-// --- 4. INITIALIZATION (READ-ONLY FALLBACK) ---
-async function initContracts(targetProviderOrSigner) {
-    regContract = new ethers.Contract(registryAddress, abiRegistry, targetProviderOrSigner);
-    engContract = new ethers.Contract(engineAddress, abiEngine, targetProviderOrSigner);
-    revContract = new ethers.Contract(reviewerAddress, abiReviewer, targetProviderOrSigner);
-}
-
-// --- 5. WALLET ---
+// --- WALLET ---
 async function connectWallet(silent = false) {
-    if (!window.ethereum) {
-        if (!silent) alert("MetaMask not found. Initializing in read-only mode.");
-        return false;
-    }
+    if (!window.ethereum) return false;
     try {
         provider = new ethers.BrowserProvider(window.ethereum);
         const accounts = silent 
@@ -64,53 +51,51 @@ async function connectWallet(silent = false) {
             : await window.ethereum.request({ method: 'eth_requestAccounts' });
 
         if (accounts.length > 0) {
-            const network = await provider.getNetwork();
-            if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
-                if (!silent) window.addPaseoNetwork();
-                return false;
-            }
             signer = await provider.getSigner();
-            await initContracts(signer); // Active mode
+            await setupContracts(signer); // Passa a modalità scrittura
             
+            const addr = await signer.getAddress();
             const btn = document.getElementById('connectBtn');
-            if (btn) btn.innerText = (await signer.getAddress()).slice(0,6) + "...";
+            if (btn) btn.innerText = addr.slice(0,6) + "...";
             
             localStorage.setItem('veritas_autoconnect', 'true');
             if (typeof initPage === "function") await initPage();
             return true;
         }
-    } catch (e) { console.error("Wallet connection error:", e); }
+    } catch (e) { console.error(e); }
     return false;
 }
 
 window.addPaseoNetwork = async function() {
-    const params = [{ 
-        chainId: '0x190f9636', 
-        chainName: 'Paseo AssetHub', 
-        nativeCurrency: { name: 'Paseo', symbol: 'PAS', decimals: 18 }, 
-        rpcUrls: [PASEO_RPC], 
-        blockExplorerUrls: ['https://paseo.subscan.io'] 
-    }];
+    const params = [{ chainId: '0x190f9636', chainName: 'Paseo AssetHub', nativeCurrency: { name: 'Paseo', symbol: 'PAS', decimals: 18 }, rpcUrls: [PASEO_RPC], blockExplorerUrls: ['https://paseo.subscan.io'] }];
     await window.ethereum.request({ method: 'wallet_addEthereumChain', params });
 };
 
-// --- 6. AUTO-INIT (Public RPC First) ---
-(async function() {
-    // Theme sync
+window.copyAddressAndGoToFaucet = async function() {
+    if (!signer) return alert("Connect wallet first!");
+    const addr = await signer.getAddress();
+    await navigator.clipboard.writeText(addr);
+    alert("Address copied!");
+    window.open("https://faucet.polkadot.io/", "_blank");
+};
+
+// --- BOOTSTRAP ---
+(async function init() {
+    // 1. Tema
     if (localStorage.getItem('veritas-theme') === 'light') document.documentElement.classList.add('light');
 
-    // Step 1: Initialize in Read-Only mode immediately using Public RPC
+    // 2. Fallback Sola Lettura immediato
     const publicProvider = new ethers.JsonRpcProvider(PASEO_RPC);
-    await initContracts(publicProvider);
-    console.log("Veritas: Read-only mode active (Public RPC)");
+    await setupContracts(publicProvider);
 
-    // Step 2: Run initPage if available (even without wallet)
+    // 3. Gestione caricamento pagina
     window.addEventListener('load', async () => {
-        if (typeof initPage === "function") await initPage();
-        
-        // Step 3: Check if we should try to connect wallet
+        // Se l'utente era già connesso, prova il ripristino
         if (localStorage.getItem('veritas_autoconnect') === 'true') {
             await connectWallet(true);
+        } else {
+            // Se non è connesso, carica comunque i dati tramite RPC
+            if (typeof initPage === "function") await initPage();
         }
     });
 })();
