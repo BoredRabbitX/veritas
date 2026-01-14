@@ -80,10 +80,19 @@ function renderUI() {
     if (hRoot) hRoot.innerHTML = headerContent;
     if (fRoot) fRoot.innerHTML = footerContent;
     
-    // Sync theme icon
+    // Sincronizza l'icona del tema
     const icon = document.getElementById('themeIcon');
     if (icon) {
         icon.innerText = document.documentElement.classList.contains('light') ? '☀️' : '🌙';
+    }
+
+    // Fondamentale: Se il wallet è già connesso, aggiorna il testo del bottone
+    // dopo che l'header è stato iniettato nel DOM
+    if (window.signer) {
+        window.signer.getAddress().then(addr => {
+            const btn = document.getElementById('connectBtn');
+            if (btn) btn.innerText = addr.slice(0,6) + "...";
+        });
     }
 }
 
@@ -92,7 +101,7 @@ window.toggleMobileMenu = function() {
     if (menu) menu.classList.toggle('hidden');
 };
 
-// Safe execution
+// Esegui il rendering UI appena il DOM è pronto
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderUI);
 } else {
