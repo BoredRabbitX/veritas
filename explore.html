@@ -17,34 +17,55 @@
     <div id="footer-root"> </div> <script src="app.js"> </script>
     <script src="app.js"></script><script src="components.js"></script>
     <script>
-      async function initPage() {
+    async function initPage() {
     try {
         const grid = document.getElementById('grid');
         if (!grid) return;
         
         grid.innerHTML = "<p class='opacity-50 uppercase text-[10px] animate-pulse'>Accessing Polkadot Ledger...</p>";
 
-        // regContract qui è già pronto grazie all'RPC in app.js
-        const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), -50000);
-        const owners = [...new Set(events.map(e => e.args.owner))];
+        // 1. Recupera tutti gli eventi di registrazione
+        const filter = regContract.filters.BusinessRegistered();
+        const events = await regContract.queryFilter(filter, -100000); // ultimi 100k blocchi
+        
+        // 2. FILTRO DUPLICATI: Creiamo un Set di indirizzi unici
+        // Usiamo un Set per assicurarci che ogni indirizzo compaia UNA sola volta
+        const uniqueAddresses = [...new Set(events.map(e => e.args.owner || e.args[0]))];
         
         grid.innerHTML = ""; // Puliamo il loader
         
-        for(let addr of owners.reverse()) {
+        if (uniqueAddresses.length === 0) {
+            grid.innerHTML = "<p class='opacity-30 uppercase text-[10px]'>No merchants registered yet.</p>";
+            return;
+        }
+
+        // 3. Ciclo sugli indirizzi UNICI (in ordine inverso per vedere i più recenti)
+        for(let addr of uniqueAddresses.reverse()) {
             const b = await regContract.businesses(addr);
+            
+            // Saltiamo i merchant non attivi
             if(!b.isActive) continue;
             
             const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
+            
             grid.innerHTML += `
-                <a href="store.html?id=${addr}" class="p-8 rounded-[2rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition block text-left">
-                    <p class="text-blue-600 text-[9px] font-bold uppercase mb-4">${cleanCat}</p>
-                    <h3 class="text-3xl font-black italic uppercase italic leading-none mb-4">${b.name}</h3>
-                    <div class="opacity-30 text-[9px] font-bold uppercase">Volume: ${b.volume} TX</div>
+                <a href="store.html?id=${addr}" class="p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg">
+                    <div class="flex justify-between items-start mb-6">
+                        <p class="text-blue-600 text-[10px] font-black uppercase tracking-[0.2em]">${cleanCat}</p>
+                        <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+                    </div>
+                    <h3 class="text-4xl font-black italic uppercase leading-none mb-6 tracking-tighter group-hover:text-blue-500 transition-colors">${b.name}</h3>
+                    <div class="flex justify-between items-center opacity-30 text-[9px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
+                        <span>${b.volume} Verified Logs</span>
+                        <span class="font-mono">${addr.slice(0,6)}...${addr.slice(-4)}</span>
+                    </div>
                 </a>`;
         }
     } catch (e) {
-        console.error("Explore initialization error:", e);
-        document.getElementById('grid').innerHTML = "<p class='text-red-500'>Error accessing Paseo Hub. Check your connection.</p>";
+        console.error("Explore error:", e);
+        if(document.getElementById('grid')) {
+            document.getElementById('grid').innerHTML = "<p class='text-red-500 text-[10px] font-bold uppercase'>Sync Error. Please Refresh.</p>";
+        }
     }
 }
     </script>
