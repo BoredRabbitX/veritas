@@ -3,140 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Profile | Veritas</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Store Details | Veritas Protocol</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="bg-[var(--bg-main)] text-[var(--text-main)]">
+
     <div id="header-root"></div>
 
-    <main class="main-content flex-grow px-6 py-20">
-        <div class="max-w-4xl mx-auto">
-            
-            <div id="storeHeader" class="mb-12 text-center md:text-left">
-                <p id="storeCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-4"></p>
-                <h1 id="storeName" class="text-7xl md:text-8xl font-black italic uppercase mb-6 tracking-tighter leading-none">Loading...</h1>
-                <div class="flex justify-center md:justify-start gap-8 text-[10px] font-bold uppercase opacity-30 tracking-widest">
-                    <span>TX Volume: <span id="storeVol" class="text-[var(--text-main)] font-mono">0</span></span>
-                    <span>Status: <span class="text-blue-500">On-Chain Verified</span></span>
-                </div>
+    <main class="max-w-7xl mx-auto px-6 py-20">
+        <div class="mb-16">
+            <p id="storeCat" class="text-blue-600 font-black uppercase tracking-[0.3em] text-[10px] mb-4 animate-pulse">Loading Category...</p>
+            <h1 id="storeName" class="text-6xl md:text-8xl font-black italic uppercase tracking-tighter mb-6">---</h1>
+            <div class="flex gap-8 opacity-40 text-[10px] font-bold uppercase tracking-widest">
+                <span>Verified Merchant</span>
+                <span>ID: <span id="storeVol">0</span> Logs</span>
             </div>
+        </div>
 
-            <div id="ratingSummary" class="mb-20 grid grid-cols-1 md:grid-cols-2 gap-10 items-center bg-[var(--card-bg)] p-10 rounded-[2.5rem] border border-[var(--border)]">
-                <div class="text-center md:text-left">
-                    <div class="text-sm font-black uppercase tracking-[0.2em] opacity-40 mb-2 italic">Global Rating</div>
-                    <div class="flex items-center justify-center md:justify-start gap-4">
-                        <span id="avgStars" class="text-6xl font-black italic">0.0</span>
-                        <div class="text-blue-600 text-2xl font-black">★★★★★</div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+            <div class="lg:col-span-4">
+                <div class="sticky top-32 p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] shadow-xl">
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-40 mb-8">Global Rating</p>
+                    
+                    <div class="mb-10">
+                        <h2 id="avgStars" class="text-8xl font-black italic leading-none mb-2">0.0</h2>
+                        <div class="flex gap-1 text-blue-600 mb-4" id="starIcons">
+                            ★★★★★
+                        </div>
+                        <p class="text-[10px] font-bold opacity-40 uppercase tracking-widest">
+                            Based on <span id="totalRev">0</span> verified logs
+                        </p>
                     </div>
-                    <div class="text-[10px] uppercase font-bold opacity-30 mt-2 tracking-widest">Based on <span id="totalRev" class="text-[var(--text-main)]">0</span> verified logs</div>
+
+                    <div id="barsContainer" class="space-y-4">
+                        </div>
                 </div>
-                
-                <div id="barsContainer" class="space-y-2"></div>
             </div>
 
-            <div class="space-y-12">
-                <h3 class="text-xs font-black uppercase tracking-[0.5em] opacity-20 italic">Verified Feedback Stream</h3>
+            <div class="lg:col-span-8">
                 <div id="reviewsList" class="space-y-8">
-                    <p class="opacity-20 italic uppercase text-xs">Accessing Paseo ledger...</p>
+                    <div class="p-20 text-center border border-[var(--border)] rounded-[3rem] border-dashed">
+                        <p class="text-[10px] font-black uppercase tracking-widest opacity-30 animate-pulse">
+                            Syncing with Polkadot Ledger...
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
-<div id="footer-root"></div> <script src="app.js"></script>
+
+    <div id="footer-root"></div>
+
     <script src="app.js"></script>
     <script src="components.js"></script>
+
     <script>
-     async function initPage() {
-    console.log("Store: Initializing Analytics & Reviews...");
-    const list = document.getElementById('reviewsList');
-    
-    try {
-        const id = new URLSearchParams(window.location.search).get('id');
-        if(!id) return;
-
-        // 1. Dati Business
-        const b = await regContract.businesses(id);
-        if(!b.isActive) return;
-
-        const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
-        if(document.getElementById('storeName')) document.getElementById('storeName').innerText = b.name;
-        if(document.getElementById('storeCat')) document.getElementById('storeCat').innerText = cleanCat;
-        if(document.getElementById('storeVol')) document.getElementById('storeVol').innerText = b.volume;
-
-        // 2. Recupero Recensioni per calcoli
-        const filter = revContract.filters.ReviewSubmitted(id);
-        const events = await revContract.queryFilter(filter, -50000);
-        
-        if(!list) return;
-        list.innerHTML = events.length ? "" : "No verified feedback found for this store.";
-
-        // --- CALCOLO STATISTICHE ---
-        let totalRating = 0;
-        let starCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
-        const totalReviews = events.length;
-
-        if(totalReviews > 0) {
-            // Ciclo per calcolare i dati
-            for(let ev of events) {
-                const r = Number(ev.args.rating || ev.args[2]);
-                totalRating += r;
-                starCounts[r]++;
-            }
-
-            // Aggiorna Media e Totale nel DOM
-            const average = (totalRating / totalReviews).toFixed(1);
-            if(document.getElementById('avgStars')) document.getElementById('avgStars').innerText = average;
-            if(document.getElementById('totalRev')) document.getElementById('totalRev').innerText = totalReviews;
-
-            // Aggiorna le barre grafiche se presenti
-            const barsContainer = document.getElementById('barsContainer');
-            if(barsContainer) {
-                barsContainer.innerHTML = "";
-                for(let s=5; s>=1; s--) {
-                    const percentage = ((starCounts[s] / totalReviews) * 100).toFixed(0);
-                    barsContainer.innerHTML += `
-                        <div class="flex items-center gap-4 mb-2">
-                            <span class="w-12 text-[9px] font-bold opacity-40 uppercase">${s} Stars</span>
-                            <div class="flex-grow bg-[var(--bg-main)] h-1 rounded-full overflow-hidden border border-[var(--border)]">
-                                <div class="bg-blue-600 h-full" style="width: ${percentage}%"></div>
-                            </div>
-                            <span class="w-8 text-[9px] font-mono opacity-40 text-right">${starCounts[s]}</span>
-                        </div>`;
+        // Funzione per l'effetto Count-Up
+        function animateValue(obj, start, end, duration, isFloat = false) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const val = progress * (end - start) + start;
+                obj.innerHTML = isFloat ? val.toFixed(1) : Math.floor(val);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
                 }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        async function initPage() {
+            const list = document.getElementById('reviewsList');
+            try {
+                const id = new URLSearchParams(window.location.search).get('id');
+                if(!id) return;
+
+                // 1. Dati Business (Usa regContract da app.js)
+                const b = await regContract.businesses(id);
+                if(!b.isActive) {
+                    list.innerHTML = "Store not active.";
+                    return;
+                }
+
+                // Update UI di base
+                document.getElementById('storeName').innerText = b.name;
+                document.getElementById('storeCat').innerText = ethers.decodeBytes32String(b.category).split('_').join(' ');
+                document.getElementById('storeVol').innerText = b.volume;
+
+                // 2. Recupero Recensioni
+                const filter = revContract.filters.ReviewSubmitted(id);
+                const events = await revContract.queryFilter(filter, -100000); // ultimi 100k blocchi
+                
+                if(events.length === 0) {
+                    list.innerHTML = "<div class='p-20 text-center opacity-30 uppercase text-[10px] font-bold'>No reviews yet for this merchant.</div>";
+                    return;
+                }
+
+                // --- CALCOLO ANALYTICS ---
+                let totalRating = 0;
+                let starCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
+                for(let ev of events) {
+                    const r = Number(ev.args.rating || ev.args[2]);
+                    totalRating += r;
+                    starCounts[r]++;
+                }
+
+                const avg = totalRating / events.length;
+
+                // --- AVVIA ANIMAZIONI COUNT-UP ---
+                animateValue(document.getElementById('avgStars'), 0, avg, 1500, true);
+                animateValue(document.getElementById('totalRev'), 0, events.length, 1200);
+
+                // --- RENDER BARRE ---
+                const bars = document.getElementById('barsContainer');
+                bars.innerHTML = "";
+                for(let s=5; s>=1; s--) {
+                    const percent = (starCounts[s] / events.length) * 100;
+                    bars.innerHTML += `
+                        <div class="flex items-center gap-4">
+                            <span class="w-10 text-[9px] font-black opacity-30">${s} ST</span>
+                            <div class="flex-grow h-[2px] bg-[var(--border)] rounded-full overflow-hidden">
+                                <div class="bg-blue-600 h-full transition-all duration-1000" style="width: 0%" id="bar-${s}"></div>
+                            </div>
+                            <span class="w-6 text-[9px] font-bold opacity-30 text-right">${starCounts[s]}</span>
+                        </div>
+                    `;
+                    // Trigger animazione barra dopo un piccolo delay
+                    setTimeout(() => {
+                        const b = document.getElementById(`bar-${s}`);
+                        if(b) b.style.width = percent + "%";
+                    }, 100);
+                }
+
+                // --- RENDER LISTA RECENSIONI ---
+                list.innerHTML = "";
+                for(let i = events.length-1; i >= 0; i--) {
+                    const ev = events[i];
+                    const author = ev.args.author || ev.args[1];
+                    const rating = Number(ev.args.rating || ev.args[2]);
+                    const content = ev.args.content || ev.args[3];
+                    const receiptId = ev.args.receiptId || ev.args[4];
+                    
+                    // Recupero risposta del merchant (se presente)
+                    const reply = await engContract.merchantReplies(receiptId);
+
+                    list.innerHTML += `
+                        <div class="p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600/30 transition-all duration-500 group">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="flex gap-1 text-blue-600 text-xs">
+                                    ${"★".repeat(rating)}${"☆".repeat(5-rating)}
+                                </div>
+                                <span class="text-[9px] font-mono opacity-20 group-hover:opacity-100 transition">AUTH: ${author.slice(0,10)}...</span>
+                            </div>
+                            <p class="text-3xl font-medium italic tracking-tight mb-8 leading-tight">"${content}"</p>
+                            
+                            ${reply ? `
+                                <div class="mt-8 p-8 bg-[var(--bg-main)] rounded-3xl border border-[var(--border)] relative">
+                                    <div class="absolute -top-3 left-8 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase">Official Reply</div>
+                                    <p class="text-sm opacity-70 italic">${reply}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+
+            } catch(e) {
+                console.error(e);
+                list.innerHTML = "Error loading blockchain data.";
             }
         }
-
-        // 3. Render Lista Recensioni (Reverse per vedere le ultime prime)
-        for(let i = events.length-1; i >= 0; i--) {
-            const ev = events[i];
-            const author = ev.args.author || ev.args[1];
-            const rating = Number(ev.args.rating || ev.args[2]);
-            const content = ev.args.content || ev.args[3];
-            const receiptId = ev.args.receiptId || ev.args[4];
-            const reply = await engContract.merchantReplies(receiptId);
-
-            list.innerHTML += `
-                <div class="bg-[var(--card-bg)] p-10 rounded-[2.5rem] border border-[var(--border)] hover:border-blue-600/30 transition shadow-sm mb-8">
-                    <div class="flex justify-between mb-6">
-                        <span class="text-[9px] font-mono opacity-30 uppercase tracking-widest">Customer: ${author.slice(0,14)}...</span>
-                        <span class="text-blue-600 font-black italic text-lg leading-none">${"★".repeat(rating)}</span>
-                    </div>
-                    <p class="text-2xl italic leading-relaxed opacity-90 tracking-tight">"${content}"</p>
-                    ${reply ? `
-                        <div class="mt-8 pt-8 border-t border-[var(--border)] text-right">
-                            <p class="text-[9px] font-black text-blue-500 uppercase mb-3 italic opacity-50">${b.name} Response</p>
-                            <p class="text-base italic opacity-70 pl-8">${reply}</p>
-                        </div>
-                    ` : ''}
-                </div>`;
-        }
-
-    } catch(e) { 
-        console.error("Store Analytics Error:", e);
-    }
-}
     </script>
 </body>
 </html>
