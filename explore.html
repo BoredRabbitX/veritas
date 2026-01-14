@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Explore | Veritas</title>
+    <meta charset="UTF-8"><title>Explore | Veritas Beta 1.0</title>
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen">
     <main class="main-content flex-grow px-6 py-12">
         <div class="max-w-7xl mx-auto">
-            <h1 class="text-7xl font-black italic tracking-tighter uppercase mb-12">Verified Stores</h1>
-            <div id="grid" class="grid md:grid-cols-3 gap-8">
-                <div class="col-span-full text-center opacity-30 py-20 animate-pulse italic uppercase text-[10px] font-bold tracking-widest">Scanning Blockchain Events...</div>
+            <h1 class="text-7xl font-black italic tracking-tighter uppercase mb-12 text-white leading-none">Verified Stores</h1>
+            <div id="grid" class="grid md:grid-cols-3 gap-8 text-white">
+                <div class="col-span-full text-center opacity-30 py-20 animate-pulse italic uppercase text-[10px] font-bold tracking-widest">Synchronizing with Polkadot Node...</div>
             </div>
         </div>
     </main>
@@ -20,26 +20,45 @@
         async function initPage() {
             const grid = document.getElementById('grid');
             try {
-                const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), 0);
-                const stores = [...new Set(events.map(e => e.args.owner))];
-                grid.innerHTML = stores.length ? "" : '<p class="col-span-full opacity-30 text-center uppercase text-[10px] font-bold">No stores found.</p>';
+                // Ensure contract exists
+                if (!regContract) return;
 
+                const filter = regContract.filters.BusinessRegistered();
+                const events = await regContract.queryFilter(filter, 0);
+                
+                // Extract unique owners
+                const stores = [...new Set(events.map(e => e.args.owner))];
+                
+                if (stores.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full opacity-30 text-center uppercase text-[10px] font-bold">No registered stores found on-chain.</div>';
+                    return;
+                }
+
+                grid.innerHTML = "";
                 for(let addr of stores.reverse()) {
                     const b = await regContract.businesses(addr);
                     if(!b.isActive) continue;
-                    const r = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), 0);
-                    const avg = r.length ? (r.reduce((s,e)=>s+Number(e.args.rating),0)/r.length).toFixed(1) : "0.0";
+
+                    // Get rating average from Reviewer
+                    const rFilter = revContract.filters.ReviewSubmitted(addr);
+                    const reviews = await revContract.queryFilter(rFilter, 0);
+                    const avg = reviews.length ? (reviews.reduce((s,e)=>s+Number(e.args.rating),0)/reviews.length).toFixed(1) : "0.0";
+                    const category = ethers.decodeBytes32String(b.category);
+
                     grid.innerHTML += `
-                        <a href="store.html?id=${addr}" class="bg-white/5 border border-white/5 p-8 rounded-3xl block hover:border-blue-600 transition">
+                        <a href="store.html?id=${addr}" class="bg-white/5 border border-white/5 p-8 rounded-3xl block hover:border-blue-600 transition group">
                             <div class="flex justify-between items-start mb-6">
-                                <span class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">${ethers.decodeBytes32String(b.category)}</span>
-                                <span class="font-black italic text-sm text-white">★ ${avg}</span>
+                                <span class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">${category}</span>
+                                <span class="font-black italic text-sm text-white group-hover:text-blue-500 transition">★ ${avg}</span>
                             </div>
                             <h3 class="text-3xl font-black italic uppercase tracking-tighter mb-4 text-white">${b.name}</h3>
-                            <p class="text-[9px] font-mono opacity-30 truncate uppercase tracking-widest">Merchant: ${addr}</p>
+                            <p class="text-[9px] font-mono opacity-30 truncate uppercase tracking-widest leading-none">Address: ${addr}</p>
                         </a>`;
                 }
-            } catch(e) { grid.innerHTML = '<p class="col-span-full opacity-30 text-center uppercase text-[10px] font-bold">Error connecting to Registry.</p>'; }
+            } catch(e) { 
+                console.error("Explore Error:", e);
+                grid.innerHTML = '<div class="col-span-full text-red-500 opacity-50 text-center uppercase text-[10px] font-bold">Blockchain Connection Lost. Please check your wallet.</div>';
+            }
         }
     </script>
 </body>
