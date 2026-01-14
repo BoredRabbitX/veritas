@@ -91,3 +91,13 @@ window.toggleMobileMenu = function() {
 
 window.addEventListener('load', renderUI);
 if (document.readyState === 'complete') renderUI();
+
+function startUI() {
+    renderUI(); // La tua funzione che inietta HTML
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startUI);
+} else {
+    startUI();
+}
