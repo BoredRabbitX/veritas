@@ -55,25 +55,31 @@ async function connectWallet(silent = false) {
     return false;
 }
 
-// Bootstrap: Parte all'avvio su ogni pagina
-(async function bootstrap() {
-    console.log("Veritas: Bootstrapping Reading Mode...");
+// --- BOOTSTRAP RESILIENTE (Versione Finale) ---
+(async function init() {
+    console.log("Veritas: Booting Core...");
     
-    // 1. Inizializza contratti via RPC Pubblico (Sola Lettura)
-    const publicProvider = new ethers.JsonRpcProvider(PASEO_RPC);
-    setupContracts(publicProvider);
+    // 1. Tema immediato
+    if (localStorage.getItem('veritas-theme') === 'light') document.documentElement.classList.add('light');
 
-    // 2. Esegui la logica della pagina (Explore/Store) SUBITO
-    // Non aspettiamo il wallet per mostrare i dati!
-    window.addEventListener('load', () => {
-        if (typeof initPage === "function") {
-            console.log("Veritas: Initializing Page Content...");
-            initPage();
-        }
+    try {
+        // 2. Setup Sola Lettura immediato via RPC
+        const publicProvider = new ethers.JsonRpcProvider(PASEO_RPC);
+        await setupContracts(publicProvider);
+        console.log("Veritas: Public RPC Contracts Ready");
         
-        // 3. Test connection
-        if (localStorage.getItem('veritas_autoconnect') === 'true') {
-            connectWallet(true);
+        // Lanciamo un evento globale per avvisare le pagine (es. store.html)
+        window.dispatchEvent(new Event('contractsReady'));
+    } catch (e) {
+        console.error("Veritas: RPC Boot failed", e);
+    }
+
+    // 3. Gestione Wallet
+    window.addEventListener('load', async () => {
+        if (localStorage.getItem('veritas_autoconnect') === 'true' && window.ethereum) {
+            await connectWallet(true);
+            // Riavviamo l'evento se il wallet cambia i contratti in modalità scrittura
+            window.dispatchEvent(new Event('contractsReady'));
         }
     });
 })();
