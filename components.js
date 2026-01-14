@@ -10,12 +10,23 @@ const headerHTML = `
                 <a href="explore.html" id="nav-explore" class="opacity-60 hover:opacity-100 transition">Explore</a>
                 <a href="review.html" id="nav-review" class="opacity-60 hover:opacity-100 transition">Submit Review</a>
                 <a href="dashboard.html" id="nav-dashboard" class="opacity-60 hover:opacity-100 transition">Merchant Hub</a>
+                <a href="https://faucet.polkadot.io/" target="_blank" class="text-pink-500 hover:text-pink-400 transition flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse"></span>
+                    Faucet
+                </a>
             </div>
         </div>
-        <button id="connectBtn" class="btn-primary text-xs py-2 px-6" onclick="connectWallet()">Connect Wallet</button>
+        
+        <div class="flex items-center gap-4">
+            <button onclick="addPaseoNetwork()" class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[#f6851b]/20 hover:text-[#f6851b] transition group">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Mirror_Logo.svg" class="w-3 h-3 grayscale group-hover:grayscale-0" alt="MetaMask">
+                Setup Paseo
+            </button>
+            
+            <button id="connectBtn" class="btn-primary text-xs py-2 px-6" onclick="connectWallet()">Connect Wallet</button>
+        </div>
     </nav>
 </div>`;
-
 const footerHTML = `
 <footer class="mt-auto">
     <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center border-t border-white/5 gap-6">
