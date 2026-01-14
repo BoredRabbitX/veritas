@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Merchant Hub | Veritas</title>
-    <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Hub | Veritas</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -19,34 +22,55 @@
             <div id="mainDashboard" class="hidden">
                 
                 <section id="regSection" class="hidden max-w-2xl mx-auto py-20 text-center">
-                    <h1 class="text-6xl font-black italic uppercase mb-4 tracking-tighter">Register <span class="text-blue-600 text-7xl italic leading-none block">Business</span></h1>
-                    <p class="opacity-40 text-xs mb-10 uppercase tracking-[0.5em] font-bold">Activate your on-chain identity</p>
-                    <div class="space-y-4 bg-zinc-900/50 p-10 rounded-[3rem] border border-white/5">
-                        <input id="bizName" type="text" placeholder="Store Name" class="bg-black border border-white/10 w-full p-5 rounded-2xl outline-none focus:border-blue-600 transition text-white text-center">
-                        <input id="bizCat" type="text" placeholder="Category (e.g. Retail, Food)" class="bg-black border border-white/10 w-full p-5 rounded-2xl outline-none focus:border-blue-600 transition text-white text-center">
-                        <button onclick="register()" class="btn-primary w-full py-5 font-black uppercase italic tracking-widest shadow-xl shadow-blue-600/10">Register on Paseo</button>
+                    <h1 class="text-6xl font-black italic uppercase mb-4 tracking-tighter text-white">Register <span class="text-blue-600 text-7xl italic leading-none block">Business</span></h1>
+                    <p class="opacity-40 text-[10px] mb-10 uppercase tracking-[0.5em] font-bold">Official Veritas Merchant Onboarding</p>
+                    
+                    <div class="space-y-4 bg-zinc-900/50 p-10 rounded-[3rem] border border-white/5 text-left">
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-4">Business Name</label>
+                            <input id="bizName" type="text" placeholder="e.g. The Quantum Store" class="bg-black border border-white/10 w-full p-5 rounded-2xl outline-none focus:border-blue-600 transition text-white">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-4">Industry Category</label>
+                            <select id="bizCat" class="bg-black border border-white/10 w-full p-5 rounded-2xl outline-none focus:border-blue-600 transition text-white appearance-none cursor-pointer italic font-bold">
+                                <option value="" disabled selected>Select Category...</option>
+                                <option value="RETAIL">Retail & Shops</option>
+                                <option value="FOOD_DRINK">Food & Drink</option>
+                                <option value="TECH">Technology & Software</option>
+                                <option value="SERVICES">Professional Services</option>
+                                <option value="HEALTH">Health & Wellness</option>
+                                <option value="FASHION">Fashion & Apparel</option>
+                                <option value="TRAVEL">Travel & Hospitality</option>
+                                <option value="AUTOMOTIVE">Automotive</option>
+                                <option value="ENTERTAINMENT">Entertainment</option>
+                                <option value="EDUCATION">Education</option>
+                                <option value="REAL_ESTATE">Real Estate</option>
+                                <option value="ART_DESIGN">Art & Design</option>
+                            </select>
+                        </div>
+
+                        <button onclick="register()" class="btn-primary w-full py-5 mt-4 font-black uppercase italic tracking-widest shadow-xl shadow-blue-600/10">Deploy Merchant Identity</button>
                     </div>
                 </section>
 
                 <section id="activeDashboard" class="hidden space-y-12">
-                    
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 border-b border-white/5 pb-10">
                         <div>
                             <p id="dispCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.5em] mb-3"></p>
                             <h1 id="dispName" class="text-7xl font-black italic uppercase tracking-tighter leading-none text-white"></h1>
                         </div>
-                        
                         <div class="grid grid-cols-3 gap-4 w-full lg:w-auto">
                             <div class="bg-zinc-900 p-6 rounded-3xl border border-white/5 text-center min-w-[120px]">
-                                <p class="text-[9px] font-bold opacity-30 uppercase mb-1 tracking-widest">Reviews</p>
+                                <p class="text-[9px] font-bold opacity-30 uppercase mb-1 tracking-widest text-zinc-400">Reviews</p>
                                 <p id="statRev" class="text-3xl font-black italic">0</p>
                             </div>
                             <div class="bg-zinc-900 p-6 rounded-3xl border border-white/5 text-center min-w-[120px]">
-                                <p class="text-[9px] font-bold opacity-30 uppercase mb-1 tracking-widest">Rating</p>
+                                <p class="text-[9px] font-bold opacity-30 uppercase mb-1 tracking-widest text-zinc-400">Rating</p>
                                 <p id="statRate" class="text-3xl font-black italic text-blue-600">0.0</p>
                             </div>
                             <div class="bg-zinc-900 p-6 rounded-3xl border border-white/5 text-center min-w-[120px]">
-                                <p class="text-[9px] font-bold opacity-30 uppercase mb-1 tracking-widest text-zinc-400">Vol</p>
+                                <p class="text-[9px] font-bold opacity-30 uppercase mb-1 tracking-widest text-zinc-400">Volume</p>
                                 <p id="statVol" class="text-3xl font-black italic">0</p>
                             </div>
                         </div>
@@ -76,7 +100,7 @@
                         <section class="space-y-6">
                             <h3 class="text-2xl font-black uppercase italic tracking-tight">Feedback Inbox</h3>
                             <div id="merchantInbox" class="space-y-6 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
-                                <p class="opacity-20 italic text-sm uppercase tracking-widest py-10">Syncing with blockchain...</p>
+                                <p class="opacity-20 italic text-sm uppercase tracking-widest py-10">No reviews found yet.</p>
                             </div>
                         </section>
                     </div>
@@ -95,7 +119,7 @@
             if(b.isActive) {
                 document.getElementById('activeDashboard').classList.remove('hidden');
                 document.getElementById('dispName').innerText = b.name;
-                document.getElementById('dispCat').innerText = ethers.decodeBytes32String(b.category);
+                document.getElementById('dispCat').innerText = ethers.decodeBytes32String(b.category).replace('_', ' ');
                 document.getElementById('statVol').innerText = b.volume;
                 await updateStats(addr);
                 await loadMerchantData(addr);
@@ -106,9 +130,11 @@
 
         async function register() {
             const name = document.getElementById('bizName').value;
-            const cat = ethers.encodeBytes32String(document.getElementById('bizCat').value);
+            const selectedCat = document.getElementById('bizCat').value;
+            if(!name || !selectedCat) return alert("All fields are required.");
             try {
-                const tx = await regContract.registerBusiness(name, cat);
+                const catBytes = ethers.encodeBytes32String(selectedCat);
+                const tx = await regContract.registerBusiness(name, catBytes);
                 await tx.wait(); location.reload();
             } catch(e) { alert(e.reason || e.message); }
         }
@@ -117,11 +143,7 @@
             const filter = revContract.filters.ReviewSubmitted(addr);
             const events = await revContract.queryFilter(filter, -50000);
             const count = events.length;
-            let avg = 0;
-            if (count > 0) {
-                const sum = events.reduce((acc, ev) => acc + Number(ev.args.rating || ev.args[2]), 0);
-                avg = (sum / count).toFixed(1);
-            }
+            let avg = (count > 0) ? (events.reduce((acc, ev) => acc + Number(ev.args.rating || ev.args[2]), 0) / count).toFixed(1) : "0.0";
             document.getElementById('statRev').innerText = count;
             document.getElementById('statRate').innerText = avg;
         }
@@ -129,7 +151,7 @@
         async function loadMerchantData(addr) {
             const list = document.getElementById('merchantInbox');
             const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), -50000);
-            list.innerHTML = events.length ? "" : "No feedback found.";
+            if(events.length > 0) list.innerHTML = "";
             for(let i = events.length-1; i >= 0; i--) {
                 const ev = events[i];
                 const author = ev.args.author || ev.args[1];
@@ -140,15 +162,15 @@
 
                 list.innerHTML += `
                     <div class="bg-zinc-900 border border-white/5 p-8 rounded-[2rem] mb-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="text-[10px] font-mono opacity-30 uppercase">${author.slice(0,14)}...</span>
+                        <div class="flex justify-between items-center mb-4 text-[10px]">
+                            <span class="opacity-30 uppercase font-mono">${author.slice(0,14)}...</span>
                             <span class="text-blue-500 font-bold italic tracking-widest">${"★".repeat(rating)}</span>
                         </div>
                         <p class="text-base italic mb-6 text-zinc-300">"${content}"</p>
-                        ${reply ? `<div class="p-5 bg-blue-600/10 border-l-2 border-blue-600 text-xs italic opacity-80 rounded-r-2xl"><p class="text-[9px] font-black text-blue-500 uppercase mb-2 italic">Official Response</p>${reply}</div>` : `
+                        ${reply ? `<div class="p-5 bg-blue-600/10 border-l-2 border-blue-600 text-xs italic opacity-80 rounded-r-2xl">${reply}</div>` : `
                         <div class="flex gap-3">
-                            <input id="rep-${receiptId}" type="text" placeholder="Reply..." class="bg-black border border-white/10 flex-grow p-4 rounded-xl text-xs text-white outline-none">
-                            <button onclick="sendReply('${receiptId}')" class="bg-white text-black text-[9px] font-black px-6 rounded-xl uppercase hover:bg-blue-600 hover:text-white">Post</button>
+                            <input id="rep-${receiptId}" type="text" placeholder="Reply..." class="bg-black border border-white/10 flex-grow p-4 rounded-xl text-xs text-white outline-none focus:border-blue-600">
+                            <button onclick="sendReply('${receiptId}')" class="bg-white text-black text-[9px] font-black px-6 rounded-xl uppercase">Post</button>
                         </div>`}
                     </div>`;
             }
