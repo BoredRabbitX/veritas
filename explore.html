@@ -5,12 +5,18 @@
     <title>Explore | Veritas</title>
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        .store-card { opacity: 0; transform: translateY(20px); transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); }
+        .store-card.visible { opacity: 1; transform: translateY(0); }
+    </style>
 </head>
 <body class="bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen">
     <div id="header-root"></div>
     <main class="max-w-7xl mx-auto px-6 py-20">
         <h1 class="text-7xl md:text-8xl font-black italic uppercase tracking-tighter mb-20 text-center">Verified <span class="text-blue-600">Stores</span></h1>
-        <div id="categories-container"><p class="text-center opacity-30 animate-pulse">Syncing Ledger...</p></div>
+        <div id="categories-container">
+            <p class="text-center opacity-30 animate-pulse uppercase text-[10px] font-black tracking-widest">Syncing Ledger...</p>
+        </div>
     </main>
     <div id="footer-root"></div>
     <script src="app.js"></script><script src="components.js"></script>
@@ -22,25 +28,71 @@
                 const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), -100000);
                 const addrs = [...new Set(events.map(e => e.args[0]))];
                 const stores = [];
+
                 for(let addr of addrs) {
                     const b = await regContract.businesses(addr);
-                    if(b.isActive) stores.push({ addr, name: b.name, category: ethers.decodeBytes32String(b.category), vol: b.volume });
+                    if(b.isActive) {
+                        // Fetch Reviews for rating calculation
+                        const revEvents = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), -50000);
+                        let avg = 0;
+                        if(revEvents.length > 0) {
+                            const sum = revEvents.reduce((acc, ev) => acc + Number(ev.args[2]), 0);
+                            avg = (sum / revEvents.length).toFixed(1);
+                        }
+
+                        stores.push({ 
+                            addr, 
+                            name: b.name, 
+                            category: ethers.decodeBytes32String(b.category), 
+                            vol: revEvents.length,
+                            rating: avg
+                        });
+                    }
                 }
+
                 const grouped = stores.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc; }, {});
                 container.innerHTML = "";
+
                 Object.keys(grouped).forEach(cat => {
                     const section = document.createElement('section');
                     section.className = "mb-20";
-                    section.innerHTML = `<h2 class="text-2xl font-black uppercase italic text-blue-600 mb-10 border-b border-[var(--border)] pb-4">${cat.replace('_',' ')}</h2>
-                        <div class="grid md:grid-cols-3 gap-8">${grouped[cat].map(s => `
-                            <a href="store.html?id=${s.addr}" class="p-10 rounded-[2rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition block">
-                                <h3 class="text-3xl font-black uppercase mb-4">${sanitize(s.name)}</h3>
-                                <p class="text-[9px] font-bold opacity-30 uppercase">${s.vol} Verified Logs</p>
-                            </a>`).join('')}</div>`;
+                    section.innerHTML = `
+                        <h2 class="text-2xl font-black uppercase italic text-blue-600 mb-10 border-b border-[var(--border)] pb-4 tracking-tighter">${cat.replace(/_/g,' ')}</h2>
+                        <div class="grid md:grid-cols-3 gap-8">
+                            ${grouped[cat].map(s => `
+                                <a href="store.html?id=${s.addr}" class="store-card p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600 transition-all duration-500 block text-left group shadow-lg hover:-translate-y-2">
+                                    <div class="flex justify-between items-start mb-6">
+                                        <h3 class="text-3xl font-black uppercase italic leading-none tracking-tighter group-hover:text-blue-600 transition-colors">${sanitize(s.name)}</h3>
+                                        <div class="flex items-center gap-1 text-blue-600 font-bold text-sm bg-blue-600/5 px-3 py-1 rounded-full">
+                                            <span>★</span><span>${s.rating > 0 ? s.rating : 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center opacity-30 text-[9px] font-bold uppercase tracking-widest pt-6 border-t border-[var(--border)]">
+                                        <span>${s.vol} Verified Reviews</span>
+                                        <span class="font-mono text-[8px]">${s.addr.slice(0,6)}...</span>
+                                    </div>
+                                </a>
+                            `).join('')}
+                        </div>`;
                     container.appendChild(section);
                 });
-            } catch (e) { container.innerHTML = "Sync Error."; }
+
+                // Staggered Animation Trigger
+                setTimeout(() => {
+                    document.querySelectorAll('.store-card').forEach((el, i) => {
+                        setTimeout(() => el.classList.add('visible'), i * 80);
+                    });
+                }, 100);
+
+            } catch (e) { 
+                console.error(e);
+                container.innerHTML = "<p class='text-center text-red-500 uppercase text-[10px] font-black'>Sync Error. Please Refresh.</p>"; 
+            }
         }
+
+        // Logic to ensure the page starts as soon as contracts are ready
+        if (window.isVeritasReady) { initPage(); }
+        window.addEventListener('contractsReady', initPage);
     </script>
 </body>
 </html>
