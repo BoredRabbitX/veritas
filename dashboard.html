@@ -7,56 +7,43 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #qrcode img { margin: 0 auto; border: 10px solid white; border-radius: 1rem; }
-    </style>
 </head>
 <body class="bg-[var(--bg-main)] text-[var(--text-main)]">
     <div id="header-root"></div>
     
     <main class="max-w-6xl mx-auto px-6 py-20">
-        <h1 class="text-7xl font-black italic uppercase mb-12 tracking-tighter leading-none">
-            Merchant <span class="text-blue-600">Hub</span>
-        </h1>
+        <h1 class="text-7xl font-black italic uppercase mb-12 tracking-tighter">Merchant <span class="text-blue-600">Hub</span></h1>
         
-        <div id="authGuard" class="py-32 text-center border border-dashed border-[var(--border)] rounded-[3rem] transition-all duration-500">
-            <div id="guardLoader">
-                <p class="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse opacity-30 mb-4">Verifying Blockchain Identity...</p>
-                <p class="text-xs opacity-50 italic">Please ensure MetaMask is connected via the header button.</p>
+        <div id="authStatusContainer">
+            <div id="loadingUI" class="py-20 text-center">
+                <p class="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse opacity-30">Connecting to Paseo Network...</p>
             </div>
-            <div id="guardFailed" class="hidden">
-                <p class="text-blue-600 text-[10px] font-black uppercase tracking-widest mb-4">Wallet Not Detected</p>
-                <p class="text-sm opacity-50 italic">Use the <b>Connect</b> button in the top menu to access your dashboard.</p>
-            </div>
-        </div>
 
-        <div id="hubContent" class="hidden fade-in">
-            <div class="grid lg:grid-cols-12 gap-12">
-                <div class="lg:col-span-5 space-y-8">
-                    <div id="bizDetails" class="card-veritas p-10">
+            <div id="noAuthUI" class="hidden py-20 text-center border border-dashed border-[var(--border)] rounded-[3rem]">
+                <p class="text-blue-600 text-[10px] font-black uppercase tracking-widest mb-4">Identity Required</p>
+                <p class="text-sm opacity-50 italic">Please connect your wallet using the button in the header above.</p>
+            </div>
+
+            <div id="hubUI" class="hidden">
+                <div class="grid lg:grid-cols-12 gap-12">
+                    <div class="lg:col-span-5 space-y-8">
+                        <div id="bizDetails" class="card-veritas p-10">
+                            <p class="animate-pulse">Loading profile...</p>
                         </div>
 
-                    <div class="card-veritas p-10 border-blue-600/20">
-                        <h3 class="text-2xl font-black uppercase italic mb-6">Issue <span class="text-blue-600">Receipt</span></h3>
-                        <p class="text-xs opacity-50 mb-8 italic">Generate a unique ID for a customer to allow a verified review.</p>
-                        <button onclick="generateReceipt()" class="btn-primary w-full py-5 font-black uppercase italic tracking-widest mb-8">Generate Code</button>
-                        
-                        <div id="receiptResult" class="hidden fade-in text-center space-y-6 pt-6 border-t border-[var(--border)]">
-                            <div>
-                                <p class="text-[8px] font-black uppercase opacity-40 mb-2">Unique Receipt ID</p>
+                        <div class="card-veritas p-10 border-blue-600/20">
+                            <h3 class="text-2xl font-black uppercase italic mb-6">Issue <span class="text-blue-600">Receipt</span></h3>
+                            <button onclick="generateReceipt()" class="btn-primary w-full py-5 font-black uppercase italic tracking-widest mb-8">Generate Code</button>
+                            <div id="receiptResult" class="hidden text-center space-y-6 pt-6 border-t border-[var(--border)]">
                                 <code id="receiptCode" class="text-blue-600 font-mono text-sm break-all bg-blue-600/5 p-3 rounded-lg block uppercase">---</code>
+                                <div id="qrcode" class="py-4"></div>
                             </div>
-                            <div id="qrcode" class="py-4"></div>
                         </div>
                     </div>
-                </div>
 
-                <div class="lg:col-span-7">
-                    <h2 class="text-3xl font-black italic uppercase mb-8">Review <span class="text-blue-600">Management</span></h2>
-                    <div id="reviewsGrid" class="space-y-6">
-                        <p class="opacity-30 italic">Loading feedback stream...</p>
+                    <div class="lg:col-span-7">
+                        <h2 class="text-3xl font-black italic uppercase mb-8">Review <span class="text-blue-600">Management</span></h2>
+                        <div id="reviewsGrid" class="space-y-6"></div>
                     </div>
                 </div>
             </div>
@@ -67,112 +54,105 @@
 
     <script src="app.js"></script>
     <script src="components.js"></script>
+
     <script>
-        /**
-         * LOGICA DI ACCESSO REATTIVA
-         */
-        async function syncState() {
-            const guard = document.getElementById('authGuard');
-            const hub = document.getElementById('hubContent');
-            const loader = document.getElementById('guardLoader');
-            const failed = document.getElementById('guardFailed');
+        // FORCED SYNC: This checks both window variables and Ethers directly
+        async function forceSync() {
+            const loading = document.getElementById('loadingUI');
+            const noAuth = document.getElementById('noAuthUI');
+            const hub = document.getElementById('hubUI');
 
-            // Se app.js non è pronto, non fare nulla e aspetta l'evento
-            if (!window.isVeritasReady) return;
-
-            // Se abbiamo il signer (connesso), sblocca l'Hub
-            if (window.signer) {
-                guard.classList.add('hidden');
-                hub.classList.remove('hidden');
-                initPage();
-            } else {
-                // Se dopo 1.5 secondi non c'è ancora il signer, mostra il messaggio di errore
-                setTimeout(() => {
-                    if (!window.signer) {
-                        loader.classList.add('hidden');
-                        failed.classList.remove('hidden');
+            // Try to recover signer from window or provider
+            if (!window.signer && window.ethereum) {
+                try {
+                    const tempProvider = new ethers.BrowserProvider(window.ethereum);
+                    const accounts = await tempProvider.listAccounts();
+                    if (accounts.length > 0) {
+                        window.signer = await tempProvider.getSigner();
+                        // Re-setup contracts with the found signer
+                        regContract = new ethers.Contract(registryAddress, abiRegistry, window.signer);
+                        engContract = new ethers.Contract(engineAddress, abiEngine, window.signer);
+                        revContract = new ethers.Contract(reviewerAddress, abiReviewer, window.signer);
                     }
-                }, 1500);
+                } catch (e) { console.error("Auto-recovery failed", e); }
+            }
+
+            if (window.signer) {
+                loading.classList.add('hidden');
+                noAuth.classList.add('hidden');
+                hub.classList.remove('hidden');
+                initDashboard();
+            } else {
+                loading.classList.add('hidden');
+                noAuth.classList.remove('hidden');
             }
         }
 
-        // Ascolta il segnale di "Pronto" da app.js
-        window.addEventListener('contractsReady', syncState);
-        // Controlla anche al caricamento immediato
-        window.addEventListener('load', syncState);
-
-        async function initPage() {
+        async function initDashboard() {
             try {
-                const addr = await signer.getAddress();
+                const addr = await window.signer.getAddress();
                 const b = await regContract.businesses(addr);
                 const bizBox = document.getElementById('bizDetails');
 
                 if (b.isActive) {
                     bizBox.innerHTML = `
-                        <p class="text-blue-600 font-black uppercase text-[10px] tracking-widest italic mb-2">${ethers.decodeBytes32String(b.category).replace(/_/g,' ')}</p>
+                        <p class="text-blue-600 font-black uppercase text-[10px] mb-2">${ethers.decodeBytes32String(b.category).replace(/_/g,' ')}</p>
                         <h2 class="text-5xl font-black uppercase italic tracking-tighter leading-none mb-6">${sanitize(b.name)}</h2>
-                        <div class="flex justify-between pt-6 border-t border-[var(--border)]">
-                            <div><p class="text-[8px] font-bold opacity-30 uppercase">Volume</p><p class="font-black">${b.volume} Reviews</p></div>
-                            <div class="text-right"><p class="text-[8px] font-bold opacity-30 uppercase">Identity</p><p class="font-black text-green-500">Verified</p></div>
+                        <div class="pt-6 border-t border-[var(--border)] flex justify-between">
+                            <span class="text-[10px] font-bold opacity-30 uppercase">Volume: ${b.volume}</span>
+                            <span class="text-[10px] font-black text-green-500 uppercase tracking-widest italic">Live</span>
                         </div>`;
                     loadReviews(addr);
                 } else {
                     bizBox.innerHTML = `
-                        <h3 class="text-2xl font-black uppercase mb-6 italic text-blue-600">Merchant Registration</h3>
-                        <div class="space-y-4">
-                            <input id="regName" class="w-full" placeholder="Public Business Name">
-                            <select id="regCat" class="w-full bg-[var(--card-bg)] border border-[var(--border)] p-4 rounded-xl">
-                                <option value="Food_Drink">Food & Drink</option>
-                                <option value="Retail">Retail Store</option>
-                                <option value="Technology">Technology</option>
-                            </select>
-                            <button onclick="register()" class="btn-primary w-full py-5 font-black uppercase italic">Register on Paseo</button>
-                        </div>`;
+                        <h3 class="text-2xl font-black uppercase mb-6 italic">Registration</h3>
+                        <input id="regName" class="w-full mb-4" placeholder="Business Name">
+                        <select id="regCat" class="w-full mb-6 bg-[var(--card-bg)] border border-[var(--border)] p-4 rounded-xl">
+                            <option value="Food_Drink">Food & Drink</option>
+                            <option value="Retail">Retail Store</option>
+                        </select>
+                        <button onclick="registerMerchant()" class="btn-primary w-full py-5 font-black uppercase italic">Register</button>`;
                 }
-            } catch (e) { console.error("Identity Error:", e); }
+            } catch (e) { console.error(e); }
         }
 
-        async function register() {
+        async function registerMerchant() {
             const name = document.getElementById('regName').value;
             const cat = ethers.encodeBytes32String(document.getElementById('regCat').value);
-            if(!name) return;
             try {
                 const tx = await regContract.registerBusiness(name, cat);
                 await tx.wait(); location.reload();
-            } catch(e) { console.error(e); }
+            } catch(e) { alert("Registration failed"); }
         }
 
         function generateReceipt() {
-            const randomId = ethers.hexlify(ethers.randomBytes(32));
+            const rid = ethers.hexlify(ethers.randomBytes(32));
             document.getElementById('receiptResult').classList.remove('hidden');
-            document.getElementById('receiptCode').innerText = randomId;
-            const qrContainer = document.getElementById('qrcode');
-            qrContainer.innerHTML = "";
-            new QRCode(qrContainer, {
-                text: `${window.location.origin}/review.html?rid=${randomId}`,
-                width: 180, height: 180,
-                colorDark : "#2563eb", colorLight : "#ffffff"
-            });
+            document.getElementById('receiptCode').innerText = rid;
+            const qr = document.getElementById('qrcode');
+            qr.innerHTML = "";
+            new QRCode(qr, { text: `${window.location.origin}/review.html?rid=${rid}`, width: 160, height: 160, colorDark: "#2563eb" });
         }
 
         async function loadReviews(addr) {
             const grid = document.getElementById('reviewsGrid');
             const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), -50000);
-            grid.innerHTML = events.length === 0 ? `<div class="p-12 border border-dashed border-[var(--border)] rounded-[2rem] text-center opacity-30 uppercase text-[10px] font-black">No reviews found</div>` : "";
+            grid.innerHTML = events.length === 0 ? `<p class="opacity-20 uppercase text-[10px] font-black tracking-widest text-center py-10">No reviews found</p>` : "";
             
             for(let ev of events.reverse()) {
                 const { rating, content, receiptId } = ev.args;
+                const rText = Number(rating);
                 const reply = await engContract.merchantReplies(receiptId);
                 grid.innerHTML += `
-                    <div class="p-8 border border-[var(--border)] bg-[var(--card-bg)] rounded-[2.5rem] fade-in shadow-lg hover:border-blue-600/30 transition">
-                        <div class="flex justify-between mb-4 items-start">
-                            <span class="text-blue-600 font-bold">${"★".repeat(rating)}${"☆".repeat(5-rating)}</span>
-                            <span class="text-[8px] font-mono opacity-20 uppercase">Receipt: ${receiptId.slice(0,16)}...</span>
+                    <div class="p-8 border border-[var(--border)] bg-[var(--card-bg)] rounded-[2.5rem] shadow-lg">
+                        <div class="flex justify-between mb-4">
+                            <span class="text-blue-600 font-bold">${"★".repeat(rText)}${"☆".repeat(5-rText)}</span>
+                            <span class="text-[8px] font-mono opacity-20 uppercase">#${receiptId.slice(0,16)}</span>
                         </div>
-                        <p class="text-2xl font-medium italic mb-8 leading-tight">"${sanitize(content)}"</p>
+                        <p class="text-2xl font-medium italic mb-8">"${sanitize(content)}"</p>
                         <div id="reply-box-${receiptId}">
                             ${reply ? `<div class="p-6 bg-[var(--bg-main)] rounded-2xl border-l-4 border-blue-600 text-sm italic">${sanitize(reply)}</div>` : 
-                            `<div class="flex gap-2"><input id="rep-${receiptId}" class="flex-grow text-xs" placeholder="Reply to customer..."><button onclick="sendReply('${receiptId}')" class="btn-primary px-8 text-[10px] font-black uppercase">Post</button></div>`}
+                            `<div class="flex gap-2"><input id="rep-${receiptId}" class="flex-grow text-xs" placeholder="Reply..."><button onclick="sendReply('${receiptId}')" class="btn-primary px-8 text-[10px] font-black uppercase">Post</button></div>`}
                         </div>
                     </div>`;
             }
@@ -186,6 +166,12 @@
                 await tx.wait(); location.reload();
             } catch(e) { console.error(e); }
         }
+
+        // STARTUP SEQUENCE
+        window.addEventListener('load', () => {
+            setTimeout(forceSync, 1000); // Give app.js time to breathe
+        });
+        window.addEventListener('contractsReady', forceSync);
     </script>
 </body>
 </html>
