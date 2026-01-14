@@ -2,106 +2,95 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Store Details | Veritas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store View | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
-    <div class="nav-container">
-        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
-            <a href="index.html" class="font-black text-2xl italic tracking-tighter">VERITAS</a>
-            <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
-                <a href="explore.html">Explore</a>
-                <a href="review.html">Submit Review</a>
-                <a href="dashboard.html">Merchant Hub</a>
-            </div>
-            <button id="connectBtn" class="btn-primary" onclick="connectWallet()">Connect</button>
-        </nav>
-    </div>
+<body class="bg-[#09090b] text-[#f4f4f5] min-h-screen">
+    <nav class="p-6 border-b border-white/5 flex justify-between items-center">
+        <a href="index.html" class="text-2xl font-black italic tracking-tighter">VERITAS</a>
+        <button id="connectBtn" onclick="connectWallet()" class="bg-blue-600 px-6 py-2 rounded-full font-bold text-xs uppercase">Connect Wallet</button>
+    </nav>
 
-    <main class="flex-grow max-w-5xl mx-auto px-6 py-12 w-full">
-        <div class="card-veritas mb-12 border-b-4 border-blue-600">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <span id="storeCat" class="text-blue-600 font-bold text-[10px] uppercase tracking-widest">Category</span>
-                    <h1 id="storeName" class="text-6xl font-black italic tracking-tighter uppercase mt-2">Loading...</h1>
-                    <p id="storeAddr" class="font-mono text-[10px] opacity-30 mt-2 break-all"></p>
-                </div>
-                <div class="flex gap-4">
-                    <div class="bg-zinc-900 p-6 rounded-2xl text-center min-w-[120px] border border-white/5">
-                        <div id="avgRate" class="text-4xl font-black text-blue-600">0.0</div>
-                        <div class="text-[8px] uppercase font-bold opacity-40 mt-1">Average Rating</div>
-                    </div>
-                    <div class="bg-zinc-900 p-6 rounded-2xl text-center min-w-[120px] border border-white/5">
-                        <div id="totalRev" class="text-4xl font-black text-white">0</div>
-                        <div class="text-[8px] uppercase font-bold opacity-40 mt-1">Reviews</div>
-                    </div>
-                </div>
+    <main class="max-w-4xl mx-auto p-6 py-12">
+        <div class="mb-12 border-b border-white/10 pb-10">
+            <p id="storeCat" class="text-blue-500 font-bold text-[10px] uppercase tracking-[0.3em] mb-2"></p>
+            <h1 id="storeName" class="text-6xl font-black italic uppercase tracking-tighter mb-4">Loading Store...</h1>
+            <div class="flex gap-6 opacity-40 text-[10px] font-bold uppercase">
+                <span>Address: <span id="storeAddr" class="font-mono"></span></span>
+                <span>Verified Transactions: <span id="storeVol">0</span></span>
             </div>
         </div>
 
-        <h2 class="text-sm font-bold mb-8 uppercase tracking-widest opacity-40 italic">Verified Feedback Stream</h2>
-        <div id="reviewsList" class="space-y-4">Scanning blockchain logs...</div>
+        <h3 class="text-sm font-black uppercase mb-6 tracking-widest opacity-20">Customer Feedback</h3>
+        <div id="reviewsList" class="space-y-6">
+            <div class="animate-pulse text-zinc-700 italic">Scanning blockchain for reviews...</div>
+        </div>
     </main>
-
-    <footer class="py-10 border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center opacity-30 text-[10px] font-bold">
-            <div>THE WHITE RABBIT BORED CREATION</div>
-            <div>VERITAS PROTOCOL V3.5.2</div>
-        </div>
-    </footer>
 
     <script src="app.js"></script>
     <script>
-        window.onload = async () => {
-            const id = new URLSearchParams(window.location.search).get('id');
-            if(!id) return;
-            document.getElementById('storeAddr').innerText = id;
-            if(!await connectWallet(true)) {
-                document.getElementById('reviewsList').innerHTML = "Connect wallet to see logs.";
+        async function initPage() {
+            const params = new URLSearchParams(window.location.search);
+            const bizAddr = params.get('id');
+            if (!bizAddr) return window.location.href = 'index.html';
+
+            document.getElementById('storeAddr').innerText = bizAddr.slice(0,10) + "...";
+
+            try {
+                // 1. Fetch Store Data from Registry
+                const biz = await regContract.businesses(bizAddr);
+                document.getElementById('storeName').innerText = biz.name;
+                document.getElementById('storeCat').innerText = ethers.decodeBytes32String(biz.category);
+                document.getElementById('storeVol').innerText = biz.volume;
+
+                // 2. Fetch Reviews from Reviewer
+                await loadReviews(bizAddr);
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadReviews(bizAddr) {
+            const list = document.getElementById('reviewsList');
+            const filter = revContract.filters.ReviewSubmitted(bizAddr);
+            const events = await revContract.queryFilter(filter, 0);
+
+            if (events.length === 0) {
+                list.innerHTML = `<p class="opacity-30 italic">No reviews found for this merchant.</p>`;
                 return;
             }
 
-            try {
-                const biz = await contract.businesses(id);
-                document.getElementById('storeName').innerText = biz.name;
-                document.getElementById('storeCat').innerText = biz.category;
+            list.innerHTML = "";
+            // Reverse to show newest first
+            for (let i = events.length - 1; i >= 0; i--) {
+                const { author, rating, content, receiptId } = events[i].args;
+                
+                // 3. Fetch potential Merchant Reply from Engine
+                const reply = await engContract.merchantReplies(receiptId);
 
-                const filter = contract.filters.ReviewAdded(id);
-                let events = [];
-                try {
-                    events = await contract.queryFilter(filter, 0);
-                } catch(e) {
-                    events = await contract.queryFilter(filter, -10000); // Fallback to last 10k blocks
-                }
-
-                const list = document.getElementById('reviewsList');
-                if(events.length === 0) {
-                    list.innerHTML = "No reviews found.";
-                    return;
-                }
-
-                list.innerHTML = "";
-                let sum = 0;
-                events.reverse().forEach(ev => {
-                    const r = Number(ev.args.rating);
-                    sum += r;
-                    list.innerHTML += `
-                        <div class="card-veritas text-left">
-                            <div class="flex justify-between mb-2">
-                                <span class="text-[9px] font-mono opacity-30">${ev.args.author.slice(0,20)}...</span>
-                                <span class="text-yellow-500 font-bold">${"★".repeat(r)}</span>
+                const card = document.createElement('div');
+                card.className = "bg-zinc-900/50 border border-white/5 p-8 rounded-3xl relative overflow-hidden";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="text-[9px] font-mono opacity-30 uppercase">User: ${author.slice(0,12)}...</div>
+                        <div class="text-yellow-500 font-bold">${"★".repeat(rating)}</div>
+                    </div>
+                    <p class="text-xl italic mb-6 leading-relaxed">"${content}"</p>
+                    
+                    ${reply ? `
+                        <div class="mt-6 pt-6 border-t border-white/5">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-1 h-3 bg-blue-600"></div>
+                                <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter text-blue-500">Official Merchant Reply</span>
                             </div>
-                            <p class="text-xl italic opacity-90 leading-relaxed font-medium">"${ev.args.content}"</p>
-                        </div>`;
-                });
-                document.getElementById('avgRate').innerText = (sum / events.length).toFixed(1);
-                document.getElementById('totalRev').innerText = events.length;
-            } catch(e) { 
-                document.getElementById('reviewsList').innerHTML = "<span class='text-red-500'>Error loading logs. Check network connection.</span>";
+                            <p class="text-sm opacity-70 italic pl-3 border-l border-blue-600/30">${reply}</p>
+                        </div>
+                    ` : ''}
+                `;
+                list.appendChild(card);
             }
-        };
+        }
     </script>
 </body>
 </html>
