@@ -1,5 +1,5 @@
-/** * VERITAS CORE - Beta 1.1 
- * Official Paseo RPC: https://testnet-passet-hub-eth-rpc.polkadot.io
+/** VERITAS CORE - Beta 1.2 
+ * Hybrid Reading: Official Polkadot Paseo RPC
  **/
 
 const registryAddress = "0xea45643b2b4bf3a5bb12588d7e9b8a147b040964";
@@ -14,7 +14,7 @@ const abiRegistry = ["function businesses(address) view returns (string name, by
 const abiEngine = ["function issueReceipt(bytes32) external","function postReply(bytes32, string) external","function merchantReplies(bytes32) view returns (string)","function receiptIssuers(bytes32) view returns (address)"];
 const abiReviewer = ["function submitReview(address, uint8, string, bytes32) external","event ReviewSubmitted(address indexed business, address indexed author, uint8 rating, string content, bytes32 indexed receiptId)"];
 
-// --- 1. THEME (Immediato) ---
+// Inizializzazione Tema
 (function() {
     if (localStorage.getItem('veritas-theme') === 'light') document.documentElement.classList.add('light');
 })();
@@ -26,14 +26,14 @@ window.toggleTheme = function() {
     if (icon) icon.innerText = isLight ? '☀️' : '🌙';
 };
 
-// --- 2. CONTRACT SETUP (Non-blocking) ---
-function setupContracts(target) {
-    regContract = new ethers.Contract(registryAddress, abiRegistry, target);
-    engContract = new ethers.Contract(engineAddress, abiEngine, target);
-    revContract = new ethers.Contract(reviewerAddress, abiReviewer, target);
+// Funzione Core per creare i contratti
+function setupContracts(targetProviderOrSigner) {
+    regContract = new ethers.Contract(registryAddress, abiRegistry, targetProviderOrSigner);
+    engContract = new ethers.Contract(engineAddress, abiEngine, targetProviderOrSigner);
+    revContract = new ethers.Contract(reviewerAddress, abiReviewer, targetProviderOrSigner);
 }
 
-// --- 3. WALLET LOGIC ---
+// Connessione Wallet (Scrittura)
 async function connectWallet(silent = false) {
     if (!window.ethereum) return false;
     try {
@@ -44,7 +44,7 @@ async function connectWallet(silent = false) {
 
         if (accounts.length > 0) {
             signer = await provider.getSigner();
-            setupContracts(signer);
+            setupContracts(signer); // Upgrade a modalità scrittura
             const addr = await signer.getAddress();
             if (document.getElementById('connectBtn')) document.getElementById('connectBtn').innerText = addr.slice(0,6) + "...";
             localStorage.setItem('veritas_autoconnect', 'true');
@@ -55,39 +55,25 @@ async function connectWallet(silent = false) {
     return false;
 }
 
-// --- 4. BOOTSTRAP (The Fix) ---
-async function bootstrap() {
-    console.log("Veritas: Starting Bootstrap...");
+// Bootstrap: Parte all'avvio su ogni pagina
+(async function bootstrap() {
+    console.log("Veritas: Bootstrapping Reading Mode...");
     
-    // Inizializza subito con RPC pubblico per non avere "undefined"
+    // 1. Inizializza contratti via RPC Pubblico (Sola Lettura)
     const publicProvider = new ethers.JsonRpcProvider(PASEO_RPC);
     setupContracts(publicProvider);
 
-    // Se l'utente ha l'autoconnect, MetaMask sovrascriverà i contratti
-    if (localStorage.getItem('veritas_autoconnect') === 'true') {
-        await connectWallet(true);
-    } else {
-        // Se non è connesso, avviamo comunque la logica della pagina
+    // 2. Esegui la logica della pagina (Explore/Store) SUBITO
+    // Non aspettiamo il wallet per mostrare i dati!
+    window.addEventListener('load', () => {
         if (typeof initPage === "function") {
-            console.log("Veritas: Running initPage in guest mode...");
+            console.log("Veritas: Initializing Page Content...");
             initPage();
         }
-    }
-}
-
-// Avvio forzato
-window.addEventListener('load', bootstrap);
-
-// Utility
-window.addPaseoNetwork = async function() {
-    const params = [{ chainId: '0x190f9636', chainName: 'Paseo AssetHub', nativeCurrency: { name: 'Paseo', symbol: 'PAS', decimals: 18 }, rpcUrls: [PASEO_RPC], blockExplorerUrls: ['https://paseo.subscan.io'] }];
-    await window.ethereum.request({ method: 'wallet_addEthereumChain', params });
-};
-
-window.copyAddressAndGoToFaucet = async function() {
-    if (!signer) return alert("Connect wallet first!");
-    const addr = await signer.getAddress();
-    await navigator.clipboard.writeText(addr);
-    alert("Address copied!"); 
-    window.open("https://faucet.polkadot.io/", "_blank");
-};
+        
+        // 3. Prova a connettere il wallet in background se già autorizzato
+        if (localStorage.getItem('veritas_autoconnect') === 'true') {
+            connectWallet(true);
+        }
+    });
+})();
