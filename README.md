@@ -1,60 +1,41 @@
-# 🔗 VERITAS Protocol (V3.5.2)
-### *Trust is On-Chain. Reviews are Eternal.*
+# 🛡️ Veritas Protocol | Beta 1.0
+**The Decentralized Trust Layer for On-Chain Verified Reviews**
 
-**VERITAS** is a decentralized review protocol built on the **Paseo AssetHub** blockchain. It solves the "fake review" problem by mathematically linking every piece of feedback to a unique, on-chain cryptographic receipt issued by the merchant.
+Veritas is a modular protocol built on **Paseo AssetHub** that mathematically links customer feedback to real on-chain transactions using cryptographic receipts.
+
+## 🏗️ Modular Architecture (V3.5)
+To overcome EVM code-size limits and ensure scalability, Veritas is split into three core modules:
+
+1. **Veritas Registry** (`0x8f91...fb51`)
+   - The "Single Source of Truth" for merchant identities.
+   - Stores store names, categories, and transaction volumes.
+   
+2. **Veritas Engine** (`0x8f82...f6f7`)
+   - Handles receipt issuance and cryptographic storage.
+   - Manages on-chain **Merchant Replies** to customer reviews.
+
+3. **Veritas Reviewer** (`0x6ab...56c8`)
+   - Process consumer feedback and verifies receipt ownership.
+   - Connects reviews to IPFS evidence (Phase 2).
+
+## 🚀 Key Features (Beta 1.0)
+- **Zero-Trust Reviews:** Feedback is only accepted if backed by a valid, unused receipt hash.
+- **Merchant Hub:** Dedicated interface for store registration and receipt generation.
+- **Merchant Engagement:** Business owners can respond directly to feedback on-chain.
+- **Explore Directory:** Real-time synchronization with blockchain events to discover verified stores.
 
 
 
----
+## 🛠️ Technology Stack
+- **Blockchain:** Polkadot Paseo AssetHub (Chain ID: 420420422)
+- **Smart Contracts:** Solidity 0.8.19
+- **Frontend:** HTML5, Tailwind CSS, Ethers.js v6
+- **QR Engine:** QRCode.js
 
-## 🚀 Key Features
-
-* **Proof-of-Purchase:** Only customers with a valid, single-use Receipt ID can post a review. No receipt, no voice.
-* **Immutable Transparency:** Reviews are stored as blockchain events—they cannot be deleted, hidden, or altered by merchants.
-* **Dynamic Analytics:** Real-time calculation of average ratings and review counts directly from the blockchain logs.
-* **High-End UI:** A professional "Glassmorphism" dark mode interface designed for readability and trust.
-* **Merchant Hub:** Self-service dashboard for business registration and on-chain receipt generation.
-
----
-
-## 🛠 Tech Stack
-
-* **Blockchain:** Paseo AssetHub (Chain ID: `420420422`)
-* **Smart Contract:** Solidity (EVM)
-* **Frontend:** HTML5, Tailwind CSS, Ethers.js (v6.7)
-* **Styling:** Custom "Cyber-Pro" CSS (Glassmorphism)
-* **Provider:** MetaMask / Injected Web3
-
----
-
-## 🗺 Roadmap 2026
-
-### **Phase 1: Foundation (Current)**
-* [x] Launch V3.5 Core Protocol.
-* [x] On-chain Receipt Verification logic.
-* [x] Dynamic Store Frontends & Explore Page.
-* [x] High-contrast "Cyber-Pro" UI Refinement.
-
-### **Phase 2: Engagement (Q2 2026)**
-* [ ] **Merchant Replies:** Allow business owners to respond to reviews on-chain.
-* [ ] **IPFS Integration:** Support for photo evidence linked to reviews.
-* [ ] **Advanced Filtering:** Sort stores by rating, category, or transaction volume.
-* [ ] **Merchant Alerts:** Telegram/Discord bot for real-time review notifications.
-
-### **Phase 3: Governance & Scale (Q3-Q4 2026)**
-* [ ] **Veritas DAO:** Community-led governance for protocol parameters and dispute handling.
-* [ ] **Dispute Resolution:** Decentralized jury system to handle malicious content flags.
-* [ ] **Native Mobile App:** Dedicated dApp with built-in QR scanner for instant reviews.
-* [ ] **Cross-Chain Bridge:** Expanding the protocol to other Polkadot Parachains.
+## 📅 Roadmap 2026
+- **Q2 (Engagement):** IPFS photo integration & automated Merchant alerts via Telegram/Discord.
+- **Q3 (Governance):** Veritas DAO for dispute resolution and malicious flag handling.
+- **Q4 (Scale):** Dedicated Mobile App & Cross-Chain bridges to other parachains.
 
 ---
-
-## 📄 License
-Distributed under the **MIT License**.
-
-## 👤 Contact
-**The White Rabbit** - Project Lead
-Protocol Version: `3.5.2-Paseo`
-
----
-*Built with passion for a more transparent and honest web.*
+*Created by The White Rabbit. Trust is no longer a promise, it's a mathematical certainty.*
