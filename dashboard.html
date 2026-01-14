@@ -9,66 +9,88 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="bg-[#09090b] text-[#f4f4f5] min-h-screen flex flex-col">
-    <nav class="p-6 border-b border-white/5">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-black italic tracking-tighter">VERITAS</a>
-            <div class="hidden md:flex gap-8 text-[10px] font-bold uppercase tracking-widest">
-                <a href="explore.html" class="opacity-50 hover:opacity-100">Explore</a>
-                <a href="dashboard.html" class="text-blue-600">Merchant Hub</a>
+<body class="flex flex-col min-h-screen">
+
+    <div class="nav-container">
+        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/20">V</div>
+                    <span class="text-2xl font-black tracking-tighter uppercase italic">Veritas</span>
+                </a>
+                <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
+                    <a href="explore.html" class="opacity-60 hover:opacity-100 transition">Explore</a>
+                    <a href="review.html" class="opacity-60 hover:opacity-100 transition">Submit Review</a>
+                    <a href="dashboard.html" class="text-blue-600 transition">Merchant Hub</a>
+                </div>
             </div>
-            <button id="connectBtn" onclick="connectWallet()" class="bg-blue-600 px-6 py-2 rounded-full font-bold text-xs uppercase">Connect Wallet</button>
-        </div>
-    </nav>
+            <button id="connectBtn" class="btn-primary text-xs py-2 px-6" onclick="connectWallet()">Connect Wallet</button>
+        </nav>
+    </div>
 
-    <main class="max-w-4xl mx-auto w-full p-6 py-12 flex-grow">
-        <div id="authGuard" class="text-center py-20">
-            <h2 class="text-xl opacity-30 italic mb-6">Please connect your wallet to access the Merchant Hub.</h2>
-            <button onclick="connectWallet()" class="border border-white/20 px-8 py-3 rounded-xl text-xs font-bold uppercase hover:bg-white hover:text-black transition">Connect Now</button>
-        </div>
+    <main class="main-content flex-grow px-6 py-12">
+        <div class="max-w-4xl mx-auto">
+            <div id="authGuard" class="text-center py-20">
+                <h2 class="text-4xl font-black italic uppercase tracking-tighter mb-4">Access Denied</h2>
+                <p class="opacity-60 mb-8 italic">Please connect your merchant wallet to access the Hub.</p>
+                <button onclick="connectWallet()" class="btn-primary px-10 py-4">Connect Wallet</button>
+            </div>
 
-        <div id="mainDashboard" class="hidden space-y-10">
-            <section id="regSection" class="hidden bg-zinc-900 p-8 rounded-3xl border border-white/5">
-                <h2 class="text-3xl font-black italic uppercase mb-2">Register Business</h2>
-                <p class="opacity-40 text-xs mb-8 uppercase font-bold tracking-widest">Phase 1: Identity Activation</p>
-                <div class="grid gap-4">
-                    <input id="bizName" type="text" placeholder="Business Name" class="bg-black border border-white/10 p-4 rounded-xl outline-none focus:border-blue-600">
-                    <input id="bizCat" type="text" placeholder="Category (e.g. Technology)" class="bg-black border border-white/10 p-4 rounded-xl outline-none focus:border-blue-600">
-                    <button onclick="register()" class="bg-white text-black font-black py-4 rounded-xl hover:bg-blue-600 hover:text-white transition uppercase text-sm">Activate On-Chain Profile</button>
-                </div>
-            </section>
-
-            <section id="activeSection" class="hidden space-y-10">
-                <div class="flex flex-col md:flex-row md:items-end justify-between border-b border-white/10 pb-8 gap-6">
-                    <div>
-                        <p id="dispCat" class="text-blue-500 font-bold text-[10px] uppercase tracking-[0.3em] mb-2"></p>
-                        <h1 id="dispName" class="text-6xl font-black italic uppercase tracking-tighter"></h1>
-                    </div>
-                    <div class="bg-white/5 p-6 rounded-2xl border border-white/5 min-w-[150px]">
-                        <p class="text-[9px] opacity-40 font-bold uppercase tracking-widest mb-1">TX Volume</p>
-                        <p id="dispVol" class="text-4xl font-black">0</p>
-                    </div>
+            <div id="mainDashboard" class="hidden">
+                <div class="mb-12">
+                    <h1 class="text-6xl font-black italic tracking-tighter uppercase mb-2">Merchant Hub</h1>
+                    <p class="text-blue-600 text-[10px] font-bold uppercase tracking-widest">Protocol Version 3.5.1</p>
                 </div>
 
-                <div class="bg-zinc-900 p-8 rounded-3xl border border-blue-600/20">
-                    <h2 class="text-xl font-black italic mb-6 uppercase">Issue Verified Receipt</h2>
-                    <div class="flex flex-col md:flex-row gap-10 items-center">
-                        <div class="flex-grow space-y-4 w-full">
-                            <p class="text-sm opacity-40 italic">Generate a unique ID. Only the holder of this ID can leave a verified review.</p>
-                            <input id="receiptRaw" type="text" readonly placeholder="V3-ID-WAITING" class="bg-black/50 border border-white/5 w-full p-4 rounded-xl font-mono text-center text-blue-500">
-                            <button id="genBtn" onclick="generateReceipt()" class="w-full bg-blue-600 font-black py-4 rounded-xl hover:bg-blue-700 transition uppercase text-xs tracking-widest">Generate & Register Receipt</button>
+                <section id="regSection" class="hidden mb-10 p-8 bg-white/5 rounded-3xl border border-white/5">
+                    <h2 class="text-2xl font-black italic uppercase mb-6">Register Business</h2>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <input id="bizName" type="text" placeholder="Store Name" class="bg-black border border-white/10 p-4 rounded-xl outline-none focus:border-blue-600">
+                        <input id="bizCat" type="text" placeholder="Category (e.g. Fashion)" class="bg-black border border-white/10 p-4 rounded-xl outline-none focus:border-blue-600">
+                    </div>
+                    <button onclick="register()" class="btn-primary w-full mt-4 py-4 uppercase font-black tracking-widest">Activate Profile</button>
+                </section>
+
+                <section id="activeSection" class="hidden">
+                    <div class="flex flex-col md:flex-row gap-6 mb-12">
+                        <div class="flex-grow p-8 bg-white/5 rounded-3xl border border-white/5">
+                            <p id="dispCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-widest mb-1"></p>
+                            <h2 id="dispName" class="text-4xl font-black italic uppercase tracking-tighter"></h2>
                         </div>
-                        <div id="qrcode" class="bg-white p-3 rounded-xl min-w-[200px] min-h-[200px] flex items-center justify-center">
-                            <span class="text-black text-[10px] font-bold opacity-20 uppercase tracking-tighter">Ready for QR</span>
+                        <div class="p-8 bg-blue-600 rounded-3xl text-white text-center min-w-[150px]">
+                            <p class="text-[9px] font-bold uppercase opacity-80 mb-1">TX Volume</p>
+                            <div id="dispVol" class="text-4xl font-black italic">0</div>
                         </div>
                     </div>
-                </div>
-            </section>
+
+                    <div class="p-10 bg-white/5 rounded-3xl border border-blue-600/20">
+                        <h3 class="text-xl font-black uppercase italic mb-8">Issue Receipt ID</h3>
+                        <div class="flex flex-col md:flex-row gap-10 items-center">
+                            <div class="flex-grow space-y-4 w-full text-left">
+                                <label class="text-[10px] font-bold opacity-40 uppercase ml-1">On-Chain Identifier</label>
+                                <input id="receiptRaw" type="text" readonly placeholder="V3-WAITING" class="bg-black/50 border border-white/10 w-full p-4 rounded-xl font-mono text-center text-blue-500">
+                                <button id="genBtn" onclick="generateReceipt()" class="btn-primary w-full py-4 uppercase font-black tracking-widest">Generate & Sign Receipt</button>
+                            </div>
+                            <div id="qrcode" class="bg-white p-3 rounded-2xl min-w-[180px] min-h-[180px] flex items-center justify-center">
+                                <span class="text-black text-[10px] font-black opacity-20 uppercase">QR Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
         </div>
     </main>
 
-    <footer class="p-10 border-t border-white/5 text-center">
-        <p class="text-[9px] font-bold opacity-20 uppercase tracking-[0.5em]">Veritas Protocol © 2026 | Paseo AssetHub</p>
+    <footer>
+        <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center border-t border-white/5 gap-6">
+            <div class="text-[10px] uppercase font-bold opacity-30 tracking-[0.3em]">The White Rabbit bored creation</div>
+            <div class="flex gap-8 text-[10px] font-black uppercase tracking-widest opacity-30">
+                <a href="#" class="hover:text-blue-600 transition">Smart Contract</a>
+                <a href="#" class="hover:text-blue-600 transition">Paseo Explorer</a>
+                <a href="#" class="hover:text-blue-600 transition">Documentation</a>
+            </div>
+            <div class="text-[10px] font-black text-blue-600 tracking-widest uppercase">Veritas Protocol © 2026</div>
+        </div>
     </footer>
 
     <script src="app.js"></script>
@@ -78,7 +100,6 @@
             document.getElementById('mainDashboard').classList.remove('hidden');
             const addr = await signer.getAddress();
             const biz = await regContract.businesses(addr);
-
             if(biz.isActive) {
                 document.getElementById('activeSection').classList.remove('hidden');
                 document.getElementById('dispName').innerText = biz.name;
@@ -88,41 +109,27 @@
                 document.getElementById('regSection').classList.remove('hidden');
             }
         }
-
         async function register() {
             const name = document.getElementById('bizName').value;
             const cat = ethers.encodeBytes32String(document.getElementById('bizCat').value);
-            if(!name) return alert("Business Name Required");
             try {
                 const tx = await regContract.registerBusiness(name, cat);
                 await tx.wait();
                 location.reload();
-            } catch(e) { alert(e.reason || e.message); }
+            } catch(e) { alert(e.message); }
         }
-
         async function generateReceipt() {
-            const btn = document.getElementById('genBtn');
             const id = "V3-" + Math.random().toString(36).substring(2,8).toUpperCase();
-            btn.innerText = "CONFIRMING ON-CHAIN...";
-            btn.disabled = true;
-            
             try {
                 const hash = ethers.keccak256(ethers.toUtf8Bytes(id));
                 const tx = await engContract.issueReceipt(hash);
                 await tx.wait();
-                
                 document.getElementById('receiptRaw').value = id;
-                const url = window.location.href.replace('dashboard.html', 'review.html') + `?biz=${await signer.getAddress()}&id=${id}`;
+                const url = window.location.origin + `/review.html?biz=${await signer.getAddress()}&id=${id}`;
                 const qrDiv = document.getElementById('qrcode');
                 qrDiv.innerHTML = "";
                 new QRCode(qrDiv, { text: url, width: 180, height: 180 });
-                btn.innerText = "GENERATE & REGISTER RECEIPT";
-                btn.disabled = false;
-            } catch(e) { 
-                alert(e.message);
-                btn.innerText = "GENERATE & REGISTER RECEIPT";
-                btn.disabled = false;
-            }
+            } catch(e) { alert(e.message); }
         }
     </script>
 </body>
