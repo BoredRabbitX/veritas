@@ -17,7 +17,7 @@
                 <p id="storeCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-4"></p>
                 <h1 id="storeName" class="text-7xl md:text-8xl font-black italic uppercase mb-6 tracking-tighter leading-none">Loading...</h1>
                 <div class="flex justify-center md:justify-start gap-8 text-[10px] font-bold uppercase opacity-30 tracking-widest">
-                    <span>TX Volume: <span id="storeVol" class="font-mono text-[var(--text-main)]">0</span></span>
+                    <span>TX Volume: <span id="storeVol" class="text-[var(--text-main)] font-mono">0</span></span>
                     <span>Status: <span class="text-blue-500">On-Chain Verified</span></span>
                 </div>
             </div>
@@ -32,8 +32,7 @@
                     <div class="text-[10px] uppercase font-bold opacity-30 mt-2 tracking-widest">Based on <span id="totalRev" class="text-[var(--text-main)]">0</span> verified logs</div>
                 </div>
                 
-                <div id="barsContainer" class="space-y-2">
-                    </div>
+                <div id="barsContainer" class="space-y-2"></div>
             </div>
 
             <div class="space-y-12">
@@ -56,9 +55,10 @@
                 const b = await regContract.businesses(id);
                 if(!b.isActive) return;
 
+                const merchantName = b.name;
                 const cleanCat = ethers.decodeBytes32String(b.category).split('_').join(' ');
 
-                document.getElementById('storeName').innerText = b.name;
+                document.getElementById('storeName').innerText = merchantName;
                 document.getElementById('storeCat').innerText = cleanCat;
                 document.getElementById('storeVol').innerText = b.volume;
                 
@@ -69,7 +69,7 @@
                 let totalRating = 0;
                 let starCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
 
-                list.innerHTML = events.length ? "" : "No verified feedback found for this store.";
+                list.innerHTML = events.length ? "" : "No verified feedback found.";
 
                 for(let i = events.length-1; i >= 0; i--) {
                     const ev = events[i];
@@ -83,7 +83,6 @@
 
                     const reply = await engContract.merchantReplies(receiptId);
 
-                    // Card delle recensioni ora usano bg-[var(--card-bg)]
                     list.innerHTML += `
                         <div class="bg-[var(--card-bg)] p-10 rounded-[2.5rem] border border-[var(--border)] hover:border-blue-600/30 transition shadow-sm">
                             <div class="flex justify-between mb-6">
@@ -93,8 +92,8 @@
                             <p class="text-2xl italic leading-relaxed opacity-90 tracking-tight">"${content}"</p>
                             ${reply ? `
                                 <div class="mt-8 pt-8 border-t border-[var(--border)] text-right">
-                                    <p class="text-[9px] font-black text-blue-500 uppercase mb-3 italic opacity-50">Merchant Response</p>
-                                    <p class="text-base italic opacity-70 pl-8">${reply}</p>
+                                    <p class="text-[9px] font-black text-blue-500 uppercase mb-3 italic opacity-50">${merchantName} Response</p>
+                                    <p class="text-base italic opacity-70 pl-8 font-medium text-[var(--text-main)]">${reply}</p>
                                 </div>
                             ` : ''}
                         </div>`;
@@ -120,7 +119,6 @@
                         `;
                     }
                 }
-
             } catch(e) { console.error(e); }
         }
     </script>
