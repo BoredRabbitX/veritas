@@ -3,121 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Post Review | Veritas</title>
+    <title>Submit Review | Veritas</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="bg-[#09090b] text-[#f4f4f5] min-h-screen flex flex-col">
-    <nav class="p-6 border-b border-white/5">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-black italic tracking-tighter">VERITAS</a>
-            <button id="connectBtn" onclick="connectWallet()" class="bg-blue-600 px-6 py-2 rounded-full font-bold text-[10px] uppercase">Connect Wallet</button>
-        </div>
-    </nav>
+<body class="flex flex-col min-h-screen">
 
-    <main class="max-w-xl mx-auto w-full p-6 py-12 flex-grow">
-        <div id="authGuard" class="text-center py-10">
-            <h2 class="text-xl opacity-30 italic mb-6">Connect your wallet to post a review.</h2>
-            <button onclick="connectWallet()" class="bg-white text-black px-8 py-3 rounded-xl text-xs font-bold uppercase">Connect Wallet</button>
-        </div>
+    <div class="nav-container">
+        <nav class="max-w-7xl mx-auto p-4 flex justify-between items-center">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/20">V</div>
+                    <span class="text-2xl font-black tracking-tighter uppercase italic">Veritas</span>
+                </a>
+                <div class="hidden md:flex gap-6 text-[10px] font-bold uppercase tracking-widest">
+                    <a href="explore.html" class="opacity-60 hover:opacity-100 transition">Explore</a>
+                    <a href="review.html" class="text-blue-600 transition">Submit Review</a>
+                    <a href="dashboard.html" class="opacity-60 hover:opacity-100 transition">Merchant Hub</a>
+                </div>
+            </div>
+            <button id="connectBtn" class="btn-primary text-xs py-2 px-6" onclick="connectWallet()">Connect Wallet</button>
+        </nav>
+    </div>
 
-        <div id="reviewForm" class="hidden space-y-8">
-            <div>
-                <h1 class="text-4xl font-black italic uppercase mb-2">Submit Review</h1>
-                <p class="opacity-40 text-[10px] font-bold uppercase tracking-[0.3em]">Verified Feedback Module</p>
+    <main class="main-content flex-grow px-6 py-12 flex flex-col justify-center">
+        <div class="max-w-2xl mx-auto w-full">
+            <div id="authGuard" class="text-center py-10">
+                <h2 class="text-4xl font-black italic uppercase mb-4">Verification Required</h2>
+                <button onclick="connectWallet()" class="btn-primary px-10 py-4">Connect Wallet</button>
             </div>
 
-            <div class="space-y-6 bg-zinc-900/50 p-8 rounded-3xl border border-white/5">
-                <div class="space-y-2">
-                    <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Your Name</label>
-                    <input id="userName" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl outline-none focus:border-blue-600" placeholder="e.g. Satoshi">
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Merchant Address</label>
-                        <input id="bizAddr" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono outline-none focus:border-blue-600" placeholder="0x...">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Receipt ID</label>
-                        <input id="receiptId" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase outline-none focus:border-blue-600" placeholder="V3-XXXXXX">
-                    </div>
-                </div>
+            <div id="reviewForm" class="hidden">
+                <h1 class="text-5xl font-black italic uppercase tracking-tighter mb-8">Submit Feedback</h1>
                 
-                <div class="space-y-2">
-                    <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Rating (1 to 5 Stars)</label>
-                    <div class="flex gap-4 items-center">
-                        <input id="rating" type="range" min="1" max="5" step="1" value="5" class="w-full accent-blue-600">
-                        <span id="ratingVal" class="text-xl font-black italic text-blue-500 min-w-[20px]">5</span>
+                <div class="space-y-6 p-8 bg-white/5 rounded-3xl border border-white/5">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Merchant Address</label>
+                            <input id="bizAddr" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono outline-none focus:border-blue-600" placeholder="0x...">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Receipt ID</label>
+                            <input id="receiptId" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase outline-none focus:border-blue-600" placeholder="V3-XXXXXX">
+                        </div>
                     </div>
-                </div>
 
-                <div class="space-y-2">
-                    <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Your Experience</label>
-                    <textarea id="content" rows="4" class="bg-black border border-white/10 w-full p-4 rounded-xl outline-none focus:border-blue-600" placeholder="Describe the service..."></textarea>
-                </div>
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Reviewer Name</label>
+                        <input id="userName" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl outline-none focus:border-blue-600" placeholder="Your Name">
+                    </div>
 
-                <button id="subBtn" onclick="submit()" class="w-full bg-blue-600 font-black py-5 rounded-2xl shadow-xl shadow-blue-600/10 hover:bg-blue-700 transition text-sm uppercase tracking-widest">Publish Review On-Chain</button>
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Rating (1 to 5 Stars)</label>
+                        <div class="flex gap-4 items-center bg-black p-4 rounded-xl border border-white/10">
+                            <input id="rating" type="range" min="1" max="5" value="5" class="w-full accent-blue-600">
+                            <span id="ratingVal" class="text-xl font-black italic text-blue-600 w-8">5</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Message</label>
+                        <textarea id="content" rows="4" class="bg-black border border-white/10 w-full p-4 rounded-xl outline-none focus:border-blue-600" placeholder="Describe your experience..."></textarea>
+                    </div>
+
+                    <button id="subBtn" onclick="submit()" class="btn-primary w-full py-5 text-sm uppercase font-black tracking-widest">Publish On-Chain</button>
+                </div>
             </div>
         </div>
     </main>
 
-    <footer class="p-10 border-t border-white/5 text-center">
-        <p class="text-[9px] font-bold opacity-20 uppercase tracking-[0.5em]">Veritas Protocol V3.5.7</p>
+    <footer>
+        <div class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center border-t border-white/5 gap-6">
+            <div class="text-[10px] uppercase font-bold opacity-30 tracking-[0.3em]">The White Rabbit bored creation</div>
+            <div class="flex gap-8 text-[10px] font-black uppercase tracking-widest opacity-30">
+                <a href="#" class="hover:text-blue-600 transition">Smart Contract</a>
+                <a href="#" class="hover:text-blue-600 transition">Paseo Explorer</a>
+                <a href="#" class="hover:text-blue-600 transition">Documentation</a>
+            </div>
+            <div class="text-[10px] font-black text-blue-600 tracking-widest uppercase">Veritas Protocol © 2026</div>
+        </div>
     </footer>
 
     <script src="app.js"></script>
     <script>
-        document.getElementById('rating').oninput = function() {
-            document.getElementById('ratingVal').innerText = this.value;
-        };
-
+        document.getElementById('rating').oninput = function() { document.getElementById('ratingVal').innerText = this.value; };
         async function initPage() {
             document.getElementById('authGuard').classList.add('hidden');
             document.getElementById('reviewForm').classList.remove('hidden');
-            
-            // Popolamento automatico se i parametri sono presenti nell'URL
             const params = new URLSearchParams(window.location.search);
-            const bizParam = params.get('biz');
-            const idParam = params.get('id');
-            
-            if(bizParam) document.getElementById('bizAddr').value = bizParam;
-            if(idParam) document.getElementById('receiptId').value = idParam;
+            if(params.get('biz')) document.getElementById('bizAddr').value = params.get('biz');
+            if(params.get('id')) document.getElementById('receiptId').value = params.get('id');
         }
-
         async function submit() {
             const btn = document.getElementById('subBtn');
-            const name = document.getElementById('userName').value;
-            const biz = document.getElementById('bizAddr').value;
-            const ridText = document.getElementById('receiptId').value;
-            const rate = document.getElementById('rating').value;
-            const msg = document.getElementById('content').value;
-
-            if(!name || !biz || !ridText || !msg) return alert("Please fill all fields.");
-            
-            // Uniamo Nome e Messaggio per visualizzarli nello Store
-            const fullMessage = `${name}: ${msg}`;
-            
-            btn.innerText = "WAITING FOR SIGNATURE...";
-            btn.disabled = true;
-
+            const ridHash = ethers.keccak256(ethers.toUtf8Bytes(document.getElementById('receiptId').value.trim().toUpperCase()));
+            const fullMsg = `${document.getElementById('userName').value}: ${document.getElementById('content').value}`;
+            btn.innerText = "SIGNING...";
             try {
-                // Generiamo l'hash della ricevuta per il contratto
-                const ridHash = ethers.keccak256(ethers.toUtf8Bytes(ridText.trim().toUpperCase()));
-                
-                // Chiamata al contratto Reviewer
-                const tx = await revContract.submitReview(biz.trim(), rate, fullMessage, "", ridHash);
+                const tx = await revContract.submitReview(document.getElementById('bizAddr').value, document.getElementById('rating').value, fullMsg, "", ridHash);
                 await tx.wait();
-                
-                alert("Review Successfully Published!");
                 window.location.href = "index.html";
-            } catch(e) { 
-                console.error(e);
-                alert("Error: " + (e.reason || "Transaction failed. Check if Receipt ID is correct or already used.")); 
-                btn.innerText = "PUBLISH REVIEW ON-CHAIN";
-                btn.disabled = false;
-            }
+            } catch(e) { alert(e.message); btn.innerText = "Publish On-Chain"; }
         }
     </script>
 </body>
