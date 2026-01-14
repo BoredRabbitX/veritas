@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        /* Animazione per la comparsa del merchant */
         .merchant-found { 
             display: block !important; 
             animation: slideIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
@@ -57,8 +56,8 @@
                 </div>
 
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Your Name / Alias</label>
-                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm outline-none focus:border-blue-600" placeholder="Mario Rossi">
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Reviewer Name</label>
+                    <input id="reviewerName" type="text" class="w-full bg-[var(--card-bg)] border border-[var(--border)] rounded-xl p-4 text-sm outline-none focus:border-blue-600" placeholder="John Doe">
                 </div>
 
                 <div>
@@ -73,8 +72,8 @@
                 </div>
 
                 <div>
-                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Experience</label>
-                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm outline-none focus:border-blue-600 resize-none" placeholder="How was the service?"></textarea>
+                    <label class="text-[9px] font-black uppercase opacity-40 mb-3 block tracking-widest">Experience Details</label>
+                    <textarea id="comment" class="w-full h-32 p-4 rounded-xl border border-[var(--border)] bg-[var(--card-bg)] text-sm outline-none focus:border-blue-600 resize-none" placeholder="Describe your service experience..."></textarea>
                 </div>
 
                 <button id="submitBtn" onclick="submitReview()" class="btn-primary w-full py-6 font-black uppercase tracking-[0.2em] shadow-xl">
@@ -92,18 +91,23 @@
         const rIdInput = document.getElementById('rId');
         const statusText = document.getElementById('searchStatus');
 
-        // Monitoraggio costante dell'input
         rIdInput.addEventListener('input', (e) => {
             const val = e.target.value.trim().toUpperCase();
-            if (val.length >= 10) {
+            if (val.length >= 8) {
                 statusText.classList.remove('hidden');
+                statusText.innerText = "Searching on-chain...";
                 detectMerchant(val);
             } else {
                 statusText.classList.add('hidden');
-                document.getElementById('merchantBadge').classList.add('hidden');
-                document.getElementById('merchantBadge').classList.remove('merchant-found');
+                resetBadge();
             }
         });
+
+        function resetBadge() {
+            const badge = document.getElementById('merchantBadge');
+            badge.classList.add('hidden');
+            badge.classList.remove('merchant-found');
+        }
 
         async function detectMerchant(rid) {
             const badge = document.getElementById('merchantBadge');
@@ -114,17 +118,12 @@
             if (!window.engContract) return;
 
             try {
-                // Conversione identica a quella usata in Dashboard
                 const ridBytes = ethers.encodeBytes32String(rid);
-                
-                // Interroga la blockchain
                 const issuer = await engContract.receiptIssuers(ridBytes);
                 
                 if (issuer && issuer !== "0x0000000000000000000000000000000000000000") {
                     const b = await regContract.businesses(issuer);
-                    
-                    // UI UPDATE
-                    nameDisplay.innerText = b.name;
+                    nameDisplay.innerText = sanitize(b.name);
                     addrDisplay.innerText = issuer.slice(0,6) + "..." + issuer.slice(-4);
                     addrInput.value = issuer;
                     
@@ -132,17 +131,17 @@
                     badge.classList.remove('hidden');
                     badge.classList.add('merchant-found');
                 } else {
-                    badge.classList.add('hidden');
-                    badge.classList.remove('merchant-found');
+                    statusText.innerText = "Code not recognized on ledger";
+                    resetBadge();
                 }
             } catch(e) {
-                console.error("Search failed:", e);
-                badge.classList.add('hidden');
+                statusText.innerText = "Invalid code format";
+                resetBadge();
             }
         }
 
         async function submitReview() {
-            if (!window.signer) return alert("Connect Wallet!");
+            if (!window.signer) return alert("Connect Wallet first!");
             const btn = document.getElementById('submitBtn');
             const mAddr = document.getElementById('mAddr').value;
             const rid = rIdInput.value.trim().toUpperCase();
@@ -150,8 +149,8 @@
             const stars = document.getElementById('stars').value;
             const comment = document.getElementById('comment').value;
 
-            if (!mAddr) return alert("Identify Merchant first!");
-            if (!reviewer || !comment) return alert("Fill all fields!");
+            if (!mAddr) return alert("Merchant not identified. Enter a valid receipt code.");
+            if (!reviewer || !comment) return alert("All fields are required.");
 
             btn.disabled = true; btn.innerText = "Publishing...";
 
@@ -164,12 +163,11 @@
                 window.location.href = "explore.html";
             } catch(e) {
                 console.error(e);
-                alert("Failed.");
+                alert("Blockchain transaction failed.");
                 btn.disabled = false; btn.innerText = "Broadcast Review";
             }
         }
 
-        // Se arriva dal QR: ?rid=VER-XXXX-XXXX
         window.addEventListener('load', () => {
             const urlRid = new URLSearchParams(window.location.search).get('rid');
             if (urlRid) {
