@@ -13,69 +13,101 @@
                 <h2 class="text-4xl font-black italic uppercase mb-8">Merchant Access</h2>
                 <button onclick="connectWallet()" class="btn-primary px-10 py-4">Connect Wallet</button>
             </div>
-            <div id="mainDashboard" class="hidden space-y-12">
-                <div class="flex justify-between items-end border-b border-white/5 pb-10">
-                    <div>
-                        <p id="dispCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-2"></p>
-                        <h1 id="dispName" class="text-6xl font-black italic uppercase tracking-tighter leading-none">Store</h1>
+
+            <div id="mainDashboard" class="hidden">
+                <section id="regSection" class="hidden max-w-2xl mx-auto py-20 text-center">
+                    <h2 class="text-5xl font-black italic uppercase mb-4">Register Business</h2>
+                    <p class="opacity-40 text-xs mb-10 uppercase tracking-widest">Activate your on-chain identity</p>
+                    <div class="space-y-4">
+                        <input id="bizName" type="text" placeholder="Store Name" class="bg-zinc-900 border border-white/10 w-full p-4 rounded-2xl outline-none focus:border-blue-600">
+                        <input id="bizCat" type="text" placeholder="Category (e.g. Food, Tech)" class="bg-zinc-900 border border-white/10 w-full p-4 rounded-2xl outline-none focus:border-blue-600">
+                        <button onclick="register()" class="btn-primary w-full py-5 font-black uppercase italic tracking-widest">Register on Paseo</button>
                     </div>
-                    <div class="flex gap-4 text-center">
-                        <div class="bg-zinc-900 p-6 rounded-2xl border border-white/5 min-w-[120px]">
-                            <p class="text-[9px] font-bold opacity-30 uppercase mb-1">TX Volume</p>
+                </section>
+
+                <section id="activeDashboard" class="hidden space-y-12">
+                    <div class="flex justify-between items-end border-b border-white/5 pb-10">
+                        <div>
+                            <p id="dispCat" class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-2"></p>
+                            <h1 id="dispName" class="text-6xl font-black italic uppercase tracking-tighter leading-none">Store</h1>
+                        </div>
+                        <div class="bg-zinc-900 p-6 rounded-2xl border border-white/5 text-center min-w-[120px]">
+                            <p class="text-[9px] font-bold opacity-30 uppercase mb-1 text-zinc-400">TX Volume</p>
                             <p id="statVol" class="text-3xl font-black italic">0</p>
                         </div>
                     </div>
-                </div>
-                <div class="grid lg:grid-cols-2 gap-10">
-                    <section class="p-8 bg-zinc-900 rounded-[2.5rem] border border-blue-600/20">
-                        <h3 class="text-xl font-black uppercase italic mb-6">Issue Receipt</h3>
-                        <div class="space-y-6">
-                            <input id="receiptRaw" type="text" readonly placeholder="V3-WAITING" class="bg-black border border-white/10 w-full p-4 rounded-xl font-mono text-center text-blue-500 text-lg uppercase outline-none">
-                            <button id="genBtn" onclick="generateReceipt()" class="btn-primary w-full py-4 uppercase font-black italic">Sign & Generate QR</button>
-                            <div class="flex justify-center py-6 bg-black rounded-2xl border border-white/10 min-h-[200px]">
-                                <div id="qrcode" class="p-2 bg-white rounded-xl"></div>
+
+                    <div class="grid lg:grid-cols-2 gap-10">
+                        <section class="p-8 bg-zinc-900 rounded-[2.5rem] border border-blue-600/20">
+                            <h3 class="text-xl font-black uppercase italic mb-6">Issue Receipt</h3>
+                            <div class="space-y-6">
+                                <input id="receiptRaw" type="text" readonly placeholder="V3-WAITING" class="bg-black border border-white/10 w-full p-4 rounded-xl font-mono text-center text-blue-500 text-lg uppercase outline-none">
+                                <button id="genBtn" onclick="generateReceipt()" class="btn-primary w-full py-4 uppercase font-black italic">Sign & Generate QR</button>
+                                <div class="flex justify-center py-6 bg-black rounded-2xl border border-white/10 min-h-[200px]">
+                                    <div id="qrcode" class="p-2 bg-white rounded-xl"></div>
+                                </div>
                             </div>
-                        </div>
-                    </section>
-                    <section>
-                        <h3 class="text-xl font-black uppercase italic mb-6">Feedback Inbox</h3>
-                        <div id="merchantInbox" class="space-y-4"></div>
-                    </section>
-                </div>
+                        </section>
+                        <section>
+                            <h3 class="text-xl font-black uppercase italic mb-6">Feedback Inbox</h3>
+                            <div id="merchantInbox" class="space-y-4"></div>
+                        </section>
+                    </div>
+                </section>
             </div>
         </div>
     </main>
-    <script src="app.js"></script><script src="components.js"></script>
+
+    <script src="app.js"></script>
+    <script src="components.js"></script>
     <script>
         async function initPage() {
             document.getElementById('authGuard').classList.add('hidden');
             document.getElementById('mainDashboard').classList.remove('hidden');
+            
             const addr = await signer.getAddress();
             const b = await regContract.businesses(addr);
-            if(!b.isActive) { alert("Register your business first!"); return; }
-            document.getElementById('dispName').innerText = b.name;
-            document.getElementById('dispCat').innerText = ethers.decodeBytes32String(b.category);
-            document.getElementById('statVol').innerText = b.volume;
-            await loadMerchantData(addr);
+
+            if(b.isActive) {
+                document.getElementById('activeDashboard').classList.remove('hidden');
+                document.getElementById('dispName').innerText = b.name;
+                document.getElementById('dispCat').innerText = ethers.decodeBytes32String(b.category);
+                document.getElementById('statVol').innerText = b.volume;
+                await loadMerchantData(addr);
+            } else {
+                document.getElementById('regSection').classList.remove('hidden');
+            }
+        }
+
+        async function register() {
+            const name = document.getElementById('bizName').value;
+            const cat = ethers.encodeBytes32String(document.getElementById('bizCat').value);
+            if(!name) return alert("Please enter a name");
+            try {
+                const tx = await regContract.registerBusiness(name, cat);
+                await tx.wait();
+                location.reload();
+            } catch(e) { alert(e.reason || e.message); }
         }
 
         async function loadMerchantData(addr) {
             const list = document.getElementById('merchantInbox');
             const events = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), -50000);
-            list.innerHTML = events.length ? "" : "No feedback yet.";
+            list.innerHTML = events.length ? "" : "<p class='opacity-20 italic text-xs uppercase'>No reviews yet.</p>";
+            
             for(let i = events.length-1; i >= 0; i--) {
                 const {author, rating, content, receiptId} = events[i].args;
                 const reply = await engContract.merchantReplies(receiptId);
                 list.innerHTML += `
                     <div class="bg-zinc-900 border border-white/5 p-6 rounded-2xl mb-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-[9px] font-mono opacity-30">${author.slice(0,10)}...</span>
+                        <div class="flex justify-between items-center mb-2 text-[10px]">
+                            <span class="opacity-30 uppercase font-mono">${author.slice(0,12)}...</span>
                             <span class="text-blue-500 font-bold italic">${"★".repeat(rating)}</span>
                         </div>
-                        <p class="text-sm italic mb-4">"${content}"</p>
+                        <p class="text-sm italic mb-4 opacity-80">"${content}"</p>
                         ${reply ? `<div class="p-4 bg-blue-600/10 border-l-2 border-blue-600 text-xs italic opacity-70">${reply}</div>` : `
                         <div class="flex gap-2">
-                            <input id="rep-${receiptId}" type="text" placeholder="Reply..." class="bg-black border border-white/10 flex-grow p-3 rounded-xl text-xs text-white outline-none focus:border-blue-600">
+                            <input id="rep-${receiptId}" type="text" placeholder="Reply..." class="bg-black border border-white/10 flex-grow p-3 rounded-xl text-xs outline-none">
                             <button onclick="sendReply('${receiptId}')" class="bg-white text-black text-[9px] font-black px-6 rounded-xl uppercase">Post</button>
                         </div>`}
                     </div>`;
