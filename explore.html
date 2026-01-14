@@ -5,12 +5,12 @@
     <link rel="stylesheet" href="style.css"><script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen bg-black text-white">
     <main class="main-content flex-grow px-6 py-12">
-        <div class="max-w-7xl mx-auto">
-            <h1 class="text-7xl font-black italic tracking-tighter uppercase mb-12 text-white">Verified Stores</h1>
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-7xl font-black italic uppercase mb-12 italic">Verified Stores</h1>
             <div id="grid" class="grid md:grid-cols-3 gap-8">
-                <div class="col-span-full text-center opacity-30 py-20 animate-pulse text-white uppercase text-[10px] font-bold">Synchronizing...</div>
+                <div class="col-span-full opacity-30 animate-pulse uppercase text-xs font-bold">Scanning Paseo Chain...</div>
             </div>
         </div>
     </main>
@@ -19,25 +19,35 @@
         async function initPage() {
             const grid = document.getElementById('grid');
             try {
-                const events = await regContract.queryFilter(regContract.filters.BusinessRegistered(), 0);
+                console.log("Fetching events from:", registryAddress);
+                const filter = regContract.filters.BusinessRegistered();
+                const events = await regContract.queryFilter(filter, -10000); // Cerca negli ultimi 10k blocchi
+                
+                console.log("Events found:", events.length);
                 const owners = [...new Set(events.map(e => e.args.owner))];
-                grid.innerHTML = owners.length ? "" : "No stores found.";
-                for(let addr of owners.reverse()) {
+                
+                if(owners.length === 0) {
+                    grid.innerHTML = "No stores found in recent blocks.";
+                    return;
+                }
+
+                grid.innerHTML = "";
+                for(let addr of owners) {
                     const b = await regContract.businesses(addr);
                     if(!b.isActive) continue;
-                    const rEvents = await revContract.queryFilter(revContract.filters.ReviewSubmitted(addr), 0);
-                    const avg = rEvents.length ? (rEvents.reduce((s,e)=>s+Number(e.args.rating),0)/rEvents.length).toFixed(1) : "0.0";
+                    
+                    const cat = ethers.decodeBytes32String(b.category);
                     grid.innerHTML += `
-                        <a href="store.html?id=${addr}" class="bg-white/5 border border-white/5 p-8 rounded-3xl block hover:border-blue-600 transition text-white">
-                            <div class="flex justify-between items-start mb-6">
-                                <span class="text-blue-600 text-[10px] font-bold uppercase">${ethers.decodeBytes32String(b.category)}</span>
-                                <span class="font-black italic text-sm text-white">★ ${avg}</span>
-                            </div>
-                            <h3 class="text-3xl font-black italic uppercase mb-4">${b.name}</h3>
-                            <p class="text-[9px] font-mono opacity-30 truncate uppercase tracking-widest">ID: ${addr}</p>
+                        <a href="store.html?id=${addr}" class="bg-zinc-900 border border-white/5 p-8 rounded-3xl block hover:border-blue-600 transition">
+                            <span class="text-blue-600 text-[10px] font-bold uppercase">${cat}</span>
+                            <h3 class="text-3xl font-black italic uppercase mt-2">${b.name}</h3>
+                            <p class="text-[9px] opacity-30 mt-4">${addr}</p>
                         </a>`;
                 }
-            } catch(e) { grid.innerHTML = "Error connecting to Registry."; }
+            } catch(e) { 
+                console.error(e);
+                grid.innerHTML = "Error: Check Console (F12)"; 
+            }
         }
     </script>
 </body>
