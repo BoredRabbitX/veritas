@@ -45,11 +45,48 @@ const footerContent = `
     </div>
 </footer>`;
 
+// Funzione per aggiornare il testo del bottone se il wallet è già connesso
+async function syncConnectButton() {
+    const btn = document.getElementById('connectBtn');
+    if (!btn) return;
+
+    if (window.signer) {
+        try {
+            const addr = await window.signer.getAddress();
+            btn.innerText = addr.slice(0, 6) + "..." + addr.slice(-4);
+        } catch (e) {
+            btn.innerText = "Connect";
+        }
+    }
+}
+
 function renderUI() {
     const hRoot = document.getElementById('header-root');
     const fRoot = document.getElementById('footer-root');
-    if (hRoot) hRoot.innerHTML = headerContent;
-    if (fRoot) fRoot.innerHTML = footerContent;
+    
+    if (hRoot) {
+        hRoot.innerHTML = headerContent;
+    }
+    if (fRoot) {
+        fRoot.innerHTML = footerContent;
+    }
+
+    // Sincronizza il tema visivo
+    const icon = document.getElementById('themeIcon');
+    if (icon) {
+        icon.innerText = document.documentElement.classList.contains('light') ? '☀️' : '🌙';
+    }
+
+    // Fondamentale: Controlla subito se siamo connessi per aggiornare il bottone appena creato
+    syncConnectButton();
 }
 
-document.addEventListener('DOMContentLoaded', renderUI);
+// Esegui il render
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderUI);
+} else {
+    renderUI();
+}
+
+// Ascolta l'evento di app.js per aggiornare il bottone in tempo reale senza refresh
+window.addEventListener('contractsReady', syncConnectButton);
