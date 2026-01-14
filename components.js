@@ -43,7 +43,6 @@ const footerContent = `
 <footer class="py-16 border-t border-[var(--border)] bg-[var(--bg-main)]">
     <div class="max-w-7xl mx-auto px-6">
         <div class="flex flex-col md:flex-row justify-between items-center gap-10">
-            
             <div class="flex items-center gap-4 group">
                 <div class="w-12 h-12 bg-[var(--card-bg)] border border-[var(--border)] rounded-full flex items-center justify-center text-2xl grayscale group-hover:grayscale-0 transition-all duration-500">
                     🐰
@@ -80,28 +79,34 @@ function renderUI() {
     if (hRoot) hRoot.innerHTML = headerContent;
     if (fRoot) fRoot.innerHTML = footerContent;
     
-    // Sincronizza l'icona del tema
+    // Sync theme icon
     const icon = document.getElementById('themeIcon');
     if (icon) {
         icon.innerText = document.documentElement.classList.contains('light') ? '☀️' : '🌙';
     }
 
-    // Fondamentale: Se il wallet è già connesso, aggiorna il testo del bottone
-    // dopo che l'header è stato iniettato nel DOM
+    // Se il wallet è già connesso (es. dopo refresh con autoconnect), aggiorna il bottone
+    updateConnectButton();
+}
+
+function updateConnectButton() {
     if (window.signer) {
         window.signer.getAddress().then(addr => {
             const btn = document.getElementById('connectBtn');
-            if (btn) btn.innerText = addr.slice(0,6) + "...";
-        });
+            if (btn) btn.innerText = addr.slice(0,6) + "..." + addr.slice(-4);
+        }).catch(e => console.log("Signer not ready yet"));
     }
 }
+
+// Ascolta l'evento di connessione avvenuta per aggiornare il bottone
+window.addEventListener('contractsReady', updateConnectButton);
 
 window.toggleMobileMenu = function() {
     const menu = document.getElementById('mobileMenu');
     if (menu) menu.classList.toggle('hidden');
 };
 
-// Esegui il rendering UI appena il DOM è pronto
+// Rendering sicuro
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderUI);
 } else {
