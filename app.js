@@ -71,7 +71,7 @@ async function connectWallet(silent = false) {
             initPage();
         }
         
-        // 3. Prova a connettere il wallet in background se già autorizzato
+        // 3. Test connection
         if (localStorage.getItem('veritas_autoconnect') === 'true') {
             connectWallet(true);
         }
