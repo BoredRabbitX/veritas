@@ -137,32 +137,31 @@
         }
 
         function generateReceipt() {
-            const resultBox = document.getElementById('receiptResult');
-            const qrContainer = document.getElementById('qrcode');
-            const placeholder = document.getElementById('qrPlaceholder');
-            const codeDisplay = document.getElementById('receiptCode');
+    const resultBox = document.getElementById('receiptResult');
+    const qrContainer = document.getElementById('qrcode');
+    const placeholder = document.getElementById('qrPlaceholder');
+    
+    resultBox.classList.remove('hidden');
+    qrContainer.innerHTML = "";
+    placeholder.classList.remove('hidden');
 
-            resultBox.classList.remove('hidden');
-            qrContainer.innerHTML = "";
-            placeholder.classList.remove('hidden');
+    // Generiamo l'hash (32 bytes)
+    const rawHash = ethers.hexlify(ethers.randomBytes(32));
+    
+    // Creiamo il codice "umano" per la visualizzazione
+    const humanCode = `VER-${rawHash.slice(2, 6).toUpperCase()}-${rawHash.slice(6, 10).toUpperCase()}`;
+    document.getElementById('receiptCode').innerText = humanCode;
 
-            const rawHash = ethers.hexlify(ethers.randomBytes(32));
-            const p1 = rawHash.slice(2, 6).toUpperCase();
-            const p2 = rawHash.slice(6, 10).toUpperCase();
-            const humanCode = `VER-${p1}-${p2}`;
-            
-            codeDisplay.innerText = humanCode;
-
-            setTimeout(() => {
-                placeholder.classList.add('hidden');
-                new QRCode(qrContainer, {
-                    text: `${window.location.origin}/review.html?rid=${rawHash}`,
-                    width: 180, height: 180,
-                    colorDark : "#2563eb", colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-            }, 800);
-        }
+    setTimeout(() => {
+        placeholder.classList.add('hidden');
+        new QRCode(qrContainer, {
+            // IL QR DEVE PASSARE L'HASH LUNGO NELL'URL
+            text: `${window.location.origin}/review.html?rid=${rawHash}`,
+            width: 180, height: 180,
+            colorDark : "#2563eb", colorLight : "#ffffff"
+        });
+    }, 800);
+}
 
         async function loadReviews(addr) {
             const grid = document.getElementById('reviewsGrid');
