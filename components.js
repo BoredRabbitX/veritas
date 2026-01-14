@@ -76,8 +76,11 @@ const footerContent = `
 function renderUI() {
     const hRoot = document.getElementById('header-root');
     const fRoot = document.getElementById('footer-root');
+    
     if (hRoot) hRoot.innerHTML = headerContent;
     if (fRoot) fRoot.innerHTML = footerContent;
+    
+    // Sync theme icon
     const icon = document.getElementById('themeIcon');
     if (icon) {
         icon.innerText = document.documentElement.classList.contains('light') ? '☀️' : '🌙';
@@ -89,15 +92,9 @@ window.toggleMobileMenu = function() {
     if (menu) menu.classList.toggle('hidden');
 };
 
-window.addEventListener('load', renderUI);
-if (document.readyState === 'complete') renderUI();
-
-function startUI() {
-    renderUI(); // La tua funzione che inietta HTML
-}
-
+// Safe execution
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startUI);
+    document.addEventListener('DOMContentLoaded', renderUI);
 } else {
-    startUI();
+    renderUI();
 }
