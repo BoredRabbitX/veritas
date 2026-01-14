@@ -1,175 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Submit Review | Veritas</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Write Review | Veritas</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="bg-[var(--bg-main)]">
     <div id="header-root"></div>
-
-    <main class="main-content flex-grow flex items-center justify-center px-6 py-20">
-        <div class="max-w-xl w-full">
+    <main class="max-w-2xl mx-auto px-6 py-20">
+        <div class="card-veritas p-12">
+            <h1 class="text-5xl font-black italic uppercase mb-8 leading-none">Submit <span class="text-blue-600">Review</span></h1>
             
-            <div id="authGuard" class="text-center py-10">
-                <h2 class="text-4xl font-black italic uppercase mb-8 tracking-tighter">Identity Required</h2>
-                <button onclick="connectWallet()" class="btn-primary px-10 py-4 font-black uppercase italic tracking-widest">Connect Wallet</button>
-            </div>
-
-            <div id="reviewForm" class="hidden space-y-8">
-                <div class="text-center">
-                    <h1 class="text-6xl font-black italic uppercase tracking-tighter mb-2">Post Review</h1>
-                    <p class="text-blue-600 text-[10px] font-bold uppercase tracking-[0.4em] mb-8">Verified Feedback Module</p>
+            <div class="space-y-6">
+                <div>
+                    <label class="text-[10px] font-black uppercase opacity-40 mb-2 block">Merchant Address</label>
+                    <input id="mAddr" class="w-full" placeholder="0x...">
                 </div>
-
-                <div class="bg-[var(--card-bg)] border border-[var(--border)] p-10 rounded-[3rem] shadow-2xl">
-                    <div class="space-y-6">
-                        
-                        <div class="space-y-2">
-                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Your Name</label>
-                            <input id="userName" type="text" placeholder="e.g. Satoshi" class="bg-[var(--input-bg)] border border-[var(--border)] w-full p-4 rounded-2xl outline-none focus:border-blue-600 transition text-[var(--text-main)]">
-                        </div>
-
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Receipt ID</label>
-                                <input id="receiptId" type="text" oninput="autoLookupMerchant()" placeholder="V3-XXXXXX" class="bg-[var(--input-bg)] border border-[var(--border)] w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase outline-none focus:border-blue-600 transition font-bold">
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Merchant Details</label>
-                                <input id="bizAddr" type="text" placeholder="Scanning receipt..." readonly class="opacity-50 cursor-not-allowed bg-[var(--input-bg)] border border-[var(--border)] w-full p-4 rounded-xl text-[10px] font-mono outline-none italic">
-                                <div id="lookupStatus" class="min-h-[40px] opacity-60 text-[8px] uppercase tracking-tighter ml-1 mt-1 transition-all"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-2 text-center">
-                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest mb-2 block">Rating</label>
-                            <div class="flex justify-center gap-3 py-6 bg-[var(--bg-main)] rounded-3xl border border-[var(--border)]">
-                                <div id="starContainer" class="flex gap-2 text-4xl cursor-pointer">
-                                    <span class="star text-blue-600 transition hover:scale-110" data-v="1">★</span>
-                                    <span class="star text-blue-600 transition hover:scale-110" data-v="2">★</span>
-                                    <span class="star text-blue-600 transition hover:scale-110" data-v="3">★</span>
-                                    <span class="star text-blue-600 transition hover:scale-110" data-v="4">★</span>
-                                    <span class="star text-blue-600 transition hover:scale-110" data-v="5">★</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Your Experience</label>
-                            <textarea id="content" rows="4" class="bg-[var(--input-bg)] border border-[var(--border)] w-full p-5 rounded-3xl outline-none focus:border-blue-600 transition text-sm text-[var(--text-main)]" placeholder="Tell us about the service..."></textarea>
-                        </div>
-
-                        <button id="subBtn" onclick="submit()" class="btn-primary w-full py-6 font-black uppercase tracking-widest italic shadow-xl shadow-blue-600/10">Publish Review On-Chain</button>
-                    </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase opacity-40 mb-2 block">Receipt ID</label>
+                    <input id="rId" class="w-full" placeholder="Enter your unique log ID">
                 </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase opacity-40 mb-2 block">Rating (1-5)</label>
+                    <select id="stars" class="w-full">
+                        <option value="5">5 Stars - Excellent</option>
+                        <option value="4">4 Stars - Good</option>
+                        <option value="3">3 Stars - Average</option>
+                        <option value="2">2 Stars - Poor</option>
+                        <option value="1">1 Star - Terrible</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase opacity-40 mb-2 block">Your Experience</label>
+                    <textarea id="comment" class="w-full h-32" placeholder="Tell the community about your experience..."></textarea>
+                </div>
+                <button onclick="submit()" class="btn-primary w-full py-5 text-sm uppercase tracking-widest">Publish on Blockchain</button>
             </div>
         </div>
     </main>
-<div id="footer-root"> </div> <script src="app.js"></script>
+    <div id="footer-root"></div>
+
     <script src="app.js"></script>
     <script src="components.js"></script>
     <script>
-        let currentRating = 5;
-
-        // Gestione interattiva stelline
-        document.querySelectorAll('.star').forEach(star => {
-            star.onclick = function() {
-                currentRating = this.getAttribute('data-v');
-                document.querySelectorAll('.star').forEach(s => {
-                    const val = s.getAttribute('data-v');
-                    s.classList.toggle('text-blue-600', val <= currentRating);
-                    s.classList.toggle('opacity-20', val > currentRating);
-                });
-            }
-        });
-
-        // AUTO-LOOKUP: Identifica merchant e nome dal Receipt ID
-        async function autoLookupMerchant() {
-            const ridRaw = document.getElementById('receiptId').value.trim().toUpperCase();
-            const bizInput = document.getElementById('bizAddr');
-            const statusText = document.getElementById('lookupStatus');
-            
-            if (ridRaw.length >= 8) {
-                statusText.innerText = "Searching for merchant...";
-                try {
-                    const ridHash = ethers.keccak256(ethers.toUtf8Bytes(ridRaw));
-                    const merchantAddr = await engContract.receiptIssuers(ridHash);
-                    
-                    if (merchantAddr !== ethers.ZeroAddress) {
-                        const business = await regContract.businesses(merchantAddr);
-                        bizInput.value = merchantAddr;
-                        statusText.innerHTML = `
-                            <span class="text-blue-500 font-black italic text-sm block mt-1">${business.name}</span>
-                            <span class="text-green-500 font-bold">Verified Merchant Detected ✓</span>
-                        `;
-                    } else {
-                        bizInput.value = "";
-                        statusText.innerHTML = `<span class="text-red-500 font-bold">Invalid or Unissued Receipt ✗</span>`;
-                    }
-                } catch (e) {
-                    console.error(e);
-                    statusText.innerText = "Error looking up receipt.";
-                }
-            } else {
-                bizInput.value = "";
-                statusText.innerText = "";
-            }
-        }
-
-        async function initPage() {
-            document.getElementById('authGuard').classList.add('hidden');
-            document.getElementById('reviewForm').classList.remove('hidden');
-            
-            const params = new URLSearchParams(window.location.search);
-            const biz = params.get('biz');
-            const id = params.get('id');
-            
-            if(id) {
-                document.getElementById('receiptId').value = id;
-                autoLookupMerchant(); 
-            }
-            if(biz) document.getElementById('bizAddr').value = biz;
-        }
-
         async function submit() {
-            const btn = document.getElementById('subBtn');
-            const name = document.getElementById('userName').value;
-            const biz = document.getElementById('bizAddr').value;
-            const ridRaw = document.getElementById('receiptId').value.trim().toUpperCase();
-            const msg = document.getElementById('content').value;
-
-            if(!name || !msg || !ridRaw || !biz) return alert("Please provide a valid Receipt ID.");
-
-            btn.innerText = "SIGNING...";
-            btn.disabled = true;
+            if(!signer) return alert("Connect wallet first!");
+            const m = document.getElementById('mAddr').value;
+            const r = document.getElementById('rId').value;
+            const s = document.getElementById('stars').value;
+            const c = document.getElementById('comment').value;
 
             try {
-                const ridHash = ethers.keccak256(ethers.toUtf8Bytes(ridRaw));
-                const fullContent = `${name}: ${msg}`;
-                
-                const tx = await revContract.submitReview(biz, currentRating, fullContent, ridHash);
+                // Controllo sicurezza: Verifica se la ricevuta esiste
+                const issuer = await engContract.receiptIssuers(r);
+                if(issuer.toLowerCase() !== m.toLowerCase()) {
+                    return alert("Invalid Receipt ID for this merchant!");
+                }
+
+                const tx = await revContract.submitReview(m, s, c, r);
+                alert("Transaction sent! Wait for block confirmation...");
                 await tx.wait();
-                
+                alert("Review Published!");
                 window.location.href = "explore.html";
             } catch(e) { 
                 console.error(e);
-                alert("Error: " + (e.reason || "Transaction failed. Check if Receipt ID is already used.")); 
-                btn.innerText = "PUBLISH REVIEW ON-CHAIN";
-                btn.disabled = false;
+                alert("Transaction failed. Make sure you have PAS tokens."); 
             }
         }
-        // Questo garantisce che la pagina parta non appena app.js è pronto
-function startApp() {
-    if (window.isVeritasReady) {
-        initPage();
-    } else {
-        window.addEventListener('contractsReady', initPage);
-    }
-}
-window.addEventListener('load', startApp);
+        function initPage() { console.log("Review Page Ready"); }
     </script>
 </body>
 </html>
