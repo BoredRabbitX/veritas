@@ -1,6 +1,6 @@
 /**
  * VERITAS PROTOCOL - COMPONENTS.JS
- * Shared UI Layout & Navigation
+ * Shared UI Layout with Theme Toggle & Smart Faucet
  */
 
 const headerHTML = `
@@ -34,6 +34,10 @@ const headerHTML = `
                     <span id="themeIcon">🌙</span>
                 </button>
 
+                <button onclick="window.copyAddressAndGoToFaucet()" class="hidden sm:flex items-center gap-2 px-3 py-1 bg-pink-500/10 border border-pink-500/20 rounded-full text-pink-500 hover:bg-pink-500/20 transition text-[9px] font-bold uppercase">
+                    Faucet
+                </button>
+
                 <button onclick="window.addPaseoNetwork()" class="hidden xs:flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-[8px] font-black uppercase tracking-widest hover:text-[#f6851b] transition group">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Mirror_Logo.svg" class="w-3 h-3 grayscale group-hover:grayscale-0" alt="MetaMask">
                     <span>Setup</span>
@@ -51,10 +55,14 @@ const headerHTML = `
             <a href="explore.html" class="text-[11px] font-black uppercase tracking-[0.2em] py-3 px-2">Explore Directory</a>
             <a href="review.html" class="text-[11px] font-black uppercase tracking-[0.2em] py-3 px-2">Submit Review</a>
             <a href="dashboard.html" class="text-[11px] font-black uppercase tracking-[0.2em] py-3 px-2">Merchant Hub</a>
-            <a href="https://faucet.polkadot.io/" target="_blank" class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-pink-500 py-3 px-2">
-                <span class="relative flex h-2 w-2"><span class="animate-ping absolute h-full w-full rounded-full bg-pink-500 opacity-75"></span><span class="relative h-2 w-2 bg-pink-500 rounded-full"></span></span>
-                Faucet
-            </a>
+            
+            <button onclick="window.copyAddressAndGoToFaucet()" class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-pink-500 py-3 px-2">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute h-full w-full rounded-full bg-pink-500 opacity-75"></span>
+                    <span class="relative h-2 w-2 bg-pink-500 rounded-full"></span>
+                </span>
+                Copy Address & Get PAS
+            </button>
         </div>
     </nav>
 </div>`;
@@ -65,7 +73,7 @@ const footerHTML = `
         <div>Veritas Protocol © 2026</div>
         <div class="flex gap-8">
             <a href="https://paseo.subscan.io/" target="_blank">Explorer</a>
-            <a href="https://faucet.polkadot.io/" target="_blank">Faucet</a>
+            <button onclick="window.copyAddressAndGoToFaucet()">Faucet</button>
         </div>
     </div>
 </footer>`;
