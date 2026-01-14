@@ -12,11 +12,11 @@
     <nav class="p-6 border-b border-white/5">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <a href="index.html" class="text-2xl font-black italic tracking-tighter">VERITAS</a>
-            <button id="connectBtn" onclick="connectWallet()" class="bg-blue-600 px-6 py-2 rounded-full font-bold text-xs uppercase">Connect Wallet</button>
+            <button id="connectBtn" onclick="connectWallet()" class="bg-blue-600 px-6 py-2 rounded-full font-bold text-[10px] uppercase">Connect Wallet</button>
         </div>
     </nav>
 
-    <main class="max-w-xl mx-auto w-full p-6 py-20 flex-grow">
+    <main class="max-w-xl mx-auto w-full p-6 py-12 flex-grow">
         <div id="authGuard" class="text-center py-10">
             <h2 class="text-xl opacity-30 italic mb-6">Connect your wallet to post a review.</h2>
             <button onclick="connectWallet()" class="bg-white text-black px-8 py-3 rounded-xl text-xs font-bold uppercase">Connect Wallet</button>
@@ -29,28 +29,33 @@
             </div>
 
             <div class="space-y-6 bg-zinc-900/50 p-8 rounded-3xl border border-white/5">
+                <div class="space-y-2">
+                    <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Your Name</label>
+                    <input id="userName" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl outline-none focus:border-blue-600" placeholder="e.g. Satoshi">
+                </div>
+
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                         <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Merchant Address</label>
-                        <input id="bizAddr" type="text" readonly class="bg-black/50 border border-white/10 w-full p-3 rounded-lg text-xs font-mono opacity-50">
+                        <input id="bizAddr" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono outline-none focus:border-blue-600" placeholder="0x...">
                     </div>
                     <div class="space-y-2">
-                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Verified Receipt ID</label>
-                        <input id="receiptId" type="text" readonly class="bg-black/50 border border-white/10 w-full p-3 rounded-lg text-xs font-mono text-blue-500 uppercase">
+                        <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Receipt ID</label>
+                        <input id="receiptId" type="text" class="bg-black border border-white/10 w-full p-4 rounded-xl text-xs font-mono text-blue-500 uppercase outline-none focus:border-blue-600" placeholder="V3-XXXXXX">
                     </div>
                 </div>
                 
                 <div class="space-y-2">
                     <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Rating (1 to 5 Stars)</label>
-                    <div class="flex gap-4">
+                    <div class="flex gap-4 items-center">
                         <input id="rating" type="range" min="1" max="5" step="1" value="5" class="w-full accent-blue-600">
-                        <span id="ratingVal" class="text-xl font-black italic text-blue-500">5</span>
+                        <span id="ratingVal" class="text-xl font-black italic text-blue-500 min-w-[20px]">5</span>
                     </div>
                 </div>
 
                 <div class="space-y-2">
                     <label class="text-[9px] font-bold opacity-30 uppercase tracking-widest">Your Experience</label>
-                    <textarea id="content" rows="5" class="bg-black border border-white/10 w-full p-4 rounded-xl outline-none focus:border-blue-600" placeholder="Was the service as expected?"></textarea>
+                    <textarea id="content" rows="4" class="bg-black border border-white/10 w-full p-4 rounded-xl outline-none focus:border-blue-600" placeholder="Describe the service..."></textarea>
                 </div>
 
                 <button id="subBtn" onclick="submit()" class="w-full bg-blue-600 font-black py-5 rounded-2xl shadow-xl shadow-blue-600/10 hover:bg-blue-700 transition text-sm uppercase tracking-widest">Publish Review On-Chain</button>
@@ -59,7 +64,7 @@
     </main>
 
     <footer class="p-10 border-t border-white/5 text-center">
-        <p class="text-[9px] font-bold opacity-20 uppercase tracking-[0.5em]">Veritas Review Engine V3</p>
+        <p class="text-[9px] font-bold opacity-20 uppercase tracking-[0.5em]">Veritas Protocol V3.5.7</p>
     </footer>
 
     <script src="app.js"></script>
@@ -72,30 +77,44 @@
             document.getElementById('authGuard').classList.add('hidden');
             document.getElementById('reviewForm').classList.remove('hidden');
             
+            // Popolamento automatico se i parametri sono presenti nell'URL
             const params = new URLSearchParams(window.location.search);
-            document.getElementById('bizAddr').value = params.get('biz');
-            document.getElementById('receiptId').value = params.get('id');
+            const bizParam = params.get('biz');
+            const idParam = params.get('id');
+            
+            if(bizParam) document.getElementById('bizAddr').value = bizParam;
+            if(idParam) document.getElementById('receiptId').value = idParam;
         }
 
         async function submit() {
             const btn = document.getElementById('subBtn');
+            const name = document.getElementById('userName').value;
             const biz = document.getElementById('bizAddr').value;
             const ridText = document.getElementById('receiptId').value;
             const rate = document.getElementById('rating').value;
             const msg = document.getElementById('content').value;
 
-            if(!msg) return alert("Please enter your feedback.");
+            if(!name || !biz || !ridText || !msg) return alert("Please fill all fields.");
+            
+            // Uniamo Nome e Messaggio per visualizzarli nello Store
+            const fullMessage = `${name}: ${msg}`;
+            
             btn.innerText = "WAITING FOR SIGNATURE...";
             btn.disabled = true;
 
             try {
-                const ridHash = ethers.keccak256(ethers.toUtf8Bytes(ridText));
-                const tx = await revContract.submitReview(biz, rate, msg, "", ridHash);
+                // Generiamo l'hash della ricevuta per il contratto
+                const ridHash = ethers.keccak256(ethers.toUtf8Bytes(ridText.trim().toUpperCase()));
+                
+                // Chiamata al contratto Reviewer
+                const tx = await revContract.submitReview(biz.trim(), rate, fullMessage, "", ridHash);
                 await tx.wait();
+                
                 alert("Review Successfully Published!");
                 window.location.href = "index.html";
             } catch(e) { 
-                alert(e.message); 
+                console.error(e);
+                alert("Error: " + (e.reason || "Transaction failed. Check if Receipt ID is correct or already used.")); 
                 btn.innerText = "PUBLISH REVIEW ON-CHAIN";
                 btn.disabled = false;
             }
