@@ -73,68 +73,77 @@
     <script src="components.js"></script>
 
     <script>
-      async function initPage() {
-    console.log("Store: Booting with Anti-Duplicate Logic...");
+     async function initPage(retryCount = 0) {
+    console.log(`Store: Attempting sync (Try #${retryCount + 1})...`);
     const list = document.getElementById('reviewsList');
     if (!list) return;
+
+    // Protezione: aspetta se i contratti non sono pronti
+    if (!window.regContract || !window.revContract) {
+        if (retryCount < 5) {
+            setTimeout(() => initPage(retryCount + 1), 1000);
+            return;
+        }
+        list.innerHTML = "Contracts not initialized. Please check connection.";
+        return;
+    }
 
     try {
         const id = new URLSearchParams(window.location.search).get('id');
         if (!id) return;
 
-        // 1. CARICAMENTO DATI BUSINESS
+        // 1. DATA FETCHING
         const b = await regContract.businesses(id);
         if (!b.isActive) {
-            list.innerHTML = "<p class='opacity-30 uppercase text-[10px]'>Store not found.</p>";
+            list.innerHTML = "Store not active.";
             return;
         }
 
-        // Update UI Header
+        // UI Update
         document.getElementById('storeName').innerText = b.name;
         const catLabel = document.getElementById('storeCat');
         catLabel.innerText = ethers.decodeBytes32String(b.category).split('_').join(' ');
         catLabel.style.opacity = "1";
         document.getElementById('storeVol').innerText = b.volume;
 
-        // 2. RECUPERO EVENTI
+        // 2. EVENTS FETCHING
         const filter = revContract.filters.ReviewSubmitted(id);
         const allEvents = await revContract.queryFilter(filter, -100000);
         
-        // --- LOGICA ANTI-DUPLICATO ROBUSTA ---
-        const seenReceipts = new Set();
+        // Anti-Duplicate Filter
+        const seen = new Set();
         const uniqueEvents = [];
-
         for (const ev of allEvents) {
-            const rid = ev.args.receiptId || ev.args[4];
-            if (!seenReceipts.has(rid)) {
-                seenReceipts.add(rid);
+            const rid = ev.args[4] || (ev.args && ev.args.receiptId);
+            if (rid && !seen.has(rid)) {
+                seen.add(rid);
                 uniqueEvents.push(ev);
             }
         }
 
         if (uniqueEvents.length === 0) {
-            list.innerHTML = "<p class='opacity-30 uppercase text-[10px]'>No verified logs found.</p>";
+            list.innerHTML = "<p class='opacity-30 uppercase text-[10px]'>No reviews found.</p>";
             return;
         }
 
-        // --- CALCOLO ANALYTICS ---
+        // 3. ANALYTICS CALCULATION
         let totalRating = 0;
         let starCounts = {1:0, 2:0, 3:0, 4:0, 5:0};
 
         uniqueEvents.forEach(ev => {
-            const r = Number(ev.args.rating || ev.args[2]);
+            const r = Number(ev.args[2] || ev.args.rating);
             totalRating += r;
             starCounts[r]++;
         });
 
-        const avg = totalRating / uniqueEvents.length;
         const totalReviews = uniqueEvents.length;
+        const avg = totalRating / totalReviews;
 
-        // Avvio animazioni Count-Up
+        // Update Stats
         if (document.getElementById('avgStars')) animateValue(document.getElementById('avgStars'), 0, avg, 1000, true);
         if (document.getElementById('totalRev')) animateValue(document.getElementById('totalRev'), 0, totalReviews, 1000);
 
-        // Render Barre Dinamiche
+        // Update Bars
         const bars = document.getElementById('barsContainer');
         if (bars) {
             bars.innerHTML = "";
@@ -144,48 +153,51 @@
                     <div class="flex items-center gap-4">
                         <span class="w-10 text-[9px] font-black opacity-30">${s} ST</span>
                         <div class="flex-grow h-[3px] bg-[var(--border)] rounded-full overflow-hidden">
-                            <div id="bar-${s}" class="bg-blue-600 h-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                            <div id="bar-${s}" class="bg-blue-600 h-full transition-all duration-1000" style="width: 0%"></div>
                         </div>
                         <span class="w-6 text-[9px] font-mono opacity-30 text-right">${starCounts[s]}</span>
                     </div>`;
                 setTimeout(() => {
                     const el = document.getElementById(`bar-${s}`);
                     if (el) el.style.width = percent + "%";
-                }, 100);
+                }, 150);
             }
         }
 
-        // 3. RENDER REVIEWS (Reverse per ordine cronologico)
+        // 4. RENDER REVIEWS
         list.innerHTML = "";
         for (let i = uniqueEvents.length - 1; i >= 0; i--) {
             const ev = uniqueEvents[i];
-            const author = ev.args.author || ev.args[1];
-            const rating = Number(ev.args.rating || ev.args[2]);
-            const content = ev.args.content || ev.args[3];
-            const receiptId = ev.args.receiptId || ev.args[4];
+            const author = ev.args[1] || ev.args.author;
+            const rating = Number(ev.args[2] || ev.args.rating);
+            const content = ev.args[3] || ev.args.content;
+            const rid = ev.args[4] || ev.args.receiptId;
             
-            // Recupero risposta del merchant (Funzione asincrona)
-            const reply = await engContract.merchantReplies(receiptId);
+            const reply = await engContract.merchantReplies(rid);
 
             list.innerHTML += `
-                <div class="p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] hover:border-blue-600/30 transition-all duration-500 mb-8">
+                <div class="p-10 rounded-[2.5rem] border border-[var(--border)] bg-[var(--card-bg)] mb-8 transition-all">
                     <div class="flex justify-between items-start mb-8">
                         <div class="text-blue-600 text-xs">${"★".repeat(rating)}${"☆".repeat(5-rating)}</div>
-                        <span class="text-[9px] font-mono opacity-20">#${receiptId.slice(2, 10)}...</span>
+                        <span class="text-[9px] font-mono opacity-20">#${rid.slice(2, 10)}...</span>
                     </div>
                     <p class="text-3xl font-medium italic tracking-tight mb-8">"${content}"</p>
                     ${reply ? `
-                        <div class="mt-8 p-8 bg-[var(--bg-main)] rounded-3xl border border-[var(--border)] relative shadow-inner">
-                            <div class="absolute -top-3 left-8 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase">Official Reply</div>
-                            <p class="text-sm opacity-70 italic leading-relaxed">${reply}</p>
+                        <div class="mt-8 p-8 bg-[var(--bg-main)] rounded-3xl border border-[var(--border)] relative">
+                            <div class="absolute -top-3 left-8 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase">Response</div>
+                            <p class="text-sm opacity-70 italic">${reply}</p>
                         </div>
                     ` : ''}
                 </div>`;
         }
 
     } catch (e) {
-        console.error("Critical Store Error:", e);
-        list.innerHTML = "<p class='text-red-500 uppercase text-[10px] font-bold'>Sync error. Please try again.</p>";
+        console.error("Sync Error:", e);
+        if (retryCount < 3) {
+            setTimeout(() => initPage(retryCount + 1), 2000);
+        } else {
+            list.innerHTML = "<p class='text-red-500 uppercase text-[10px] font-bold'>Network Error. Please check your RPC connection.</p>";
+        }
     }
 }
     </script>
