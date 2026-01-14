@@ -19,7 +19,6 @@ const abiEngine = [
 
 const abiReviewer = [
     "function submitReview(address _business, uint8 _rating, string _content, string _ipfsHash, bytes32 _receiptId) external",
-    "function usedReceipts(bytes32) view returns (bool)",
     "event ReviewSubmitted(address indexed business, address indexed author, uint8 rating, string content, string ipfsHash, bytes32 receiptId)"
 ];
 
@@ -30,7 +29,6 @@ async function connectWallet(silent = false) {
     try {
         provider = new ethers.BrowserProvider(window.ethereum);
         const network = await provider.getNetwork();
-        // ethers v6 returns chainId as BigInt
         if (Number(network.chainId) !== EXPECTED_CHAIN_ID) {
             if(!silent) alert(`Switch to Paseo AssetHub (${EXPECTED_CHAIN_ID})`);
             return false;
@@ -49,7 +47,6 @@ async function connectWallet(silent = false) {
             if (btn) btn.innerText = addr.slice(0,6) + "...";
             
             localStorage.setItem('veritas_autoconnect', 'true');
-            // Trigger page-specific init
             if (typeof initPage === "function") await initPage();
             return true;
         }
